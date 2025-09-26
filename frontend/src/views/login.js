@@ -23,9 +23,12 @@ export default function Register() {
   return (
     <div className="d-flex align-items-center justify-content-center vh-100">
       <Card>
-          <div className="header border">
-            <h2 className="text-warning fw-bol m-0 p-0">Welcome back!</h2>
-            <span className="text-xs">Log in to your account.</span>
+          <div className="header mb-4 ">
+            <div className="d-flex justify-content-center">
+              <img src={{}} alt="Logo" width="120" className="img-fluid" />
+            </div>
+            <h2 className="fw-bold m-0 p-0 primary-text">Welcome back!</h2>
+            <span className="fs-6 text-muted ">Log in to your account.</span>
           </div>
           <form onSubmit={handleRegister} className="d-flex flex-column">
             <input
@@ -41,7 +44,7 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
               className="custom-input my-1"
             />
-            <button type="submit">Register</button>
+            <button type="submit" className="custom-button">Login</button>
           </form>
           <p>{message}</p>
         </Card>
