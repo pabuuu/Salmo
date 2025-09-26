@@ -1,15 +1,35 @@
-.card{
-    background-color: red;
-    width: 450px;
-    height: 500px;
-    display: flex;
-    justify-content: space-between;
+:root{
+    --bg-primary-light:white;
+    --bg-primary-text:black;
+    --bg-primary-button: #222222;
+}
 
+.card{
+    background-color: var(--bg-primary-light);
+    width: 450px;
+    height: 450px;
+    display: flex;
+    outline:1px solid gray;
 }
 .custom-input{
     padding-left: 1rem;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
+    border: 1px solid gray;
+    border-radius: 8px;
+}
+.custom-button{
+    padding-top: 12px;
+    padding-bottom: 12px;
     border:none;
     border-radius: 8px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    background-color: var(--bg-primary-button) ;
+    color: var(--bg-primary-light);
+    font-weight: bold;
+
+}
+.primary-text{
+    color: var(--bg-secondary-light);
 }
