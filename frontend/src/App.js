@@ -1,17 +1,19 @@
 import React, { useState } from "react";
-import Login from "./LoginRegister/login";   // ✅ correct path
-import Dashboard from "./Dashboard";         // ✅ make sure Dashboard.js exists
+import Login from "./LoginRegister/login"; 
+import Dashboard from "./Dashboard";         
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Register from "./LoginRegister/register";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(
-    !!localStorage.getItem("token")
-  );
-
-  return loggedIn ? (
-    <Dashboard />
-  ) : (
-    <Login onLogin={() => setLoggedIn(true)} />
-  );
+ 
+  return(
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login/>} />
+        <Route path="/register" element={<Register/>} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
 
 export default App;
