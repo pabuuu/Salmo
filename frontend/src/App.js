@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import Login from "./LoginRegister/login"; 
+import Login from "./views/login"; 
 import Dashboard from "./Dashboard";         
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Register from "./LoginRegister/register";
+import Register from "./views/register";
 
 function App() {
  
