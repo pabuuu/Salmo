@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
-// 🔑 Auth Pages
-import Login from "./LoginRegister/login";
-import Register from "./LoginRegister/register";
+// 🔑 Auth Pages (using your current folder names)
+import Login from "./views/login";
+import Register from "./views/register";
 
 // 🏠 Dashboard
 import Dashboard from "./Dashboard";
@@ -18,11 +18,12 @@ import Expenses from "./Routes/Expenses";
 import Reports from "./Routes/Reports";
 
 function App() {
+  // ✅ Track login state based on token in localStorage
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
 
   return (
     <Router>
-      {/* ✅ Show nav only if logged in */}
+      {/* ✅ Show navigation only when logged in */}
       {loggedIn && (
         <nav style={{ padding: "1rem", background: "#eee" }}>
           <Link to="/dashboard">Dashboard</Link> |{" "}
@@ -38,7 +39,10 @@ function App() {
 
       <Routes>
         {/* 🔑 Auth Routes */}
-        <Route path="/" element={<Login onLogin={() => setLoggedIn(true)} />} />
+        <Route
+          path="/"
+          element={<Login onLogin={() => setLoggedIn(true)} />}
+        />
         <Route path="/register" element={<Register />} />
 
         {/* 🏠 Dashboard */}

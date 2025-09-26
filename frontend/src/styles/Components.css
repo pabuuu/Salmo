@@ -1,0 +1,15 @@
+.card{
+    background-color: red;
+    width: 450px;
+    height: 500px;
+    display: flex;
+    justify-content: space-between;
+
+}
+.custom-input{
+    padding-left: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border:none;
+    border-radius: 8px;
+}
