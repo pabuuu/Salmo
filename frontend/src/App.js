@@ -41,7 +41,7 @@ function App() {
         {/* 🔑 Auth Routes */}
         <Route
           path="/"
-          element={<Login onLogin={() => setLoggedIn(true)} />}
+          element={<Login />}
         />
         <Route path="/register" element={<Register />} />
 
