@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
 // 🔑 Auth Pages (using your current folder names)
 import Login from "./views/login";
-import Register from "./views/register";
 
 // 🏠 Dashboard
 import Dashboard from "./Dashboard";
@@ -18,44 +17,47 @@ import Expenses from "./Routes/Expenses";
 import Reports from "./Routes/Reports";
 
 function App() {
-  // ✅ Track login state based on token in localStorage
+  // states
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
+  const role = localStorage.getItem("role")
 
   return (
     <Router>
-      {/* ✅ Show navigation only when logged in */}
+      {/* show navigation only when logged in */}
       {loggedIn && (
         <nav style={{ padding: "1rem", background: "#eee" }}>
           <Link to="/dashboard">Dashboard</Link> |{" "}
           <Link to="/tenants">Tenants</Link> |{" "}
           <Link to="/units">Units</Link> |{" "}
-          <Link to="/payments">Payments</Link> |{" "}
-          <Link to="/overdue">Overdue</Link> |{" "}
           <Link to="/maintenance">Maintenance</Link> |{" "}
-          <Link to="/expenses">Expenses</Link> |{" "}
           <Link to="/reports">Reports</Link>
+          {role == "admin" && (
+            <>
+              <Link to="/payments">Payments</Link> |{" "}
+              <Link to="/overdue">Overdue</Link> |{" "}
+              <Link to="/expenses">Expenses</Link> |{" "}
+            </>
+          )}
         </nav>
       )}
 
       <Routes>
-        {/* 🔑 Auth Routes */}
+        {/* auth? */}
         <Route
           path="/"
           element={<Login />}
         />
-        <Route path="/register" element={<Register />} />
-
-        {/* 🏠 Dashboard */}
+        {/* general (lahat may access) */}
         <Route path="/dashboard" element={<Dashboard />} />
-
-        {/* 📂 Main Pages */}
         <Route path="/tenants" element={<Tenants />} />
         <Route path="/units" element={<Units />} />
+        <Route path="/maintenance" element={<Maintenance/>} />
+        <Route path="/reports" element={<Reports />} />
+        {/* admin only */}
         <Route path="/payments" element={<Payments />} />
         <Route path="/overdue" element={<OverduePayments />} />
-        <Route path="/maintenance" element={<Maintenance />} />
         <Route path="/expenses" element={<Expenses />} />
-        <Route path="/reports" element={<Reports />} />
+        
       </Routes>
     </Router>
   );
