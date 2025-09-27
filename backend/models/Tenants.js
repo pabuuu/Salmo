@@ -31,6 +31,7 @@ const tenantsSchema = new mongoose.Schema({
         type:Number,
         required:true
     },
+    //lagyan ng location later
 },{ timestamps:true });
 
 export default mongoose.model("Tenants", tenantsSchema);
