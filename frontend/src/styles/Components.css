@@ -28,8 +28,16 @@
     background-color: var(--bg-primary-button) ;
     color: var(--bg-primary-light);
     font-weight: bold;
-
 }
 .primary-text{
     color: var(--bg-secondary-light);
+}
+.warning-msg{
+    color: rgb(255, 0, 0);
+    font-size: x-small;
+}
+
+/* effects */
+.custom-button:hover{
+    background-color: rgb(24, 24, 24) ;
 }
