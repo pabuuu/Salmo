@@ -8,13 +8,14 @@ import Login from "./views/login";
 import Dashboard from "./Dashboard";
 
 // 📂 Main Pages
-import Tenants from "./Routes/Tenants";
 import Units from "./Routes/Units";
 import Payments from "./Routes/Payments";
 import OverduePayments from "./Routes/OverduePayments";
 import Maintenance from "./Routes/Maintenance";
 import Expenses from "./Routes/Expenses";
 import Reports from "./Routes/Reports";
+import Tenants from "./Routes/Tenants/Tenants.js";
+import TenantsPost from "./Routes/Tenants/TenantsPost.js";
 
 function App() {
   // states
@@ -30,14 +31,14 @@ function App() {
           <Link to="/tenants">Tenants</Link> |{" "}
           <Link to="/units">Units</Link> |{" "}
           <Link to="/maintenance">Maintenance</Link> |{" "}
-          <Link to="/reports">Reports</Link>
-          {role == "admin" && (
-            <>
-              <Link to="/payments">Payments</Link> |{" "}
-              <Link to="/overdue">Overdue</Link> |{" "}
-              <Link to="/expenses">Expenses</Link> |{" "}
-            </>
-          )}
+            {role == "admin" && (
+              <>
+                <Link to="/reports">Reports</Link>
+                <Link to="/payments">Payments</Link> |{" "}
+                <Link to="/overdue">Overdue</Link> |{" "}
+                <Link to="/expenses">Expenses</Link> |{" "}
+              </>
+            )}
         </nav>
       )}
 
@@ -57,7 +58,9 @@ function App() {
         <Route path="/payments" element={<Payments />} />
         <Route path="/overdue" element={<OverduePayments />} />
         <Route path="/expenses" element={<Expenses />} />
-        
+
+        {/* tenants navigation */}
+          <Route path="/tenants/create" element={<TenantsPost />} />
       </Routes>
     </Router>
   );

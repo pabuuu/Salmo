@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/auth.js";
+import tenantsRouter from "./routes/tenantRoute.js";
 
 dotenv.config();
 const app = express();
@@ -14,9 +15,11 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error(err));
 
-
 //routes -> authentication
 app.use("/api/auth", authRoutes);
+//routes -> tenants
+app.use('/api/tenants/', tenantsRouter );
+
 app.get("/", (req, res) => {
   res.send("Server is working!");
 });
