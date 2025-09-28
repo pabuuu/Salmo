@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// 🔑 Auth Pages (using your current folder names)
+// 🔑 Auth Pages
 import Login from "./views/login";
 
 // 🏠 Dashboard
@@ -15,19 +15,19 @@ import OverduePayments from "./Routes/OverduePayments";
 import Maintenance from "./Routes/Maintenance";
 import Expenses from "./Routes/Expenses";
 import Reports from "./Routes/Reports";
+import TenantsPost from "./Routes/Tenants/TenantsPost"; // ✅ keep their extra page
 
-// ✅ NEW: Sidebar Layout
+// ✅ Sidebar Layout
 import SidebarLayout from "./components/SidebarLayout";
 
 function App() {
-  // ✅ Check login state once (keep simple)
   const [loggedIn] = useState(!!localStorage.getItem("token"));
   const role = localStorage.getItem("role");
 
   return (
     <Router>
       {loggedIn ? (
-        // ✅ Wrap routes inside SidebarLayout
+        // ✅ Sidebar + Protected Routes
         <SidebarLayout role={role}>
           <Routes>
             {/* general (lahat may access) */}
@@ -40,6 +40,8 @@ function App() {
             <Route path="/payments" element={<Payments />} />
             <Route path="/overdue" element={<OverduePayments />} />
             <Route path="/expenses" element={<Expenses />} />
+            {/* ✅ new tenants sub-route */}
+            <Route path="/tenants/create" element={<TenantsPost />} />
           </Routes>
         </SidebarLayout>
       ) : (

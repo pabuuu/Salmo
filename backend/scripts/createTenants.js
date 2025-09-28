@@ -11,14 +11,14 @@ mongoose.connect(process.env.MONGO_URI)
 
     const createTenant = async () => {
         try {
-            const firstName = "John Smith";
-            const lastName = "Doe";
-            const email = "JohnSmith@gmail.com";
-            const contactNumber = '09123123123';
-            const rentalNo = 1;
-            const rentalUnit = 'A';
+            const firstName = "John Test 2";
+            const lastName = "aaa";
+            const email = "JohnSmith2@gmail.com";
+            const contactNumber = '09124123123';
+            const rentalNo = 2;
+            const rentalUnit = 'B';
             const rentalAmount = 600000;
-
+            const location = 'Test Location';
             //check if exists
             const existing = await Tenants.findOne({ email });
             if (existing) {
@@ -34,6 +34,7 @@ mongoose.connect(process.env.MONGO_URI)
                 rentalNo,
                 rentalUnit,
                 rentalAmount,
+                location,
               });
 
             await tenant.save();
