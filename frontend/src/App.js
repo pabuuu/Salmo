@@ -8,7 +8,7 @@ import Login from "./views/login";
 import Dashboard from "./Dashboard";
 
 // 📂 Main Pages
-import Tenants from "./Routes/Tenants";
+import Tenants from "./Routes/Tenants/Tenants.js";
 import Units from "./Routes/Units";
 import Payments from "./Routes/Payments";
 import OverduePayments from "./Routes/OverduePayments";
