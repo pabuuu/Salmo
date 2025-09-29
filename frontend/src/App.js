@@ -11,10 +11,8 @@ import Dashboard from "./Dashboard";
 import Tenants from "./Routes/Tenants/Tenants.js";
 import Units from "./Routes/Units";
 import Payments from "./Routes/Payments";
-import OverduePayments from "./Routes/OverduePayments";
 import Maintenance from "./Routes/Maintenance";
 import Expenses from "./Routes/Expenses";
-import Reports from "./Routes/Reports";
 import TenantsPost from "./Routes/Tenants/TenantsPost"; // ✅ keep their extra page
 
 // ✅ Sidebar Layout
@@ -35,10 +33,8 @@ function App() {
             <Route path="/tenants" element={<Tenants />} />
             <Route path="/units" element={<Units />} />
             <Route path="/maintenance" element={<Maintenance />} />
-            <Route path="/reports" element={<Reports />} />
             {/* admin only */}
             <Route path="/payments" element={<Payments />} />
-            <Route path="/overdue" element={<OverduePayments />} />
             <Route path="/expenses" element={<Expenses />} />
             {/* ✅ new tenants sub-route */}
             <Route path="/tenants/create" element={<TenantsPost />} />
