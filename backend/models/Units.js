@@ -1,31 +1,37 @@
 import mongoose from "mongoose";
 
 const unitsSchema = new mongoose.Schema({
-  unitNo: {            // e.g., "A-101"
-    type: String,
-    required: true,
-    unique: true
+  unitNo: { 
+    type: String, 
+    required: true 
   },
-  type: {              // e.g., "Studio", "1BR"
-    type: String,
-    required: true
+  rentAmount: { 
+    type: Number, 
+    required: true 
   },
-  rentAmount: {        // default rent price
-    type: Number,
-    required: true
-  },
-  status: {            // Available / Occupied / Under Maintenance
+  status: { 
     type: String,
     enum: ["Available", "Occupied", "Maintenance"],
     default: "Available"
   },
-  location: {          // Building name / Address
+  location: { 
     type: String,
-    required: true
+    required: true,
+    enum: [               // ✅ Only these locations are valid
+      "Kambal Road GB",
+      "MH Del Pilar",
+      "Easterview",
+      "GSIS",
+      "Bulet",
+      "Liamson"
+    ]
   },
-  notes: {             // Optional remarks
-    type: String
+  notes: { 
+    type: String 
   }
 }, { timestamps: true });
+
+// ✅ Ensure unitNo is unique **per location**
+unitsSchema.index({ location: 1, unitNo: 1 }, { unique: true });
 
 export default mongoose.model("Units", unitsSchema);

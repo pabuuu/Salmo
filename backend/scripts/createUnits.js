@@ -12,21 +12,21 @@ mongoose.connect(process.env.MONGO_URI)
 
 const createUnit = async () => {
   try {
-    const unitNo = "A-101";
-    const type = "Studio";
+    const unitNo = "A";
     const rentAmount = 15000;
-    const location = "Building A";
+    const location = "Liamson";
     const status = "Available";
 
-    const existing = await Units.findOne({ unitNo });
+    // ✅ Check for duplicates *within the same location*
+    const existing = await Units.findOne({ unitNo, location });
     if (existing) {
-      console.log("Unit already exists");
+      console.log(`Unit "${unitNo}" already exists in location "${location}"`);
       process.exit(0);
     }
 
-    const unit = new Units({ unitNo, type, rentAmount, location, status });
+    const unit = new Units({ unitNo, rentAmount, location, status });
     await unit.save();
-    console.log("Unit created successfully");
+    console.log("✅ Unit created successfully");
     process.exit(0);
   } catch (err) {
     console.error(err);
