@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/auth.js";
 import tenantsRouter from "./routes/tenantRoute.js";
+import unitsRouter from "./routes/unitRoute.js";
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,8 @@ mongoose.connect(process.env.MONGO_URI)
 app.use("/api/auth", authRoutes);
 //routes -> tenants
 app.use('/api/tenants/', tenantsRouter );
+//routes -> units
+app.use("/api/units", unitsRouter);
 
 app.get("/", (req, res) => {
   res.send("Server is working!");
