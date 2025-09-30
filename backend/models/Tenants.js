@@ -4,32 +4,44 @@ const tenantsSchema = new mongoose.Schema({
     firstName: {
         type: String, 
         required: true,
+        minlength: [2, "First name must be at least 2 characters long"],
+        maxlength: [50, "First name must not exceed 50 characters"],
+        trim: true,
     },
     lastName: { 
         type: String, 
-        required: true 
+        required: true,
+        trim: true
     },
     email:{
         type: String,
-        required: true,
         unique:true,
         lowercase: true,
+        required: [true, "Email is required"],
+        unique: true,
+        lowercase: true,
+        match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"]
     },
     contactNumber:{
         type: String,
-        required:true
-    },
-    rentalNo:{ //1
-        type: Number,
-        required:true
+        required:true,
+        match: [/^[0-9]{11}$/, "Contact number must be 11 digits"] 
     },
     rentalUnit:{ //A
         type:String,
-        required:true
+        required:true,
+        uppercase: true
     },
     rentalAmount:{ //updatable? inital ammount
         type:Number,
-        required:true
+        required:true,
+        min: [1000, "Rental amount must be at least 1000"]
+    },
+    paymentFrequency: { 
+        type: String,
+        enum: ["Monthly", "Quarterly", "Yearly"],
+        default: "Monthly",
+        required: true
     },
     location:{
         type:String,

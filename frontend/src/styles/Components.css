@@ -10,9 +10,10 @@
     height: 450px;
     display: flex;
     outline:1px solid gray;
+    border-radius: 1rem;
 }
 .custom-input{
-    padding-left: 1rem;
+    padding-left: 0.5rem;
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
     border: 1px solid gray;
