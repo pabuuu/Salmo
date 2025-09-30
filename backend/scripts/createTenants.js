@@ -35,7 +35,7 @@ mongoose.connect(process.env.MONGO_URI)
                 rentalUnit,
                 rentalAmount,
                 location,
-              });
+            });
 
             await tenant.save();
             console.log("Tenant created successfully");

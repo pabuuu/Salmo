@@ -7,9 +7,6 @@ const tenantsRouter = express.Router();
 tenantsRouter.get('/',load);
 tenantsRouter.post('/create',create);
 
-
-
-
 // tenantsRouter.get('/create', (req, res) => {
 //     res.json({ success: true, message: "Tenants GET route works!" });
 //   }); //checker
