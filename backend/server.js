@@ -11,6 +11,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
 //db connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use('/api/tenants/', tenantsRouter );
 //routes -> units
 app.use("/api/units", unitsRouter);
+
 
 app.get("/", (req, res) => {
   res.send("Server is working!");

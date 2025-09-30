@@ -1,12 +1,8 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// 🔑 Auth Pages
 import Login from "./views/login";
-
-// 🏠 Dashboard
 import Dashboard from "./Dashboard";
-
 // 📂 Main Pages
 import Tenants from "./Routes/Tenants/Tenants.js";
 import Units from "./Routes/Units/Units.js";
@@ -16,7 +12,6 @@ import Expenses from "./Routes/Expenses";
 import TenantsPost from "./Routes/Tenants/TenantsPost"; // ✅ keep their extra page
 import UnitsPost from "./Routes/Units/UnitsPost.js";
 
-// ✅ Sidebar Layout
 import SidebarLayout from "./components/SidebarLayout";
 
 function App() {
