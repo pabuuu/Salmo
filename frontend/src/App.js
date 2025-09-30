@@ -1,23 +1,17 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// 🔑 Auth Pages
 import Login from "./views/login";
-
-// 🏠 Dashboard
 import Dashboard from "./Dashboard";
-
-// 📂 Main Pages
-import Tenants from "./Routes/Tenants";
+import Tenants from "./Routes/Tenants/Tenants.js";
 import Units from "./Routes/Units";
 import Payments from "./Routes/Payments";
 import OverduePayments from "./Routes/OverduePayments";
 import Maintenance from "./Routes/Maintenance";
 import Expenses from "./Routes/Expenses";
 import Reports from "./Routes/Reports";
-import TenantsPost from "./Routes/Tenants/TenantsPost"; // ✅ keep their extra page
+import TenantsPost from "./Routes/Tenants/TenantsPost"; 
 
-// ✅ Sidebar Layout
 import SidebarLayout from "./components/SidebarLayout";
 
 function App() {
