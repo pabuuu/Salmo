@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Dropdown from "../../components/Dropdown";
 import axios from "axios";
-import Table from "../../components/Table";
+import UcTable from "../../components/ucTable.js";
 import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification"; // ✅ Import reusable notification
 import { Link } from "react-router-dom";
@@ -184,7 +184,7 @@ function Units() {
 
         {/* === Units Table / Empty State === */}
         {filteredUnits.length > 0 ? (
-          <Table columns={columns} data={filteredUnits} />
+          <UcTable columns={columns} data={filteredUnits} />
         ) : (
           <div className="text-center py-4 text-muted">
             No units found matching your search/filter.
