@@ -26,7 +26,7 @@ const tenantsSchema = new mongoose.Schema({
         type: String,
         required: true,
         match: [/^09\d{9}$/, "Contact number must be a valid PH number starting with 09 and 11 digits long"]
-    }
+    },
     rentalUnit:{ //A
         type:String,
         required:true,
