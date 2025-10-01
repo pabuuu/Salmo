@@ -47,6 +47,23 @@ export default function TenantsPost() {
       alert("Something went wrong while creating tenant.");
     }
   };
+  //dropown Handler
+  const [unitLabel, setUnitLabel] = useState("Select Unit");
+  const [locationLabel, setLocationLabel] = useState("Select Location");
+  const [frequencyLabel, setFrequecyLabel] = useState("Select Frequency");
+
+  const handleUnitSelect = (unit) => {
+    setRentalUnit(unit);   
+    setUnitLabel(`Unit ${unit}`); 
+  };
+  const handleLocationSelect = (location) => {
+    setLocation(location);   
+    setLocationLabel(`${location}`); 
+  };
+  const handleFrequencySelect = (paymentFrequency) => {
+    setPaymentFrequency(paymentFrequency);   
+    setFrequecyLabel(`${paymentFrequency}`); 
+  };
   
   //useEffects
   return (
@@ -107,20 +124,20 @@ export default function TenantsPost() {
               </div>
               <div className="flex-grow-1">
                 <label className="form-label p-0 m-0">Unit</label>
-                <Dropdown label="Select Unit" width={"100%"} height={"42px"}>
-                  <li><button type="button" className="dropdown-item" onClick={()=>setRentalUnit('A')}>Unit A</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=>setRentalUnit('B')}>Unit B</button></li>
+                <Dropdown label={unitLabel} width={"100%"} height={"42px"}>
+                  <li><button type="button" className="dropdown-item" onClick={()=>handleUnitSelect('A')}>Unit A</button></li>
+                  <li><button type="button" className="dropdown-item" onClick={()=>handleUnitSelect('B')}>Unit B</button></li>
                 </Dropdown>
               </div>
               <div className="flex-grow-1">
                 <label className="form-label p-0 m-0">Location</label>
-                <Dropdown label="Select Location" width={"100%"} height={"42px"}>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setLocation('Kambal Road GB')} >Kambal Road GB</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setLocation('Kambal Road GB')} >MH Del Pilar</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setLocation('Easterview')} >Easterview</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setLocation('GSIS')} >GSIS</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setLocation('Bulet')} >Bulet</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setLocation('Liamson')} >Liamson</button></li>
+                <Dropdown label={locationLabel} width={"100%"} height={"42px"}>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('Kambal Road GB')} >Kambal Road GB</button></li>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('MH Del Pilar')} >MH Del Pilar</button></li>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('Easterview')} >Easterview</button></li>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('GSIS')} >GSIS</button></li>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('Bulet')} >Bulet</button></li>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('Liamson')} >Liamson</button></li>
                 </Dropdown>
               </div>
             </div>
@@ -139,10 +156,10 @@ export default function TenantsPost() {
               </div>
               <div style={{ width: "25%" }}>
                 <label className="form-label p-0 m-0">Payment Frequency</label>
-                <Dropdown label="Select Frequency" width={"100%"} height={"42px"}>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setPaymentFrequency('Monthly')} >Monthly</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setPaymentFrequency('Quarterly')} >Quarterly</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> setPaymentFrequency('Yearly')} >Yearly</button></li>
+                <Dropdown label={frequencyLabel} width={"100%"} height={"42px"}>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleFrequencySelect('Monthly')} >Monthly</button></li>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleFrequencySelect('Quarterly')} >Quarterly</button></li>
+                  <li><button type="button" className="dropdown-item" onClick={()=> handleFrequencySelect('Yearly')} >Yearly</button></li>
                   {/* to confirm */}
                 </Dropdown>
               </div>
