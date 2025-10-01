@@ -9,7 +9,8 @@ import Units from "./Routes/Units/Units.js";
 import Payments from "./Routes/Payments";
 import Maintenance from "./Routes/Maintenance";
 import Expenses from "./Routes/Expenses";
-import TenantsPost from "./Routes/Tenants/TenantsPost"; // ✅ keep their extra page
+import TenantsPost from "./Routes/Tenants/TenantsPost";
+import TenantsProfile from "./Routes/Tenants/TenantsProfile.js";
 import UnitsPost from "./Routes/Units/UnitsPost.js";
 
 import SidebarLayout from "./components/SidebarLayout";
@@ -29,6 +30,7 @@ function App() {
             <Route path="/tenants" element={<Tenants />} />
             {/* ✅ new tenants sub-route */}
             <Route path="/tenants/create" element={<TenantsPost />} />
+            <Route path="/tenants/profile/:id" element={<TenantsProfile />} />
             <Route path="/units" element={<Units />} />
             {/* ✅ new units sub-route */}
             <Route path="/units/create" element={<UnitsPost />} />
