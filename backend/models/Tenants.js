@@ -22,11 +22,11 @@ const tenantsSchema = new mongoose.Schema({
         lowercase: true,
         match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"]
     },
-    contactNumber:{
+    contactNumber: {
         type: String,
-        required:true,
-        match: [/^[0-9]{11}$/, "Contact number must be 11 digits"] 
-    },
+        required: true,
+        match: [/^09\d{9}$/, "Contact number must be a valid PH number starting with 09 and 11 digits long"]
+    }
     rentalUnit:{ //A
         type:String,
         required:true,
