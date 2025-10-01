@@ -17,7 +17,7 @@ const unitsSchema = new mongoose.Schema({
   location: { 
     type: String,
     required: true,
-    enum: [               // ✅ Only these locations are valid
+    enum: [
       "Kambal Road GB",
       "MH Del Pilar",
       "Easterview",
@@ -31,7 +31,7 @@ const unitsSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// ✅ Ensure unitNo is unique **per location**
+// ✅ Ensure unitNo is unique per location
 unitsSchema.index({ location: 1, unitNo: 1 }, { unique: true });
 
 export default mongoose.model("Units", unitsSchema);

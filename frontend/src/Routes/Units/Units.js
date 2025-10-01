@@ -3,6 +3,7 @@ import Dropdown from "../../components/Dropdown";
 import axios from "axios";
 import Table from "../../components/Table";
 import LoadingScreen from "../../views/Loading";
+import Notification from "../../components/Notification"; // ✅ Import reusable notification
 import { Link } from "react-router-dom";
 
 function Units() {
@@ -11,6 +12,7 @@ function Units() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [categories, setCategories] = useState(["All"]);
+  const [notification, setNotification] = useState(null); // ✅ notification state
 
   // === Fetch Data ===
   useEffect(() => {
@@ -35,32 +37,49 @@ function Units() {
           setCategories(uniqueLocations);
         }
       })
-      .catch((err) => console.error("Error fetching units:", err))
+      .catch((err) => {
+        console.error("Error fetching units:", err);
+        setNotification({
+          type: "error",
+          message: "Failed to fetch units. Please try again later.",
+        });
+      })
       .finally(() => setLoading(false));
   }, [selectedCategory]);
 
-  // === Table Columns (type removed) ===
+  // === Table Columns ===
   const columns = [
     { key: "unitNo", label: "Unit No." },
-    { key: "location", label: "Building" },
-    { key: "status", label: "Status" },
+    { key: "location", label: "Location" },
+    {
+      key: "status",
+      label: "Status",
+      render: (val) => (
+        <span
+          className={`badge px-3 py-2 ${
+            val === "Occupied" ? "bg-danger" : "bg-success"
+          }`}
+        >
+          {val}
+        </span>
+      ),
+    },
     {
       key: "rentAmount",
       label: "Monthly Rent",
-      render: (val) => `₱${Number(val).toLocaleString()}`
+      render: (val) => (val ? `₱${Number(val).toLocaleString()}` : "—"),
     },
     {
       key: "createdAt",
       label: "Date Created",
-      render: (val) => new Date(val).toLocaleDateString()
-    }
+      render: (val) =>
+        val ? new Date(val).toLocaleDateString() : "Not Available",
+    },
   ];
 
   // === Client-side Filters ===
   const filteredUnits = units.filter((u) =>
-    `${u.unitNo} ${u.location}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+    `${u.unitNo} ${u.location}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // === Sort Handler ===
@@ -84,12 +103,18 @@ function Units() {
 
   return (
     <div className="container-fluid">
+      {/* ✅ Notification */}
+      <Notification
+        notification={notification}
+        onClose={() => setNotification(null)}
+      />
+
       <div className="mb-4">
         <h1>Units</h1>
         <span>{filteredUnits.length} Units found</span>
       </div>
 
-      {/* === Category Buttons (from locations) === */}
+      {/* === Category Buttons === */}
       <div className="d-flex flex-wrap gap-2 mb-3">
         {categories.map((cat) => (
           <button
@@ -157,8 +182,14 @@ function Units() {
           </div>
         </div>
 
-        {/* === Units Table === */}
-        <Table columns={columns} data={filteredUnits} />
+        {/* === Units Table / Empty State === */}
+        {filteredUnits.length > 0 ? (
+          <Table columns={columns} data={filteredUnits} />
+        ) : (
+          <div className="text-center py-4 text-muted">
+            No units found matching your search/filter.
+          </div>
+        )}
       </div>
     </div>
   );
