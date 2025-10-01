@@ -1,6 +1,9 @@
 import React from "react";
-
+import { useNavigate } from "react-router";
+//for tenants and unit to
 const Table = ({ columns, data }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="table-responsive rounded">
       <table className="table table-striped table-hover align-middle">
@@ -18,7 +21,10 @@ const Table = ({ columns, data }) => {
             data.map((row, idx) => (
               <tr key={idx}  className="text-red">
                 {columns.map((col) => (
-                  <td key={col.key} className="py-3">
+                  <td key={col.key} className="py-3" onClick={() => {
+                    console.log("Pressed:", row._id)
+                    navigate(`/tenants/profile/${row._id}`);
+                  }}>
                     {col.render ? col.render(row[col.key], row) : row[col.key]}
                   </td>
                 ))}

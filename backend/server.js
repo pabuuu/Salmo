@@ -20,7 +20,7 @@ mongoose.connect(process.env.MONGO_URI)
 //routes -> authentication
 app.use("/api/auth", authRoutes);
 //routes -> tenants
-app.use('/api/tenants/', tenantsRouter );
+app.use('/api/tenants', tenantsRouter );
 //routes -> units
 app.use("/api/units", unitsRouter);
 

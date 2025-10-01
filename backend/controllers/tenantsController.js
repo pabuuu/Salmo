@@ -65,8 +65,38 @@ export const create = async (req, res) => {
     }
 };
   
+//update
+export const getTenant = async (req, res) => {
+  try {
+    const tenant = await Tenants.findById(req.params.id);
+    if (!tenant) return res.status(404).json({ message: "Tenant not found" });
+    res.json(tenant);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const update = async (req, res) => {
+  try {
+    const { id } = req.params;       // tenant id from URL
+    const updates = req.body;        // updated tenant data
+
+    const tenant = await Tenants.findByIdAndUpdate(id, updates, {
+      new: true,        // return updated document
+      runValidators: true // validate against schema
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ message: "Tenant not found" });
+    }
+
+    res.status(200).json(tenant);
+  } catch (err) {
+    console.error("Error updating tenant:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
 
 //delete
 
-//update
 
