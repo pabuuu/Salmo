@@ -3,19 +3,27 @@ import Dropdown from "../../components/Dropdown";
 import axios from "axios";
 import UcTable from "../../components/ucTable.js";
 import LoadingScreen from "../../views/Loading";
-import Notification from "../../components/Notification"; // ✅ Import reusable notification
-import { Link } from "react-router-dom";
+import Notification from "../../components/Notification";
+import { Link, useLocation } from "react-router-dom";
 
 function Units() {
+  const location = useLocation();
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [categories, setCategories] = useState(["All"]);
-  const [notification, setNotification] = useState(null); // ✅ notification state
+  const [notification, setNotification] = useState({ type: "", message: "" });
+  const [deletingUnitId, setDeletingUnitId] = useState(null);
 
-  // === Fetch Data ===
   useEffect(() => {
+    if (location.state?.notification) {
+      setNotification(location.state.notification);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const fetchUnits = () => {
     setLoading(true);
     const params =
       selectedCategory !== "All"
@@ -28,7 +36,6 @@ function Units() {
         const data = res.data.data || [];
         setUnits(data);
 
-        // When loading ALL, build category list from locations
         if (selectedCategory === "All") {
           const uniqueLocations = [
             "All",
@@ -45,9 +52,55 @@ function Units() {
         });
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchUnits();
   }, [selectedCategory]);
 
-  // === Table Columns ===
+  const confirmDelete = (id, unitNo) => {
+    setNotification({
+      type: "info",
+      message: `Are you sure you want to delete Unit ${unitNo}?`,
+      actions: [
+        {
+          label: "Yes",
+          type: "primary",
+          onClick: () => handleDelete(id),
+        },
+        {
+          label: "Cancel",
+          type: "secondary",
+          onClick: () => setNotification({ type: "", message: "" }),
+        },
+      ],
+    });
+  };
+
+  const handleDelete = async (id) => {
+    setDeletingUnitId(id);
+    try {
+      const res = await axios.delete(`http://localhost:5050/api/units/${id}`);
+      if (res.data.success) {
+        setNotification({
+          type: "success",
+          message: "Unit deleted successfully!",
+        });
+        fetchUnits();
+      } else {
+        setNotification({
+          type: "error",
+          message: res.data.message || "Failed to delete unit",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setNotification({ type: "error", message: "Failed to delete unit" });
+    } finally {
+      setDeletingUnitId(null);
+    }
+  };
+
   const columns = [
     { key: "unitNo", label: "Unit No." },
     { key: "location", label: "Location" },
@@ -75,14 +128,55 @@ function Units() {
       render: (val) =>
         val ? new Date(val).toLocaleDateString() : "Not Available",
     },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (_, row) => (
+        <div className="d-flex gap-3">
+          {/* Edit as colored text */}
+          <Link
+            to={`/units/${row._id}`}
+            style={{
+              color: "#0d6efd",
+              textDecoration: "none",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+            onMouseOver={(e) => (e.target.style.textDecoration = "underline")}
+            onMouseOut={(e) => (e.target.style.textDecoration = "none")}
+          >
+            Edit
+          </Link>
+
+          {/* Delete as colored text */}
+          <button
+            type="button"
+            disabled={deletingUnitId === row._id}
+            onClick={(e) => {
+              e.stopPropagation();
+              confirmDelete(row._id, row.unitNo);
+            }}
+            style={{
+              color: "#dc3545",
+              background: "transparent",
+              border: "none",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+            onMouseOver={(e) => (e.target.style.textDecoration = "underline")}
+            onMouseOut={(e) => (e.target.style.textDecoration = "none")}
+          >
+            {deletingUnitId === row._id ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      ),
+    },
   ];
 
-  // === Client-side Filters ===
   const filteredUnits = units.filter((u) =>
     `${u.unitNo} ${u.location}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // === Sort Handler ===
   const handleSort = (type) => {
     const sorted = [...units];
     if (type === "newest")
@@ -103,10 +197,11 @@ function Units() {
 
   return (
     <div className="container-fluid">
-      {/* ✅ Notification */}
       <Notification
-        notification={notification}
-        onClose={() => setNotification(null)}
+        type={notification.type}
+        message={notification.message}
+        actions={notification.actions}
+        onClose={() => setNotification({ type: "", message: "" })}
       />
 
       <div className="mb-4">
@@ -114,62 +209,83 @@ function Units() {
         <span>{filteredUnits.length} Units found</span>
       </div>
 
-      {/* === Category Buttons === */}
+      {/* Category Buttons */}
       <div className="d-flex flex-wrap gap-2 mb-3">
         {categories.map((cat) => (
           <button
             key={cat}
-            className={`btn ${
-              selectedCategory === cat ? "btn-primary" : "btn-outline-primary"
-            }`}
             onClick={() => setSelectedCategory(cat)}
+            style={{
+              backgroundColor: selectedCategory === cat ? "#1e293b" : "transparent",
+              color: selectedCategory === cat ? "#ffffff" : "#1e293b",
+              border: "1px solid #1e293b",
+              padding: "0.375rem 0.75rem",
+              borderRadius: "0.375rem",
+              cursor: "pointer",
+              fontWeight: 500,
+              transition: "all 0.2s",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = selectedCategory === cat ? "#273449" : "#f1f5f9";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor =
+                selectedCategory === cat ? "#1e293b" : "transparent";
+            }}
           >
             {cat}
           </button>
         ))}
       </div>
 
-      {/* === Search / Sort / Add === */}
+      {/* Search / Sort / Add */}
       <div className="w-100">
         <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-          <Link className="green-btn py-2 px-3 fw-normal" to="/units/create">
-            Add Unit <span className="ms-2 fw-bold">+</span>
+          {/* Add Unit button as colored text */}
+          <Link
+            to="/units/create"
+            style={{
+              color: "#198754",
+              textDecoration: "none",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+            onMouseOver={(e) => (e.target.style.textDecoration = "underline")}
+            onMouseOut={(e) => (e.target.style.textDecoration = "none")}
+          >
+            Add Unit +
           </Link>
 
           <div className="d-flex flex-wrap gap-2 align-items-center">
             <Dropdown label="Filter by" className="bg-dark">
-              <li>
-                <button
-                  className="dropdown-item"
-                  onClick={() => handleSort("newest")}
-                >
-                  Newest
-                </button>
-              </li>
-              <li>
-                <button
-                  className="dropdown-item"
-                  onClick={() => handleSort("oldest")}
-                >
-                  Oldest
-                </button>
-              </li>
-              <li>
-                <button
-                  className="dropdown-item"
-                  onClick={() => handleSort("az")}
-                >
-                  Alphabetical ↑
-                </button>
-              </li>
-              <li>
-                <button
-                  className="dropdown-item"
-                  onClick={() => handleSort("za")}
-                >
-                  Alphabetical ↓
-                </button>
-              </li>
+              {["newest", "oldest", "az", "za"].map((sortKey) => (
+                <li key={sortKey}>
+                  <button
+                    className="dropdown-item"
+                    style={{
+                      background: "transparent",
+                      color: "#1e293b",
+                      border: "none",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => (e.target.style.backgroundColor = "#f1f5f9")}
+                    onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
+                    onClick={() =>
+                      handleSort(
+                        sortKey === "az" ? "az" : sortKey === "za" ? "za" : sortKey
+                      )
+                    }
+                  >
+                    {sortKey === "az"
+                      ? "Alphabetical ↑"
+                      : sortKey === "za"
+                      ? "Alphabetical ↓"
+                      : sortKey.charAt(0).toUpperCase() + sortKey.slice(1)}
+                  </button>
+                </li>
+              ))}
             </Dropdown>
 
             <input
@@ -182,7 +298,6 @@ function Units() {
           </div>
         </div>
 
-        {/* === Units Table / Empty State === */}
         {filteredUnits.length > 0 ? (
           <UcTable columns={columns} data={filteredUnits} />
         ) : (

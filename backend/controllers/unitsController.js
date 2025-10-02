@@ -78,3 +78,17 @@ export const update = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// Get a single unit by ID
+export const getOne = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const unit = await Units.findById(id);
+    if (!unit) {
+      return res.status(404).json({ success: false, message: "Unit not found" });
+    }
+    res.json({ success: true, data: unit });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
