@@ -12,6 +12,7 @@ import Expenses from "./Routes/Expenses";
 import TenantsPost from "./Routes/Tenants/TenantsPost";
 import TenantsProfile from "./Routes/Tenants/TenantsProfile.js";
 import UnitsPost from "./Routes/Units/UnitsPost.js";
+import UnitsProfile from "./Routes/Units/UnitsProfile.js";
 
 import SidebarLayout from "./components/SidebarLayout";
 
@@ -35,6 +36,7 @@ function App() {
             {/* ✅ new units sub-route */}
             <Route path="/units/create" element={<UnitsPost />} />
             <Route path="/maintenance" element={<Maintenance />} />
+            <Route path="/units/profile/:id" element={<UnitsProfile />} />
             {/* admin only */}
             <Route path="/payments" element={<Payments />} />
             <Route path="/expenses" element={<Expenses />} />
