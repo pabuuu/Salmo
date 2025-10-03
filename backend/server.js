@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/auth.js";
-import tenantsRouter from "./routes/tenantRoute.js";
-import unitsRouter from "./routes/unitRoute.js";
+import tenantRouter from "./routes/tenantRoute.js";  // ✅ match export name
+import unitRouter from "./routes/unitRoute.js";      // ✅ match export name
 
 dotenv.config();
 const app = express();
@@ -12,19 +12,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-//db connection
+// DB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error(err));
 
-//routes -> authentication
+// Routes
 app.use("/api/auth", authRoutes);
-//routes -> tenants
-app.use('/api/tenants', tenantsRouter );
-//routes -> units
-app.use("/api/units", unitsRouter);
+app.use("/api/tenants", tenantRouter); // ✅ singular
+app.use("/api/units", unitRouter);     // ✅ singular
 
-
+// Health check
 app.get("/", (req, res) => {
   res.send("Server is working!");
 });

@@ -25,21 +25,44 @@ function Tenants() {
     });
   }, []);
 
-  const columns = [
+    const columns = [
     { key: "firstName", label: "First Name" },
     { key: "lastName", label: "Last Name" },
     { key: "email", label: "Email" },
     { key: "contactNumber", label: "Contact Number" },
-    { key: "rentalInfo", label: "Rental Info", render: (val, row) => (
-      <span>{row.rentalNo}{row.rentalUnit}</span>
+
+    { 
+      key: "unitId", 
+      label: "Unit", 
+      render: (val) => val ? `Unit ${val.unitNo}` : "-"
+    },
+    { 
+      key: "unitId", 
+      label: "Location",
+      render: (val) => val ? val.location : "-"
+    },
+    { 
+      key: "unitId", 
+      label: "Amount",
+      render: (val) => val 
+        ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(val.rentAmount) 
+        : "-"
+    },
+    { 
+      key: "unitId", 
+      label: "Status",
+      render: (val) => (
+        <span className={val?.status === "Occupied" ? "text-danger fw-bold" : "text-success"}>
+          {val ? val.status : "N/A"}
+        </span>
       )
     },
-    { key: "location", label: "Location" },
-    { key: "rentalAmount", label: "Amount" },
     { 
       key: "createdAt", 
       label: "Date Created",
-      render: (val) => new Date(val).toLocaleDateString()
+      render: (val) => new Date(val).toLocaleDateString("en-PH", { 
+        year: "numeric", month: "short", day: "numeric" 
+      })
     },
   ];
 
@@ -52,8 +75,8 @@ function Tenants() {
   return (
     <div className=" container-fluid">
       <div className="mb-4">
-        <h1>Tenants</h1>
-        <span>12 Tenants found</span>
+      <h1>Tenants</h1>
+      <span>{tenants.length} Tenants found</span>
       </div>
       {/* exact dashbaord */}
       <div className="w-100">

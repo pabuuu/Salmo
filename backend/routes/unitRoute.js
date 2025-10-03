@@ -1,12 +1,36 @@
 import express from "express";
-import { create, load, remove, update, getOne } from "../controllers/unitsController.js";
+import {
+  load,
+  getAvailableByLocation,
+  create,
+  remove,
+  update,
+  getOne,
+  assignTenant,
+  removeTenant
+} from "../controllers/unitsController.js";
 
-const unitsRouter = express.Router();
+const unitRouter = express.Router();
 
-unitsRouter.get("/:id", getOne);     // ✅ Fetch single unit by ID
-unitsRouter.get("/", load);          // Fetch all
-unitsRouter.post("/create", create); // Create
-unitsRouter.delete("/:id", remove);  // Delete by ID
-unitsRouter.put("/:id", update);     // Update by ID
+// ✅ Always put more specific routes BEFORE "/:id"
+unitRouter.get("/", load);
+unitRouter.get("/getAvailableByLocation", getAvailableByLocation);
+unitRouter.post("/create", create);
 
-export default unitsRouter;
+// ✅ Debug route must be ABOVE "/:id"
+unitRouter.get("/debug/all", async (req, res) => {
+  try {
+    const units = await import("../models/Units.js").then(m => m.default.find());
+    res.json(units);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+unitRouter.get("/:id", getOne);
+unitRouter.put("/:id", update);
+unitRouter.delete("/:id", remove);
+unitRouter.post("/:id/assignTenant", assignTenant);
+unitRouter.post("/:id/removeTenant", removeTenant);
+
+export default unitRouter;

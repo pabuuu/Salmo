@@ -1,16 +1,19 @@
 import express from "express";
-import { create, load, getTenant,update } from "../controllers/tenantsController.js";
+import { 
+  createTenant, 
+  load, 
+  getTenant, 
+  update, 
+  remove 
+} from "../controllers/tenantsController.js";
 
-const tenantsRouter = express.Router();
+const tenantRouter = express.Router();
 
-//tenants route
-tenantsRouter.get('/',load);
-tenantsRouter.post('/create',create);
-tenantsRouter.get("/:id",getTenant);
-tenantsRouter.put("/:id", update);
+// Tenant routes
+tenantRouter.get("/", load);                // Get all tenants
+tenantRouter.post("/create", createTenant); // Create tenant
+tenantRouter.get("/:id", getTenant);        // Get tenant by ID
+tenantRouter.put("/:id", update);           // Update tenant
+tenantRouter.delete("/:id", remove);        // Delete tenant
 
-// tenantsRouter.get('/create', (req, res) => {
-//     res.json({ success: true, message: "Tenants GET route works!" });
-//   }); //checker
-
-export default tenantsRouter;
+export default tenantRouter;
