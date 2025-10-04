@@ -46,6 +46,10 @@ const tenantsSchema = new mongoose.Schema({
     location:{
         type:String,
         required:true
+    },
+    isArchived: {
+        type: Boolean,
+        default: false
     }
 },{ timestamps:true });
 

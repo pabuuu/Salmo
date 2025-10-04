@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import Card from "../components/Card";
-
-export default function Login() {
+import Logo from '../assets/logo.png'
+import { useNavigate } from "react-router";
+import LoadingScreen from '../views/Loading.js'
+export default function Login({onLogin}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,6 +28,7 @@ export default function Login() {
     }
 
     setMessage("");
+    setIsLoading(true);
 
     try {
       // call API
@@ -39,23 +44,31 @@ export default function Login() {
         //save token & role in localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
-  
-        setMessage("✅ Login successful!");
-        // redirect later
+        navigate("/dashboard", { replace: true });
+        onLogin();
       } else {
         setMessage(data.message || "login failed");
       }
     } catch (err) {
       setMessage("Error connecting to server");
+    } finally{
+      setIsLoading(false);
     }
   };
+  
+  if (isLoading)
+    return (
+      <div className="d-flex vh-100 w-100 align-items-center justify-content-center ">
+        <LoadingScreen/>
+      </div>
+    );
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100">
       <Card>
           <div className="header mb-4 ">
             <div className="d-flex justify-content-center">
-              <img src={'https://picsum.photos/'} alt="Logo" width="120" className="img-fluid" />
+              <img src={Logo} alt="Logo" width="250" className="img-fluid" />
             </div>
             <h2 className="fw-bold m-0 p-0 primary-text">Welcome back!</h2>
             <span className="fs-6 text-muted ">Log in to your account.</span>
@@ -74,7 +87,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               className="custom-input my-1"
             />
-            <button type="submit" className="custom-button">Login</button>
+            <button type="submit" className="custom-button" disabled={isLoading}>Login</button>
           </form>
           <p className="warning-msg">{message}</p>
         </Card>

@@ -96,7 +96,47 @@ export const update = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+// archive
+export const archiveTenant = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-//delete
+    const tenant = await Tenants.findByIdAndUpdate(
+      id,
+      { isArchived: true },
+      { new: true }
+    );
+
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: "Tenant not found" });
+    }
+
+    res.json({ success: true, message: "Tenant archived successfully", tenant });
+  } catch (err) {
+    console.error("Error archiving tenant:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+//restore
+export const restore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await Tenants.findByIdAndUpdate(
+      id,
+      { isArchived: false },
+      { new: true }
+    );
+
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: "Tenant not found" });
+    }
+
+    res.json({ success: true, message: "Tenant restored successfully", tenant });
+  } catch (err) {
+    console.error("Error restoring tenant:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 

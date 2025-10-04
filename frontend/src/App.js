@@ -13,20 +13,21 @@ import TenantsPost from "./Routes/Tenants/TenantsPost";
 import TenantsProfile from "./Routes/Tenants/TenantsProfile.js";
 import UnitsPost from "./Routes/Units/UnitsPost.js";
 import UnitsProfile from "./Routes/Units/UnitsProfile.js";
-
+import { Navigate } from "react-router-dom";
 import SidebarLayout from "./components/SidebarLayout";
 
 function App() {
-  const [loggedIn] = useState(!!localStorage.getItem("token"));
+  const [loggedIn,setLoggedIn] = useState(!!localStorage.getItem("token"));
   const role = localStorage.getItem("role");
 
   return (
     <Router>
       {loggedIn ? (
         // ✅ Sidebar + Protected Routes
-        <SidebarLayout role={role}>
+        <SidebarLayout role={role} onLogout={() => setLoggedIn(false)}>
           <Routes>
             {/* general (lahat may access) */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tenants" element={<Tenants />} />
             {/* ✅ new tenants sub-route */}
@@ -45,7 +46,8 @@ function App() {
       ) : (
         // 🔑 Login page only when not logged in
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login onLogin={() => setLoggedIn(true)} />} />
         </Routes>
       )}
     </Router>
