@@ -24,8 +24,25 @@ const TenantsSchema = new mongoose.Schema(
       ref: "Units",
       required: false,
     },
-  },
-  { timestamps: true }
-);
+    rentalAmount:{ //updatable? inital ammount
+        type:Number,
+        required:true,
+        min: [1000, "Rental amount must be at least 1000"]
+    },
+    paymentFrequency: { 
+        type: String,
+        enum: ["Monthly", "Quarterly", "Yearly"],
+        default: "Monthly",
+        required: true
+    },
+    location:{
+        type:String,
+        required:true
+    },
+    isArchived: {
+        type: Boolean,
+        default: false
+    },
+},{ timestamps:true });
 
 export default mongoose.model("Tenants", TenantsSchema);

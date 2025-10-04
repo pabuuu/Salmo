@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
-export default function SidebarLayout({ children, role }) {
+import LoadingScreen from "../views/Loading.js";
+export default function SidebarLayout({ children, role, onLogout}) {
   const DESKTOP_WIDTH = 200;
   const MOBILE_WIDTH = 240;
   const BUBBLE_DIAMETER = 50;
@@ -10,6 +10,8 @@ export default function SidebarLayout({ children, role }) {
 
   const [collapsed, setCollapsed] = useState(false);
   const [isMedium, setIsMedium] = useState(window.innerWidth < 1024);
+  const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,11 +28,25 @@ export default function SidebarLayout({ children, role }) {
     ? BUBBLE_LEFT_COLLAPSED
     : sidebarWidth - BUBBLE_RIGHT_OVERLAP;
 
-  function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    navigate("/"); // ✅ login page is "/"
-  }
+    async function handleLogout() {
+      setIsLoading(true); 
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        onLogout(); 
+        navigate("/login", { replace: true });
+      } catch (err) {
+        console.error("Logout failed", err);
+        setIsLoading(false);
+      }
+    }
+    if (isLoading)
+      return (
+        <div className="d-flex vh-100 w-100 align-items-center justify-content-center ">
+          <LoadingScreen/>
+        </div>
+      );
+  
 
   return (
     <div className="d-flex flex-row" style={{ height: "100vh", width: "100%" }}>
@@ -92,6 +108,7 @@ export default function SidebarLayout({ children, role }) {
             e.currentTarget.style.background = "transparent";
             e.currentTarget.style.color = "#1e293b";
           }}
+          disabled={isLoading}
         >
           <i className="fa-solid fa-right-from-bracket"></i>
           Logout
