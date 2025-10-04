@@ -1,20 +1,14 @@
 import mongoose from "mongoose";
 
 const unitsSchema = new mongoose.Schema({
-  unitNo: { 
-    type: String, 
-    required: true 
-  },
-  rentAmount: { 
-    type: Number, 
-    required: true 
-  },
-  status: { 
+  unitNo: { type: String, required: true },
+  rentAmount: { type: Number, required: true },
+  status: {
     type: String,
     enum: ["Available", "Occupied", "Maintenance"],
     default: "Available"
   },
-  location: { 
+  location: {
     type: String,
     required: true,
     enum: [
@@ -26,12 +20,12 @@ const unitsSchema = new mongoose.Schema({
       "Liamson"
     ]
   },
-  notes: { 
-    type: String 
-  }
+  notes: { type: String },
+
+  // ✅ Reference tenant
+  tenant: { type: mongoose.Schema.Types.ObjectId, ref: "Tenants", default: null }
 }, { timestamps: true });
 
-// ✅ Ensure unitNo is unique per location
 unitsSchema.index({ location: 1, unitNo: 1 }, { unique: true });
 
 export default mongoose.model("Units", unitsSchema);

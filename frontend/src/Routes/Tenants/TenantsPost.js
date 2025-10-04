@@ -6,17 +6,48 @@ import { useNavigate } from "react-router-dom";
 
 export default function TenantsPost() {
   const navigate = useNavigate();
-  //useStates
+
+  // form fields
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [contactNumber, setContactNumber] = useState('');
-  const [rentalUnit, setRentalUnit] = useState("");
   const [rentalAmount, setRentalAmount] = useState('');
   const [paymentFrequency, setPaymentFrequency] = useState('');
+  
+  // location & units
   const [location, setLocation] = useState('');
+  const [availableUnits, setAvailableUnits] = useState([]);
+  const [unitId, setUnitId] = useState(""); // ✅ store unitId, not just label
 
-  const handleSumbit = async (e) => {
+  // dropdown labels
+  const [unitLabel, setUnitLabel] = useState("Select Unit");
+  const [locationLabel, setLocationLabel] = useState("Select Location");
+  const [frequencyLabel, setFrequecyLabel] = useState("Select Frequency");
+
+  // fetch units when location changes
+  useEffect(() => {
+    if (location) {
+      fetch(`http://localhost:5050/api/units/getAvailableByLocation?location=${location}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setAvailableUnits(data.data);
+          } else {
+            setAvailableUnits([]);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching available units:", err);
+          setAvailableUnits([]);
+        });
+    } else {
+      setAvailableUnits([]);
+    }
+  }, [location]);
+
+  // handle form submit
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch("http://localhost:5050/api/tenants/create", {
@@ -27,55 +58,55 @@ export default function TenantsPost() {
           lastName,
           email,
           contactNumber,
-          rentalUnit,
+          unitId, // ✅ send unitId to backend
           rentalAmount: Number(rentalAmount),
           paymentFrequency,
-          location,
         }),
       });
-  
+
       const data = await response.json();
-  
-      if (response.ok && data.success) {
+
+      if (response.ok && data.tenant) {
         alert("✅ Tenant created successfully!");
-        navigate("/tenants"); 
+        navigate("/tenants");
       } else {
-        alert("⚠️ " + data.message);
+        alert("⚠️ " + (data.message || "Failed to create tenant"));
       }
     } catch (error) {
       console.error("Error creating tenant:", error);
       alert("Something went wrong while creating tenant.");
     }
   };
-  //dropown Handler
-  const [unitLabel, setUnitLabel] = useState("Select Unit");
-  const [locationLabel, setLocationLabel] = useState("Select Location");
-  const [frequencyLabel, setFrequecyLabel] = useState("Select Frequency");
+
+  // handlers
+  const handleLocationSelect = (loc) => {
+    setLocation(loc);
+    setLocationLabel(loc);
+    setUnitId(""); // reset unit if location changes
+    setUnitLabel("Select Unit");
+  };
 
   const handleUnitSelect = (unit) => {
-    setRentalUnit(unit);   
-    setUnitLabel(`Unit ${unit}`); 
+    setUnitId(unit._id); // ✅ store actual unitId
+    setUnitLabel(`Unit ${unit.unitNo}`); // show friendly label
   };
-  const handleLocationSelect = (location) => {
-    setLocation(location);   
-    setLocationLabel(`${location}`); 
+
+  const handleFrequencySelect = (freq) => {
+    setPaymentFrequency(freq);
+    setFrequecyLabel(freq);
   };
-  const handleFrequencySelect = (paymentFrequency) => {
-    setPaymentFrequency(paymentFrequency);   
-    setFrequecyLabel(`${paymentFrequency}`); 
-  };
-  
-  //useEffects
+
   return (
     <div className="d-flex h-100 w-100">
       <Card width={"100%"} height={"100%"}>
         <div className="mx-5 p-2">
           <h1 className="text-dark">Create a Tenant</h1>
           <span className="text-muted">Fill out the tenant details below.</span>
-          <form onSubmit={handleSumbit}>
+          <form onSubmit={handleSubmit}>
+            {/* --- personal info --- */}
             <div className="d-flex gap-2 mt-5">
               <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">First Name</label>
+                <label className="form-label">First Name</label>
                 <input
                   placeholder="Enter first name"
                   className="custom-input form-control"
@@ -83,8 +114,8 @@ export default function TenantsPost() {
                   onChange={(e) => setFirstName(e.target.value)}
                 />
               </div>
-              <div className="flex-grow-1 ">
-                <label className="form-label p-0 m-0">Last Name</label>
+              <div className="flex-grow-1">
+                <label className="form-label">Last Name</label>
                 <input
                   placeholder="Enter last name"
                   className="custom-input form-control"
@@ -93,7 +124,7 @@ export default function TenantsPost() {
                 />
               </div>
               <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">Email</label>
+                <label className="form-label">Email</label>
                 <input
                   type="email"
                   placeholder="Enter email"
@@ -103,73 +134,97 @@ export default function TenantsPost() {
                 />
               </div>
             </div>
+
+            {/* --- contact + unit + location --- */}
             <div className="d-flex mt-3 align-items-center gap-2">
               <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">Mobile Number</label>
+                <label className="form-label">Mobile Number</label>
                 <input
                   type="tel"
                   placeholder="Enter mobile number"
                   className="custom-input form-control"
                   value={contactNumber}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, ""); 
-                    if (value.length <= 11) {
-                      setContactNumber(value);
-                    }
+                    const value = e.target.value.replace(/\D/g, "");
+                    if (value.length <= 11) setContactNumber(value);
                   }}
                   maxLength={11}
                   pattern="[0-9]{11}"
                   required
                 />
               </div>
+
+              {/* location dropdown */}
               <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">Unit</label>
-                <Dropdown label={unitLabel} width={"100%"} height={"42px"}>
-                  <li><button type="button" className="dropdown-item" onClick={()=>handleUnitSelect('A')}>Unit A</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=>handleUnitSelect('B')}>Unit B</button></li>
+                <label className="form-label">Location</label>
+                <Dropdown label={locationLabel} width={"100%"} height={"42px"}>
+                  {["Kambal Road GB", "MH Del Pilar", "Easterview", "GSIS", "Bulet", "Liamson"].map((loc) => (
+                    <li key={loc}>
+                      <button type="button" className="dropdown-item" onClick={() => handleLocationSelect(loc)}>
+                        {loc}
+                      </button>
+                    </li>
+                  ))}
                 </Dropdown>
               </div>
+
+              {/* units dropdown (dynamic) */}
               <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">Location</label>
-                <Dropdown label={locationLabel} width={"100%"} height={"42px"}>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('Kambal Road GB')} >Kambal Road GB</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('MH Del Pilar')} >MH Del Pilar</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('Easterview')} >Easterview</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('GSIS')} >GSIS</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('Bulet')} >Bulet</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleLocationSelect('Liamson')} >Liamson</button></li>
+                <label className="form-label">Unit</label>
+                <Dropdown label={unitLabel} width={"100%"} height={"42px"}>
+                  {availableUnits.length > 0 ? (
+                    availableUnits.map((unit) => (
+                      <li key={unit._id}>
+                        <button type="button" className="dropdown-item" onClick={() => handleUnitSelect(unit)}>
+                          {`Unit ${unit.unitNo} (₱${unit.rentAmount})`}
+                        </button>
+                      </li>
+                    ))
+                  ) : (
+                    <li><span className="dropdown-item text-muted">No available units</span></li>
+                  )}
                 </Dropdown>
               </div>
             </div>
+
+            {/* --- amount + frequency --- */}
             <div className="d-flex gap-2 mt-3 align-items-start">
               <div style={{ width: "25%" }}>
-                <label className="form-label p-0 m-0">Amount to Pay</label>
+                <label className="form-label">Amount to Pay</label>
                 <input
                   type="text"
                   placeholder="0"
                   className="custom-input form-control"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
                   value={rentalAmount}
                   onChange={(e) => setRentalAmount(e.target.value)}
                 />
               </div>
               <div style={{ width: "25%" }}>
-                <label className="form-label p-0 m-0">Payment Frequency</label>
+                <label className="form-label">Payment Frequency</label>
                 <Dropdown label={frequencyLabel} width={"100%"} height={"42px"}>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleFrequencySelect('Monthly')} >Monthly</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleFrequencySelect('Quarterly')} >Quarterly</button></li>
-                  <li><button type="button" className="dropdown-item" onClick={()=> handleFrequencySelect('Yearly')} >Yearly</button></li>
-                  {/* to confirm */}
+                  {["Monthly", "Quarterly", "Yearly"].map((freq) => (
+                    <li key={freq}>
+                      <button type="button" className="dropdown-item" onClick={() => handleFrequencySelect(freq)}>
+                        {freq}
+                      </button>
+                    </li>
+                  ))}
                 </Dropdown>
               </div>
             </div>
-            <div className="d-flex gap-2">
-              <button className="custom-button fw-normal px-4 bg-light border text-muted" type="button"  onClick={()=>{{
-                // to previous page
-                navigate(-1)
-              }}}>Cancel</button>
-              <button className="custom-button fw-normal px-4 bg-success" type="submit">Create</button>
+
+            {/* --- buttons --- */}
+            <div className="d-flex gap-2 mt-3">
+              <button
+                className="custom-button fw-normal px-4 bg-light border text-muted"
+                type="button"
+                onClick={() => navigate(-1)}
+              >
+                Cancel
+              </button>
+              <button className="custom-button fw-normal px-4 bg-success" type="submit">
+                Create
+              </button>
             </div>
           </form>
         </div>

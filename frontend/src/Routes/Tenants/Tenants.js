@@ -6,12 +6,11 @@ import LoadingScreen from "../../views/Loading";
 import { Link } from "react-router-dom";
 
 function Tenants() {
-  // states
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("Newest");
-  const [showArchived, setShowArchived] = useState(false); // toggle
+  const [showArchived, setShowArchived] = useState(false); // toggle archived
 
   // fetch tenants
   useEffect(() => {
@@ -40,12 +39,12 @@ function Tenants() {
   // restore archived tenant
   const handleRestore = async (tenantId) => {
     if (!window.confirm("Restore this tenant?")) return;
-  
+
     try {
       await axios.patch(`http://localhost:5050/api/tenants/${tenantId}/restore`);
-      setTenants(prev => prev.map(t =>
-        t._id === tenantId ? { ...t, isArchived: false } : t
-      ));
+      setTenants(prev =>
+        prev.map(t => (t._id === tenantId ? { ...t, isArchived: false } : t))
+      );
     } catch (err) {
       console.error("Failed to restore tenant:", err);
       alert("Failed to restore tenant.");
@@ -59,16 +58,37 @@ function Tenants() {
     { key: "email", label: "Email" },
     { key: "contactNumber", label: "Contact Number" },
     {
-      key: "rentalInfo",
-      label: "Rental Info",
-      render: (val, row) => <span>{row.rentalNo}{row.rentalUnit}</span>,
+      key: "unitId",
+      label: "Unit",
+      render: (val) => val ? `Unit ${val.unitNo}` : "-"
     },
-    { key: "location", label: "Location" },
-    { key: "rentalAmount", label: "Amount" },
+    {
+      key: "unitId",
+      label: "Location",
+      render: (val) => val ? val.location : "-"
+    },
+    {
+      key: "unitId",
+      label: "Amount",
+      render: (val) => val
+        ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(val.rentAmount)
+        : "-"
+    },
+    {
+      key: "unitId",
+      label: "Status",
+      render: (val) => (
+        <span className={val?.status === "Occupied" ? "text-danger fw-bold" : "text-success"}>
+          {val ? val.status : "N/A"}
+        </span>
+      )
+    },
     {
       key: "createdAt",
       label: "Date Created",
-      render: (val) => new Date(val).toLocaleDateString(),
+      render: (val) => new Date(val).toLocaleDateString("en-PH", {
+        year: "numeric", month: "short", day: "numeric"
+      })
     },
     {
       key: "actions",
@@ -90,20 +110,21 @@ function Tenants() {
           Archive
         </button>
       )
-    }    
+    }
   ];
 
-  if (loading)
+  if (loading) {
     return (
       <div className="d-flex vh-100 w-100 align-items-center justify-content-center">
         <LoadingScreen />
       </div>
     );
+  }
 
   // show active or archived tenants
   const displayedTenants = tenants.filter(t => showArchived ? t.isArchived : !t.isArchived);
 
-  // filter
+  // filter by search term
   let filteredTenants = displayedTenants.filter((tenant) => {
     const fullName = `${tenant.firstName} ${tenant.lastName}`.toLowerCase();
     return fullName.includes(searchTerm.toLowerCase());
@@ -125,7 +146,6 @@ function Tenants() {
         <h1>Tenants</h1>
         <span>{filteredTenants.length} Tenants found</span>
       </div>
-      
 
       <div className="w-100">
         <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
@@ -150,7 +170,8 @@ function Tenants() {
             />
           </div>
         </div>
-        {/* table */}
+
+        {/* Archived/Active toggle buttons */}
         <div className="d-flex gap-2 align-items-center mb-3">
           <button
             className="btn"
@@ -200,6 +221,7 @@ function Tenants() {
             Archived
           </button>
         </div>
+
         <Table columns={columns} data={filteredTenants} />
       </div>
     </div>
