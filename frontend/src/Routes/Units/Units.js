@@ -209,37 +209,6 @@ function Units() {
         <span>{filteredUnits.length} Units found</span>
       </div>
 
-      {/* Category Buttons */}
-      <div className="d-flex flex-wrap gap-2 mb-3">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            style={{
-              backgroundColor:
-                selectedCategory === cat ? "#1e293b" : "transparent",
-              color: selectedCategory === cat ? "#ffffff" : "#1e293b",
-              border: "1px solid #1e293b",
-              padding: "0.375rem 0.75rem",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-              fontWeight: 500,
-              transition: "all 0.2s",
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor =
-                selectedCategory === cat ? "#273449" : "#f1f5f9";
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor =
-                selectedCategory === cat ? "#1e293b" : "transparent";
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
       {/* Search / Sort / Add */}
       <div className="w-100">
         <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
@@ -315,6 +284,37 @@ function Units() {
             <button className="custom-button fw-normal px-4">Search</button>
           </div>
         </div>
+
+        {/* Category Buttons */}
+      <div className="d-flex flex-wrap gap-2 mb-3">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            style={{
+              backgroundColor:
+                selectedCategory === cat ? "#1e293b" : "transparent",
+              color: selectedCategory === cat ? "#ffffff" : "#1e293b",
+              border: "1px solid #1e293b",
+              padding: "0.375rem 0.75rem",
+              borderRadius: "0.375rem",
+              cursor: "pointer",
+              fontWeight: 500,
+              transition: "all 0.2s",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor =
+                selectedCategory === cat ? "#273449" : "#f1f5f9";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor =
+                selectedCategory === cat ? "#1e293b" : "transparent";
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
         {filteredUnits.length > 0 ? (
           <UcTable columns={columns} data={filteredUnits} />
