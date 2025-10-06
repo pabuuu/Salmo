@@ -15,7 +15,7 @@ export default function TenantsProfile(){
     const fetchTenant = async () => {
       try {
         const res = await axios.get(`http://localhost:5050/api/tenants/${id}`);
-        setTenant(res.data);
+        setTenant(res.data.data);
       } catch (err) {
         console.error("Error fetching tenant:", err);
       }

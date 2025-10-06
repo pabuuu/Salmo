@@ -24,6 +24,19 @@ const TenantsSchema = new mongoose.Schema(
       ref: "Units",
       required: false,
     },
+    rentAmount:{
+      type: Number,
+      required:true
+    },
+    paymentFrequency:{
+      type:String,
+      enum:['Monthly','Quarterly','Yearly'],
+      required:true,
+    },
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
