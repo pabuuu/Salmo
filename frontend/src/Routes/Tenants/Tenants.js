@@ -23,20 +23,17 @@ function Tenants() {
   const handleArchive = async (e, id, isArchived) => {
     e.stopPropagation();
     const action = isArchived ? "unarchive" : "archive";
-
     if (!window.confirm(`Are you sure you want to ${action} this tenant?`)) return;
 
     try {
       await axios.put(`http://localhost:5050/api/tenants/${id}/archive`, {
         isArchived: !isArchived,
       });
-
       setTenants((prev) =>
         prev.map((tenant) =>
           tenant._id === id ? { ...tenant, isArchived: !isArchived } : tenant
         )
       );
-
       alert(`Tenant ${action}d successfully!`);
     } catch (err) {
       console.error(`Error trying to ${action} tenant:`, err);
@@ -44,14 +41,12 @@ function Tenants() {
     }
   };
 
-  // 🔹 Filter tenants (All / Active / Archived)
   const filteredTenants = tenants.filter((tenant) => {
     if (filter === "Archived") return tenant.isArchived;
     if (filter === "Active") return !tenant.isArchived;
     return true;
   });
 
-  // 🔹 Apply search filter (by name or email)
   const searchedTenants = filteredTenants.filter((tenant) => {
     const query = searchTerm.toLowerCase();
     return (
@@ -61,7 +56,6 @@ function Tenants() {
     );
   });
 
-  // 🔹 Sort tenants (newest, oldest, A–Z, Z–A)
   const sortedTenants = [...searchedTenants].sort((a, b) => {
     switch (sortKey) {
       case "newest":
@@ -77,69 +71,53 @@ function Tenants() {
     }
   });
 
-  const handleSort = (key) => {
-    setSortKey(key);
-  };
+  const handleSort = (key) => setSortKey(key);
 
   const columns = [
     { key: "firstName", label: "First Name" },
     { key: "lastName", label: "Last Name" },
     { key: "email", label: "Email" },
     { key: "contactNumber", label: "Contact Number" },
-    {
-      key: "unitId",
-      label: "Unit",
-      render: (val) => (val ? `Unit ${val.unitNo}` : "-"),
+    { 
+      key: "unitNo", 
+      label: "Unit", 
+      render: (_, row) => row.unitId ? `Unit ${row.unitId.unitNo}` : "-"
     },
-    {
-      key: "unitId",
+    { 
+      key: "location", 
       label: "Location",
-      render: (val) => (val ? val.location : "-"),
+      render: (_, row) => row.unitId ? row.unitId.location : "-"
     },
-    {
-      key: "unitId",
+    { 
+      key: "amount", 
       label: "Amount",
-      render: (val) =>
-        val
-          ? new Intl.NumberFormat("en-PH", {
-              style: "currency",
-              currency: "PHP",
-            }).format(val.rentAmount)
-          : "-",
+      render: (_, row) => row.unitId 
+        ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" })
+            .format(row.unitId.rentAmount) 
+        : "-"
     },
-    {
-      key: "unitId",
+    { 
+      key: "status", 
       label: "Status",
-      render: (val) => (
-        <span
-          className={
-            val?.status === "Occupied"
-              ? "text-danger fw-bold"
-              : "text-success fw-bold"
-          }
-        >
-          {val ? val.status : "N/A"}
+      render: (_, row) => (
+        <span className={row.unitId?.status === "Occupied" ? "text-danger fw-bold" : "text-success"}>
+          {row.unitId ? row.unitId.status : "N/A"}
         </span>
-      ),
+      )
     },
-    {
-      key: "createdAt",
+    { 
+      key: "createdAt", 
       label: "Date Created",
-      render: (val) =>
-        new Date(val).toLocaleDateString("en-PH", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }),
+      render: (val) => new Date(val).toLocaleDateString("en-PH", { 
+        year: "numeric", month: "short", day: "numeric" 
+      })
     },
-    {
+    { 
       key: "actions",
       label: "Actions",
       render: (val, row) => (
         <button
-          className={`btn btn-sm ${
-            row.isArchived ? "btn-success" : "btn-danger"
-          }`}
+          className={`btn btn-sm ${row.isArchived ? "btn-success" : "btn-danger"}`}
           onClick={(e) => handleArchive(e, row._id, row.isArchived)}
         >
           {row.isArchived ? "Unarchive" : "Archive"}
@@ -148,12 +126,11 @@ function Tenants() {
     },
   ];
 
-  if (loading)
-    return (
-      <div className="d-flex vh-100 w-100 align-items-center justify-content-center ">
-        <LoadingScreen />
-      </div>
-    );
+  if (loading) return (
+    <div className="d-flex vh-100 w-100 align-items-center justify-content-center">
+      <LoadingScreen/>
+    </div>
+  );
 
   const filters = ["All", "Active", "Archived"];
 
@@ -164,12 +141,9 @@ function Tenants() {
         <span>{sortedTenants.length} Tenants found</span>
       </div>
 
-      <div className="w-100">
-        <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-          <Link
-            className="green-btn py-2 px-3 fw-normal text-decoration-none"
-            to={"/tenants/create"}
-          >
+      <div className="w-100 mb-3">
+        <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+          <Link className="green-btn py-2 px-3 fw-normal" to={'/tenants/create'}>
             Add Tenant <span className="ms-2 fw-bold">+</span>
           </Link>
 
@@ -188,33 +162,14 @@ function Tenants() {
                 <li key={key}>
                   <button
                     className="dropdown-item"
-                    style={{
-                      background: "transparent",
-                      color: "#1e293b",
-                      border: "none",
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseOver={(e) =>
-                      (e.target.style.backgroundColor = "#f1f5f9")
-                    }
-                    onMouseOut={(e) =>
-                      (e.target.style.backgroundColor = "transparent")
-                    }
                     onClick={() => handleSort(key)}
                   >
-                    {key === "az"
-                      ? "Alphabetical ↑"
-                      : key === "za"
-                      ? "Alphabetical ↓"
-                      : key.charAt(0).toUpperCase() + key.slice(1)}
+                    {key === "az" ? "Alphabetical ↑" : key === "za" ? "Alphabetical ↓" : key.charAt(0).toUpperCase() + key.slice(1)}
                   </button>
                 </li>
               ))}
             </Dropdown>
 
-            {/* 🔍 Search Module */}
             <input
               placeholder="Search tenant..."
               className="custom-input my-1"
@@ -225,7 +180,6 @@ function Tenants() {
           </div>
         </div>
 
-        {/* Archive filter buttons */}
         <div className="d-flex flex-wrap gap-2 mb-3">
           {filters.map((f) => (
             <button
@@ -239,15 +193,6 @@ function Tenants() {
                 borderRadius: "0.375rem",
                 cursor: "pointer",
                 fontWeight: 500,
-                transition: "all 0.2s",
-              }}
-              onMouseOver={(e) => {
-                e.target.style.backgroundColor =
-                  filter === f ? "#273449" : "#f1f5f9";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.backgroundColor =
-                  filter === f ? "#1e293b" : "transparent";
               }}
             >
               {f}

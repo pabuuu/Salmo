@@ -216,7 +216,8 @@ function Units() {
             key={cat}
             onClick={() => setSelectedCategory(cat)}
             style={{
-              backgroundColor: selectedCategory === cat ? "#1e293b" : "transparent",
+              backgroundColor:
+                selectedCategory === cat ? "#1e293b" : "transparent",
               color: selectedCategory === cat ? "#ffffff" : "#1e293b",
               border: "1px solid #1e293b",
               padding: "0.375rem 0.75rem",
@@ -226,7 +227,8 @@ function Units() {
               transition: "all 0.2s",
             }}
             onMouseOver={(e) => {
-              e.target.style.backgroundColor = selectedCategory === cat ? "#273449" : "#f1f5f9";
+              e.target.style.backgroundColor =
+                selectedCategory === cat ? "#273449" : "#f1f5f9";
             }}
             onMouseOut={(e) => {
               e.target.style.backgroundColor =
@@ -241,19 +243,27 @@ function Units() {
       {/* Search / Sort / Add */}
       <div className="w-100">
         <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-          {/* Add Unit button as colored text */}
+          {/* Add Unit button */}
           <Link
             to="/units/create"
             style={{
-              color: "#198754",
-              textDecoration: "none",
+              backgroundColor: "#198754",
+              color: "white",
+              padding: "6px 16px",
+              borderRadius: "6px",
               fontWeight: 500,
-              cursor: "pointer",
+              textDecoration: "none",
+              transition: "all 0.2s ease",
+              display: "inline-block",
             }}
-            onMouseOver={(e) => (e.target.style.textDecoration = "underline")}
-            onMouseOut={(e) => (e.target.style.textDecoration = "none")}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = "#146c43";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = "#198754";
+            }}
           >
-            Add Unit +
+            + Add Unit
           </Link>
 
           <div className="d-flex flex-wrap gap-2 align-items-center">
@@ -270,11 +280,19 @@ function Units() {
                       cursor: "pointer",
                       transition: "all 0.2s",
                     }}
-                    onMouseOver={(e) => (e.target.style.backgroundColor = "#f1f5f9")}
-                    onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
+                    onMouseOver={(e) =>
+                      (e.target.style.backgroundColor = "#f1f5f9")
+                    }
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor = "transparent")
+                    }
                     onClick={() =>
                       handleSort(
-                        sortKey === "az" ? "az" : sortKey === "za" ? "za" : sortKey
+                        sortKey === "az"
+                          ? "az"
+                          : sortKey === "za"
+                          ? "za"
+                          : sortKey
                       )
                     }
                   >
