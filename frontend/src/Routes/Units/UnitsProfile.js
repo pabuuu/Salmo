@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Card from "../../components/Card";
+import CustomButton from "../../components/CustomBottom"; // ✅ import custom button
 import { useParams, useNavigate } from "react-router";
 import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
@@ -8,7 +9,7 @@ import axios from "axios";
 export default function UnitsProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   // Unit state
   const [unit, setUnit] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,10 +42,16 @@ export default function UnitsProfile() {
     try {
       const res = await axios.put(`http://localhost:5050/api/units/${id}`, unit);
       if (res.data.success) {
-        setNotification({ type: "success", message: `Unit ${unit.unitNo} updated successfully!` });
+        setNotification({
+          type: "success",
+          message: `Unit ${unit.unitNo} updated successfully!`,
+        });
         setTimeout(() => navigate("/units"), 1200);
       } else {
-        setNotification({ type: "error", message: res.data.message || "Update failed" });
+        setNotification({
+          type: "error",
+          message: res.data.message || "Update failed",
+        });
       }
     } catch (err) {
       console.error(err);
@@ -59,7 +66,11 @@ export default function UnitsProfile() {
       message: `Are you sure you want to update Unit ${unit.unitNo}?`,
       actions: [
         { label: "Yes", type: "primary", onClick: handleUpdate },
-        { label: "Cancel", type: "secondary", onClick: () => setNotification({ type: "", message: "" }) },
+        {
+          label: "Cancel",
+          type: "secondary",
+          onClick: () => setNotification({ type: "", message: "" }),
+        },
       ],
     });
   };
@@ -101,7 +112,11 @@ export default function UnitsProfile() {
                 className="form-control"
                 value={unit.unitNo || ""}
                 readOnly
-                style={{ backgroundColor: "#f5f5f5", color: "#6c757d", cursor: "not-allowed" }}
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  color: "#6c757d",
+                  cursor: "not-allowed",
+                }}
               />
             </div>
 
@@ -112,7 +127,11 @@ export default function UnitsProfile() {
                 className="form-control"
                 value={unit.location || ""}
                 readOnly
-                style={{ backgroundColor: "#f5f5f5", color: "#6c757d", cursor: "not-allowed" }}
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  color: "#6c757d",
+                  cursor: "not-allowed",
+                }}
               />
             </div>
 
@@ -123,7 +142,9 @@ export default function UnitsProfile() {
                 type="number"
                 className="form-control"
                 value={unit.rentAmount || ""}
-                onChange={(e) => setUnit({ ...unit, rentAmount: e.target.value })}
+                onChange={(e) =>
+                  setUnit({ ...unit, rentAmount: e.target.value })
+                }
               />
             </div>
 
@@ -133,25 +154,28 @@ export default function UnitsProfile() {
               <select
                 className="form-select"
                 value={unit.status || "Available"}
-                onChange={(e) => setUnit({ ...unit, status: e.target.value })}
+                onChange={(e) =>
+                  setUnit({ ...unit, status: e.target.value })
+                }
               >
                 <option value="Available">Available</option>
                 <option value="Occupied">Occupied</option>
+                <option value="Maintenance">Maintenance</option>
               </select>
             </div>
 
-            {/* Action Buttons */}
-            <div className="d-flex gap-2">
-              <button
-                type="button"
-                className="btn btn-secondary"
+            {/* ✅ Updated Action Buttons */}
+            <div className="d-flex gap-3 mt-4">
+              <CustomButton
+                label="Cancel"
+                variant="secondary"
                 onClick={() => navigate("/units")}
-              >
-                Cancel
-              </button>
-              <button type="submit" className="btn btn-warning">
-                Update
-              </button>
+              />
+              <CustomButton
+                label="Update"
+                type="submit"
+                variant="primary"
+              />
             </div>
           </form>
         </div>

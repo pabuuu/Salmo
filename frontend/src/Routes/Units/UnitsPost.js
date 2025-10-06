@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Card from "../../components/Card.js";
 import Dropdown from "../../components/Dropdown.js";
 import Notification from "../../components/Notification.js";
+import CustomButton from "../../components/CustomBottom.js"; // ✅ Import our reusable button
 import { useNavigate } from "react-router-dom";
 
 export default function UnitsPost() {
@@ -54,8 +55,8 @@ export default function UnitsPost() {
         <div className="mx-5 p-2">
           <h1 className="text-dark">Create a Unit</h1>
           <span className="text-muted">Fill out the unit details below.</span>
+
           <form onSubmit={handleSubmit}>
-            
             {/* Unit Number + Location */}
             <div className="d-flex mt-4 gap-3 align-items-center">
               <div className="flex-grow-1">
@@ -106,21 +107,18 @@ export default function UnitsPost() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="d-flex gap-2 mt-4">
-              <button
-                className="custom-button fw-normal px-4 bg-light border text-muted"
-                type="button"
+            {/* ✅ Action Buttons (Now use CustomButton) */}
+            <div className="d-flex gap-3 mt-4">
+              <CustomButton
+                label="Cancel"
+                variant="secondary"
                 onClick={() => navigate(-1)}
-              >
-                Cancel
-              </button>
-              <button
-                className="custom-button fw-normal px-4 bg-success"
+              />
+              <CustomButton
+                label="Create"
                 type="submit"
-              >
-                Create
-              </button>
+                variant="primary"
+              />
             </div>
           </form>
         </div>
