@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 
 import Login from "./views/login";
 import Dashboard from "./Dashboard";
@@ -28,9 +28,11 @@ function App() {
   return (
     <Router>
       {loggedIn ? (
-        // ✅ Sidebar + Protected Routes
         <SidebarLayout role={role}>
           <Routes>
+            {/* Default route */}
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+
             {/* General routes (accessible to all roles) */}
             <Route path="/dashboard" element={<Dashboard />} />
 
@@ -51,12 +53,15 @@ function App() {
             {/* Admin only */}
             <Route path="/payments" element={<Payments />} />
             <Route path="/expenses" element={<Expenses />} />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </SidebarLayout>
       ) : (
-        // 🔑 Login page only when not logged in
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       )}
     </Router>
