@@ -18,19 +18,54 @@ export const load = async (req, res) => {
 // ✅ Create Tenant
 export const createTenant = async (req, res) => {
   try {
-    const { firstName, lastName, email, contactNumber, unitId } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      contactNumber,
+      unitId,
+      rentAmount,
+      paymentFrequency,
+    } = req.body;
 
-    // 1. Create tenant
+    // ✅ Basic validation before saving
+    if (!rentAmount || rentAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Rent amount is required and must be positive",
+      });
+    }
+
+    if (!paymentFrequency) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment frequency is required",
+      });
+    }
+
+    // ✅ Create tenant
     const tenant = new Tenants({
       firstName,
       lastName,
       email,
       contactNumber,
       unitId,
+      rentAmount,
+      paymentFrequency,
     });
+    console.log({
+      firstName,
+      lastName,
+      email,
+      contactNumber,
+      unitId,
+      rentAmount,
+      paymentFrequency
+    });
+    
     await tenant.save();
 
-    // 2. Update the chosen unit → Occupied + link tenant
+    // ✅ Update the chosen unit (mark as occupied)
     if (unitId) {
       await Units.findByIdAndUpdate(
         unitId,
@@ -39,16 +74,21 @@ export const createTenant = async (req, res) => {
       );
     }
 
+    // ✅ Send clear response
     res.status(201).json({
       success: true,
       message: "Tenant created and unit updated successfully",
-      data: tenant,
+      tenant, // so your frontend can check `data.tenant`
     });
   } catch (err) {
     console.error("Error creating tenant:", err);
-    res.status(500).json({ success: false, message: "Failed to create tenant" });
+    res.status(500).json({
+      success: false,
+      message: err.message || "Failed to create tenant",
+    });
   }
 };
+
 
 // ✅ Get single tenant
 export const getTenant = async (req, res) => {
@@ -85,7 +125,6 @@ export const update = async (req, res) => {
           { status: "Available", tenant: null }
         );
       }
-
       // Find and validate new unit
       const newUnit = await Units.findOne({
         unitNo: updates.rentalUnit,
@@ -126,7 +165,7 @@ export const update = async (req, res) => {
 };
 
 // ✅ Delete tenant
-export const remove = async (req, res) => {
+export const archiveTenant = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -135,19 +174,30 @@ export const remove = async (req, res) => {
       return res.status(404).json({ success: false, message: "Tenant not found" });
     }
 
-    // Free linked unit (if assigned)
-    if (tenant.unitId) {
+    // Toggle archive status
+    const newStatus = !tenant.isArchived;
+    tenant.isArchived = newStatus;
+
+    // ✅ Disable validation so it won’t require all fields again
+    await tenant.save({ validateBeforeSave: false });
+
+    // Free unit only if archiving
+    if (newStatus && tenant.unitId) {
       await Units.findOneAndUpdate(
         { _id: tenant.unitId, tenant: tenant._id },
         { status: "Available", tenant: null }
       );
     }
 
-    await Tenants.findByIdAndDelete(id);
-
-    res.json({ success: true, message: "Tenant deleted and unit freed" });
+    res.json({
+      success: true,
+      message: newStatus
+        ? "Tenant archived successfully."
+        : "Tenant unarchived successfully.",
+      archived: newStatus,
+    });
   } catch (err) {
-    console.error("Error deleting tenant:", err);
+    console.error("Error archiving tenant:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

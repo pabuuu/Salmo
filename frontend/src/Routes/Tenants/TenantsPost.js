@@ -14,7 +14,7 @@ export default function TenantsPost() {
   const [contactNumber, setContactNumber] = useState('');
   const [rentalAmount, setRentalAmount] = useState('');
   const [paymentFrequency, setPaymentFrequency] = useState('');
-  
+  const [rentAmount, setRentAmount] = useState('')
   // location & units
   const [location, setLocation] = useState('');
   const [availableUnits, setAvailableUnits] = useState([]);
@@ -58,9 +58,10 @@ export default function TenantsPost() {
           lastName,
           email,
           contactNumber,
-          unitId, // ✅ send unitId to backend
-          rentalAmount: Number(rentalAmount),
+          unitId,
+          rentAmount: Number(rentalAmount), // ✅ map rentalAmount → rentAmount
           paymentFrequency,
+          isArchived: false,
         }),
       });
 
@@ -186,17 +187,16 @@ export default function TenantsPost() {
                 </Dropdown>
               </div>
             </div>
-
-            {/* --- amount + frequency --- */}
             <div className="d-flex gap-2 mt-3 align-items-start">
               <div style={{ width: "25%" }}>
                 <label className="form-label">Amount to Pay</label>
                 <input
-                  type="text"
+                  type="number"
                   placeholder="0"
                   className="custom-input form-control"
                   value={rentalAmount}
                   onChange={(e) => setRentalAmount(e.target.value)}
+                  required
                 />
               </div>
               <div style={{ width: "25%" }}>
