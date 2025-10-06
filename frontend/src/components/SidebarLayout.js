@@ -4,9 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 export default function SidebarLayout({ children, role }) {
   const DESKTOP_WIDTH = 200;
   const MOBILE_WIDTH = 240;
-  const BUBBLE_DIAMETER = 50;
-  const BUBBLE_LEFT_COLLAPSED = 10;
+  const BUBBLE_DIAMETER = 40; // smaller bubble
+  const BUBBLE_LEFT_COLLAPSED = 4; // move a bit more to the left
   const BUBBLE_RIGHT_OVERLAP = BUBBLE_DIAMETER / 2;
+  const GAP_WHEN_COLLAPSED = 16; // small right gap for main content
 
   const [collapsed, setCollapsed] = useState(false);
   const [isMedium, setIsMedium] = useState(window.innerWidth < 1024);
@@ -29,11 +30,14 @@ export default function SidebarLayout({ children, role }) {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/"); // ✅ login page is "/"
+    navigate("/");
   }
 
   return (
-    <div className="d-flex flex-row" style={{ height: "100vh", width: "100%" }}>
+    <div
+      className="d-flex flex-row"
+      style={{ height: "100vh", width: "100%", background: "#f1f5f9" }}
+    >
       {/* === Overlay (mobile only) === */}
       <div
         onClick={() => setCollapsed(true)}
@@ -70,7 +74,11 @@ export default function SidebarLayout({ children, role }) {
           <SidebarLink to="/dashboard" label="Dashboard" icon="fa-chart-line" />
           <SidebarLink to="/tenants" label="Tenants" icon="fa-users" />
           <SidebarLink to="/units" label="Units" icon="fa-building-user" />
-          <SidebarLink to="/maintenance" label="Maintenance" icon="fa-screwdriver-wrench" />
+          <SidebarLink
+            to="/maintenance"
+            label="Maintenance"
+            icon="fa-screwdriver-wrench"
+          />
 
           {role === "admin" && (
             <>
@@ -105,26 +113,33 @@ export default function SidebarLayout({ children, role }) {
           aria-label={collapsed ? "Open menu" : "Close menu"}
           className="position-fixed border-0 p-0 bg-transparent d-flex align-items-center justify-content-center"
           style={{
-            top: "50%",
+            top: collapsed ? "16px" : "48px",
             left: `${bubbleLeft}px`,
-            transform: "translateY(-50%)",
+            transform: collapsed ? "none" : "translateY(0)",
             width: `${BUBBLE_DIAMETER}px`,
             height: `${BUBBLE_DIAMETER}px`,
             zIndex: 11,
-            transition: "left 0.35s cubic-bezier(.2,.9,.2,1)",
+            transition:
+              "left 0.35s cubic-bezier(.2,.9,.2,1), top 0.35s cubic-bezier(.2,.9,.2,1)",
           }}
         >
           <div
-            className="rounded-circle bg-white shadow d-flex align-items-center justify-content-center"
-            style={{ width: "100%", height: "100%" }}
+            className="rounded-circle shadow-sm d-flex align-items-center justify-content-center"
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#f1f5f9",
+              boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
+            }}
           >
             <div
               className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
               style={{
-                width: `${BUBBLE_DIAMETER - 14}px`,
-                height: `${BUBBLE_DIAMETER - 14}px`,
+                width: `${BUBBLE_DIAMETER - 12}px`,
+                height: `${BUBBLE_DIAMETER - 12}px`,
                 backgroundColor: "#1e293b",
-                fontSize: 20,
+                fontSize: 14,
+                boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
               }}
             >
               {collapsed ? "☰" : "<"}
@@ -140,7 +155,8 @@ export default function SidebarLayout({ children, role }) {
           background: "#f1f5f9",
           height: "100vh",
           overflowY: "auto",
-          transition: "filter 0.35s ease",
+          transition: "all 0.35s ease",
+          marginLeft: isMedium && collapsed ? `${GAP_WHEN_COLLAPSED}px` : "0",
           filter: isMedium && !collapsed ? "brightness(0.6)" : "brightness(1)",
         }}
       >
@@ -159,7 +175,7 @@ function SidebarLink({ to, label, icon }) {
         color: "#1e293b",
         whiteSpace: "nowrap",
         transition: "background 0.18s ease, color 0.18s ease",
-        gap: "10px"
+        gap: "10px",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "#f1f5f9";
@@ -175,4 +191,3 @@ function SidebarLink({ to, label, icon }) {
     </Link>
   );
 }
-
