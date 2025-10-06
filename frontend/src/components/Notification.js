@@ -72,25 +72,52 @@ export default function Notification({ type = "info", message, onClose, actions,
               <span className="fw-semibold">{message}</span>
             </div>
             <div className="d-flex gap-3 justify-content-center mt-3">
-              {actions.map((action, idx) => (
-                <button
-                  key={idx}
-                  className={`btn ${
-                    action.type === "primary"
-                      ? "btn-warning text-dark fw-bold"
-                      : action.type === "danger"
-                      ? "btn-danger fw-bold"
-                      : "btn-secondary"
-                  }`}
-                  onClick={() => {
-                    setVisible(false);
-                    setTimeout(() => action.onClick(), 300);
-                  }}
-                  style={{ minWidth: "100px", padding: "0.6rem 1.2rem", borderRadius: "0.4rem" }}
-                >
-                  {action.label}
-                </button>
-              ))}
+              {actions.map((action, idx) => {
+                // determine button styles
+                let buttonStyle = {
+                  minWidth: "100px",
+                  padding: "0.6rem 1.2rem",
+                  borderRadius: "0.4rem",
+                  fontWeight: "600",
+                  border: "2px solid black",
+                  transition: "all 0.2s ease",
+                };
+
+                if (action.label.toLowerCase() === "yes") {
+                  // ✅ YES button: black box, white text
+                  buttonStyle = {
+                    ...buttonStyle,
+                    backgroundColor: "black",
+                    color: "white",
+                  };
+                } else if (action.label.toLowerCase() === "cancel") {
+                  // ✅ CANCEL button: white fill, black text, black border
+                  buttonStyle = {
+                    ...buttonStyle,
+                    backgroundColor: "white",
+                    color: "black",
+                  };
+                }
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setVisible(false);
+                      setTimeout(() => action.onClick(), 300);
+                    }}
+                    style={buttonStyle}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = "scale(1.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = "scale(1)";
+                    }}
+                  >
+                    {action.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
