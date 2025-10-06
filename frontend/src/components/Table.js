@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router";
-//for tenants and unit to
+
 const Table = ({ columns, data }) => {
   const navigate = useNavigate();
 
@@ -18,20 +18,25 @@ const Table = ({ columns, data }) => {
         </thead>
         <tbody>
           {data.length > 0 ? (
-            data.map((row, idx) => (
-              <tr key={idx}  className="text-red">
+            data.map((row) => (
+              <tr
+                key={row._id} // use unique row id
+                className="text-dark"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate(`/tenants/profile/${row._id}`)}
+              >
                 {columns.map((col) => (
-                  <td key={col.key} className="py-3" onClick={() => {
-                    console.log("Pressed:", row._id)
-                    navigate(`/tenants/profile/${row._id}`);
-                  }}>
+                  <td
+                    key={`${row._id}-${col.key}`} // unique per cell
+                    className="py-3"
+                  >
                     {col.render ? col.render(row[col.key], row) : row[col.key]}
                   </td>
                 ))}
               </tr>
             ))
           ) : (
-            <tr className="">
+            <tr>
               <td colSpan={columns.length} className="text-center text-muted">
                 No data available
               </td>
