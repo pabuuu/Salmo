@@ -3,8 +3,9 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/auth.js";
-import tenantRouter from "./routes/tenantRoute.js";  // ✅ match export name
-import unitRouter from "./routes/unitRoute.js";      // ✅ match export name
+import tenantRouter from "./routes/tenantRoute.js";
+import unitRouter from "./routes/unitRoute.js";
+import maintenanceRouter from "./routes/maintenanceRoute.js"; // ✅ import route
 
 dotenv.config();
 const app = express();
@@ -19,8 +20,9 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/tenants", tenantRouter); // ✅ singular
-app.use("/api/units", unitRouter);     // ✅ singular
+app.use("/api/tenants", tenantRouter);
+app.use("/api/units", unitRouter);
+app.use("/api/maintenances", maintenanceRouter); // ✅ mount maintenance routes
 
 // Health check
 app.get("/", (req, res) => {
