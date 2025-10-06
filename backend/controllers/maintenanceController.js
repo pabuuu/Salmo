@@ -45,11 +45,21 @@ export const getMaintenances = async (req, res) => {
 export const createMaintenance = async (req, res) => {
   try {
     const { tenant, unit, task, schedule, status } = req.body;
-    if (!tenant || !unit || !task || !schedule) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+
+    if (!unit || !task || !schedule) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Unit, task, and schedule are required" });
     }
 
-    const maintenance = new Maintenance({ tenant, unit, task, schedule, status });
+    const maintenance = new Maintenance({
+      tenant: tenant || null, // optional
+      unit,
+      task,
+      schedule,
+      status,
+    });
+
     await maintenance.save();
 
     res.status(201).json({ success: true, data: maintenance });

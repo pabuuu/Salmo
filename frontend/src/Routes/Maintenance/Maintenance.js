@@ -27,6 +27,65 @@ function Maintenance() {
     }
   };
 
+  const updateStatus = async (maintenance, newStatus) => {
+    try {
+      // Update maintenance status
+      await axios.put(`http://localhost:5050/api/maintenances/${maintenance._id}`, {
+        status: newStatus,
+      });
+
+      // Update unit status accordingly
+      if (maintenance.unit?._id) {
+        let unitStatus = "Maintenance";
+        if (newStatus === "Completed") unitStatus = "Occupied";
+        if (newStatus === "Pending") {
+          unitStatus = maintenance.unit.originalStatus || "Occupied";
+        }
+        await axios.put(`http://localhost:5050/api/units/${maintenance.unit._id}`, {
+          status: unitStatus,
+        });
+      }
+
+      fetchMaintenances();
+    } catch (err) {
+      console.error(err);
+      setNotification({ type: "error", message: "Failed to update status" });
+    }
+  };
+
+  const deleteMaintenance = async (maintenance) => {
+    if (!window.confirm("Are you sure you want to delete this maintenance?")) return;
+    try {
+      await axios.delete(`http://localhost:5050/api/maintenances/${maintenance._id}`);
+      fetchMaintenances();
+    } catch (err) {
+      console.error(err);
+      setNotification({ type: "error", message: "Failed to delete maintenance" });
+    }
+  };
+
+  const cancelMaintenance = async (maintenance) => {
+    if (!window.confirm("Are you sure you want to cancel this maintenance?")) return;
+    try {
+      await axios.put(`http://localhost:5050/api/maintenances/${maintenance._id}`, {
+        status: "Cancelled",
+      });
+
+      // Revert unit status
+      if (maintenance.unit?._id) {
+        const originalStatus = maintenance.unit.originalStatus || "Occupied";
+        await axios.put(`http://localhost:5050/api/units/${maintenance.unit._id}`, {
+          status: originalStatus,
+        });
+      }
+
+      fetchMaintenances();
+    } catch (err) {
+      console.error(err);
+      setNotification({ type: "error", message: "Failed to cancel maintenance" });
+    }
+  };
+
   const filteredMaintenances = maintenances.filter(
     (m) => m.status === statusFilter
   );
@@ -48,7 +107,8 @@ function Maintenance() {
     {
       key: "unit",
       label: "Unit",
-      render: (val) => (val ? val.unitNo || "—" : "—"),
+      render: (_, row) =>
+        row.unit ? `${row.unit.location || ""} - ${row.unit.unitNo || ""}` : "—",
     },
     { key: "task", label: "Task" },
     {
@@ -57,6 +117,85 @@ function Maintenance() {
       render: (val) => (val ? new Date(val).toLocaleDateString() : "—"),
     },
     { key: "status", label: "Status" },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (_, row) => (
+        <div className="d-flex gap-2">
+          {/* Pending: Move to In Process + Cancel */}
+          {row.status === "Pending" && (
+            <>
+              <button
+                className="btn btn-warning btn-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateStatus(row, "In Process");
+                }}
+              >
+                Move to In Process
+              </button>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  cancelMaintenance(row);
+                }}
+              >
+                Cancel
+              </button>
+            </>
+          )}
+
+          {/* In Process: Move to Completed + Back */}
+          {row.status === "In Process" && (
+            <>
+              <button
+                className="btn btn-success btn-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateStatus(row, "Completed");
+                }}
+              >
+                Move to Completed
+              </button>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateStatus(row, "Pending");
+                }}
+              >
+                Back
+              </button>
+            </>
+          )}
+
+          {/* Completed: Back + Delete */}
+          {row.status === "Completed" && (
+            <>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateStatus(row, "In Process");
+                }}
+              >
+                Back
+              </button>
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteMaintenance(row);
+                }}
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -129,7 +268,7 @@ function Maintenance() {
                 <tr key={m._id}>
                   {columns.map((col) => (
                     <td key={col.key}>
-                      {col.render ? col.render(m[col.key]) : m[col.key]}
+                      {col.render ? col.render(m[col.key], m) : m[col.key]}
                     </td>
                   ))}
                 </tr>

@@ -101,21 +101,23 @@ function Units() {
     }
   };
 
-  const columns = [
+    const columns = [
     { key: "unitNo", label: "Unit No." },
     { key: "location", label: "Location" },
     {
       key: "status",
       label: "Status",
-      render: (val) => (
-        <span
-          className={`badge px-3 py-2 ${
-            val === "Occupied" ? "bg-danger" : "bg-success"
-          }`}
-        >
-          {val}
-        </span>
-      ),
+      render: (val) => {
+        let badgeClass = "bg-success"; // default Available = green
+        if (val === "Occupied") badgeClass = "bg-danger"; // red
+        if (val === "Maintenance") badgeClass = "bg-warning"; // yellow
+
+        return (
+          <span className={`badge px-3 py-2 text-white ${badgeClass}`}>
+            {val}
+          </span>
+        );
+      },
     },
     {
       key: "rentAmount",
@@ -125,46 +127,32 @@ function Units() {
     {
       key: "createdAt",
       label: "Date Created",
-      render: (val) =>
-        val ? new Date(val).toLocaleDateString() : "Not Available",
+      render: (val) => (val ? new Date(val).toLocaleDateString() : "Not Available"),
     },
     {
       key: "actions",
       label: "Actions",
       render: (_, row) => (
-        <div className="d-flex gap-3">
-          {/* Edit as colored text */}
-          <Link
-            to={`/units/${row._id}`}
-            style={{
-              color: "#0d6efd",
-              textDecoration: "none",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
-            onMouseOver={(e) => (e.target.style.textDecoration = "underline")}
-            onMouseOut={(e) => (e.target.style.textDecoration = "none")}
-          >
-            Edit
+        <div className="d-flex gap-2">
+          {/* Edit Button */}
+          <Link to={`/units/${row._id}`}>
+            <button
+              className="btn btn-primary btn-sm"
+              type="button"
+            >
+              Edit
+            </button>
           </Link>
 
-          {/* Delete as colored text */}
+          {/* Delete Button */}
           <button
             type="button"
+            className="btn btn-danger btn-sm"
             disabled={deletingUnitId === row._id}
             onClick={(e) => {
               e.stopPropagation();
               confirmDelete(row._id, row.unitNo);
             }}
-            style={{
-              color: "#dc3545",
-              background: "transparent",
-              border: "none",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
-            onMouseOver={(e) => (e.target.style.textDecoration = "underline")}
-            onMouseOut={(e) => (e.target.style.textDecoration = "none")}
           >
             {deletingUnitId === row._id ? "Deleting..." : "Delete"}
           </button>
