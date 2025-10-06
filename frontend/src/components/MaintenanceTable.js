@@ -27,7 +27,13 @@ const MaintenanceTable = ({ columns, data }) => {
               >
                 {columns.map((col) => (
                   <td key={col.key} className="py-3">
-                    {col.render ? col.render(row[col.key], row) : row[col.key]}
+                    {col.key === "unit"
+                      ? row.unit
+                        ? `${row.unit.location || ""} - ${row.unit.unitNo || ""}`
+                        : "—"
+                      : col.render
+                      ? col.render(row[col.key], row)
+                      : row[col.key]}
                   </td>
                 ))}
               </tr>
