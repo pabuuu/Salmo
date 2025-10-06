@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 
 import Login from "./views/login";
 import Dashboard from "./Dashboard";
@@ -23,29 +23,26 @@ function App() {
   return (
     <Router>
       {loggedIn ? (
-        // ✅ Sidebar + Protected Routes
         <SidebarLayout role={role}>
           <Routes>
-            {/* general (lahat may access) */}
+            <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tenants" element={<Tenants />} />
-            {/* ✅ new tenants sub-route */}
             <Route path="/tenants/create" element={<TenantsPost />} />
             <Route path="/tenants/profile/:id" element={<TenantsProfile />} />
             <Route path="/units" element={<Units />} />
-            {/* ✅ new units sub-route */}
             <Route path="/units/create" element={<UnitsPost />} />
-            <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/units/profile/:id" element={<UnitsProfile />} />
-            {/* admin only */}
+            <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </SidebarLayout>
       ) : (
-        // 🔑 Login page only when not logged in
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       )}
     </Router>
