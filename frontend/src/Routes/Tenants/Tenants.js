@@ -143,7 +143,7 @@ function Tenants() {
 
       <div className="w-100 mb-3">
         <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-          <Link className="green-btn py-2 px-3 fw-normal" to={'/tenants/create'}>
+          <Link className="green-btn py-2 px-3 fw-normal text-decoration-none" to={'/tenants/create'}>
             Add Tenant <span className="ms-2 fw-bold">+</span>
           </Link>
 
