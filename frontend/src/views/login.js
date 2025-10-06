@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import Card from "../components/Card";
+import Logo from '../assets/logo.png'
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -39,8 +42,7 @@ export default function Login() {
         //save token & role in localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
-  
-        setMessage("✅ Login successful!");
+        window.location.href = "/dashboard";
         // redirect later
       } else {
         setMessage(data.message || "login failed");
@@ -55,7 +57,7 @@ export default function Login() {
       <Card>
           <div className="header mb-4 ">
             <div className="d-flex justify-content-center">
-              <img src={'https://picsum.photos/'} alt="Logo" width="120" className="img-fluid" />
+              <img src={Logo} alt="Logo" width="210" className="img-fluid" />
             </div>
             <h2 className="fw-bold m-0 p-0 primary-text">Welcome back!</h2>
             <span className="fs-6 text-muted ">Log in to your account.</span>
