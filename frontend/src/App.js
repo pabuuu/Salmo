@@ -22,13 +22,13 @@ import MaintenancePost from "./Routes/Maintenance/MaintenancePost.js";
 import SidebarLayout from "./components/SidebarLayout";
 
 function App() {
-  const [loggedIn] = useState(!!localStorage.getItem("token"));
+  const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
   const role = localStorage.getItem("role");
 
   return (
     <Router>
       {loggedIn ? (
-        <SidebarLayout role={role}>
+        <SidebarLayout role={role} setLoggedIn={setLoggedIn}>
           <Routes>
             {/* Default route */}
             <Route path="/" element={<Navigate to="/dashboard" />} />
@@ -60,7 +60,7 @@ function App() {
         </SidebarLayout>
       ) : (
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<Login setLoggedIn={setLoggedIn} />}/>
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       )}
