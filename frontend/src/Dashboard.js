@@ -9,6 +9,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [units, setUnits] = useState([]);
   const [occupancyRate, setOccupancyRate] = useState(0);
+  const [maintenances, setMaintenances] = useState([]);
   
   useEffect(() => {
     axios
@@ -32,6 +33,27 @@ function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const fetchMaintenances = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get("http://localhost:5050/api/maintenances");
+        // Filter only Pending maintenances
+        const pendingMaintenances = (res.data.data || []).filter(
+          (item) => item.status === "Pending"
+        );
+        setMaintenances(pendingMaintenances);
+      } catch (err) {
+        console.error("Failed to fetch maintenances:", err);
+        // setNotification({ type: "error", message: "Failed to fetch maintenances" });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMaintenances();
+  }, []); // empty dependency array to run once on mount
+
   if (loading) return (
     <div className="d-flex vh-100 w-100 align-items-center justify-content-center">
       <LoadingScreen/>
@@ -40,38 +62,51 @@ function Dashboard() {
 
   return (
     <div className="container-fluid">
-      <Card width={"100%"} height={"auto"}>
+      <Card width="100%" height="auto">
         <div className="my-2">
           <h1>Dashboard</h1>
         </div>
-        <div className="w-100 d-flex gap-3">
-          <Card width="100%" height="140px" className={'bg-dark text-white'}>
-            <div className="w-100 d-flex h-100 flex-column justify-content-center">
-              <div className="d-flex align-items-center gap-2">
-                <i class="fs-3 fa fa-solid fa-user-group"></i>
-                <p className=" fs-3 my-1">Active Tenants</p>
+        <div className="row g-3">
+          {/* Active Tenants */}
+          <div className="col-12 col-md-4">
+            <Card width="100%" height="140px" className="bg-dark text-white">
+              <div className="w-100 h-100 d-flex flex-column justify-content-center">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="fs-3 fa fa-solid fa-user-group"></i>
+                  <p className="fs-2 my-1">Active Tenants</p>
+                </div>
+                <h3 className="fs-4 mb-0 fw-bold">{tenants.length}</h3>
               </div>
-              <h3 className="fs-1 mb-0 fw-bold">{tenants.length}</h3>
-            </div>
-          </Card>
-          <Card width="100%" height="140px" className={'bg-dark text-white'}>
-            <div className="w-100 d-flex h-100 flex-column justify-content-center">
-              <div className="d-flex align-items-center gap-2">
-                <i class="fs-3 fa fa-solid fa-chart-simple"></i>
-                <p className=" fs-3 my-1">Occupancy rate</p>
+            </Card>
+          </div>
+
+          {/* Occupancy Rate */}
+          <div className="col-12 col-md-4">
+            <Card width="100%" height="140px" className="bg-light text-dark">
+              <div className="w-100 h-100 d-flex flex-column justify-content-center">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="fs-3 fa fa-solid fa-chart-simple"></i>
+                  <p className="fs-2 my-1">Occupancy Rate</p>
+                </div>
+                <h3 className="fs-4 mb-0 fw-bold">{occupancyRate}%</h3>
               </div>
-              <h3 className="fs-1 mb-0 fw-bold">{occupancyRate}%</h3>
-            </div>
-          </Card>
-          <Card width="100%" height="140px">
-          <div className="w-100 d-flex h-100 flex-column justify-content-center">
-              <div className="d-flex align-items-center gap-2">
-                <i class="fs-3 fa fa-solid fa-code-pull-request"></i>
-                <p className=" fs-3 my-1">Maintenance</p>
+            </Card>
+          </div>
+
+          {/* Pending Maintenances */}
+          <div className="col-12 col-md-4">
+            <Card width="100%" height="140px" className="bg-dark text-white">
+              <div className="w-100 h-100 d-flex flex-column justify-content-center">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="fs-3 fa fa-solid fa-wrench"></i>
+                  <p className="fs-2 my-1">Maintenance</p>
+                </div>
+                <h3 className="fs-4 mb-0 fw-bold">
+                  {maintenances.length} <span className="fw-normal fs-5">remaining</span>
+                </h3>
               </div>
-              <h3 className="fs-1 mb-0 fw-bold">GIAN FAGGOT NIGGA SHIBAR</h3>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       </Card>
     </div>
