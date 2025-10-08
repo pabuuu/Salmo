@@ -44,18 +44,20 @@ export const getMaintenances = async (req, res) => {
 // Create a maintenance
 export const createMaintenance = async (req, res) => {
   try {
-    const { tenant, unit, task, schedule, status } = req.body;
+    const { tenant, unit, task, description, schedule, status } = req.body;
 
     if (!unit || !task || !schedule) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Unit, task, and schedule are required" });
+      return res.status(400).json({
+        success: false,
+        message: "Unit, task, and schedule are required",
+      });
     }
 
     const maintenance = new Maintenance({
-      tenant: tenant || null, // optional
+      tenant: tenant || null,
       unit,
       task,
+      description: description || "", // ✅ include description
       schedule,
       status,
     });
@@ -66,6 +68,23 @@ export const createMaintenance = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+export const getMaintenanceById = async (req, res) => {
+  try {
+    const maintenance = await Maintenance.findById(req.params.id)
+      .populate("unit")
+      .populate("tenant");
+
+    if (!maintenance) {
+      return res.status(404).json({ message: "Maintenance record not found" });
+    }
+
+    res.json(maintenance);
+  } catch (error) {
+    console.error("Error fetching maintenance:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
