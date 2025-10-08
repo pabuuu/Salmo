@@ -19,6 +19,7 @@ import Expenses from "./Routes/Expenses";
 
 import Maintenance from "./Routes/Maintenance/Maintenance.js";
 import MaintenancePost from "./Routes/Maintenance/MaintenancePost.js";
+import MaintenanceProfile from "./Routes/Maintenance/MaintenanceProfile.js";
 
 import SidebarLayout from "./components/SidebarLayout";
 
@@ -50,6 +51,7 @@ function App() {
             {/* Maintenance routes */}
             <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/maintenance/create" element={<MaintenancePost />} />
+            <Route path="/maintenance/:id" element={<MaintenanceProfile />} />
 
             {/* Admin only */}
             <Route path="/payments" element={<Payments />} />
