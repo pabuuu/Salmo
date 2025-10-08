@@ -13,7 +13,8 @@ import Units from "./Routes/Units/Units.js";
 import UnitsPost from "./Routes/Units/UnitsPost.js";
 import UnitsProfile from "./Routes/Units/UnitsProfile.js";
 
-import Payments from "./Routes/Payments";
+import Payments from "./Routes/Payments/Payments.js";
+import UsersPayments from "./Routes/Payments/UsersPayments.js"
 import Expenses from "./Routes/Expenses";
 
 import Maintenance from "./Routes/Maintenance/Maintenance.js";
@@ -52,6 +53,7 @@ function App() {
 
             {/* Admin only */}
             <Route path="/payments" element={<Payments />} />
+            <Route path="/tenants/:id/payments" element={<UsersPayments />} />
             <Route path="/expenses" element={<Expenses />} />
 
             {/* Fallback */}

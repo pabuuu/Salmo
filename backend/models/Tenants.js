@@ -18,20 +18,25 @@ const TenantsSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    // Store which unit they are assigned to
+    // Unit reference
     unitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Units",
       required: false,
     },
-    rentAmount:{
+    rentAmount: {
       type: Number,
-      required:true
+      required: true,
     },
-    paymentFrequency:{
-      type:String,
-      enum:['Monthly','Quarterly','Yearly'],
-      required:true,
+    paymentFrequency: {
+      type: String,
+      enum: ["Monthly", "Quarterly", "Yearly"],
+      required: true,
+    },
+    // Track unpaid balance
+    balance: {
+      type: Number,
+      default: 0,
     },
     isArchived: {
       type: Boolean,
@@ -40,6 +45,11 @@ const TenantsSchema = new mongoose.Schema(
     nextDueDate: {
       type: Date,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ["Paid", "Partial", "Overdue","Unpaid"],
+      default: "Unpaid",
     },
   },
   { timestamps: true }

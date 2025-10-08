@@ -5,7 +5,8 @@ import cors from "cors";
 import authRoutes from "./routes/auth.js";
 import tenantRouter from "./routes/tenantRoute.js";
 import unitRouter from "./routes/unitRoute.js";
-import maintenanceRouter from "./routes/maintenanceRoute.js"; // ✅ import route
+import maintenanceRouter from "./routes/maintenanceRoute.js"; 
+import paymentRoute from "./routes/paymentRoute.js";
 
 dotenv.config();
 const app = express();
@@ -23,7 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
 app.use("/api/maintenances", maintenanceRouter); // ✅ mount maintenance routes
-
+app.use("/api/payments", paymentRoute)
 // Health check
 app.get("/", (req, res) => {
   res.send("Server is working!");
