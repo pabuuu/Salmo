@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function SidebarLayout({ children, role }) {
+export default function SidebarLayout({ children, role,setLoggedIn }) {
   const DESKTOP_WIDTH = 200;
   const MOBILE_WIDTH = 240;
   const BUBBLE_DIAMETER = 40; // smaller bubble
@@ -30,7 +30,8 @@ export default function SidebarLayout({ children, role }) {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/");
+    setLoggedIn(false); 
+    navigate("/", { replace: true });
   }
 
   return (

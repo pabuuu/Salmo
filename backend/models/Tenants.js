@@ -37,6 +37,10 @@ const TenantsSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    nextDueDate: {
+      type: Date,
+      required: true,
+    },
   },
   { timestamps: true }
 );
