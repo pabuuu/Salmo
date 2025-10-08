@@ -1,6 +1,8 @@
 import Tenants from '../models/Tenants.js';
 import Units from '../models/Units.js';
+import dayjs from "dayjs"
 
+import { updateOverdueTenants } from '../utils/updateOverdues.js';
 // ✅ Load all tenants with their unit details
 export const load = async (req, res) => {
   try {
@@ -28,20 +30,19 @@ export const createTenant = async (req, res) => {
       paymentFrequency,
     } = req.body;
 
-    // ✅ Basic validation before saving
     if (!rentAmount || rentAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Rent amount is required and must be positive",
-      });
+      return res.status(400).json({ success: false, message: "Rent amount is required and must be positive" });
     }
 
     if (!paymentFrequency) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment frequency is required",
-      });
+      return res.status(400).json({ success: false, message: "Payment frequency is required" });
     }
+
+    // ✅ Automatically compute next due date
+    let nextDueDate = new Date();
+    if (paymentFrequency === "Monthly") nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+    else if (paymentFrequency === "Quarterly") nextDueDate.setMonth(nextDueDate.getMonth() + 3);
+    else if (paymentFrequency === "Yearly") nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
 
     // ✅ Create tenant
     const tenant = new Tenants({
@@ -52,20 +53,12 @@ export const createTenant = async (req, res) => {
       unitId,
       rentAmount,
       paymentFrequency,
+      nextDueDate,
+      balance: rentAmount,
     });
-    console.log({
-      firstName,
-      lastName,
-      email,
-      contactNumber,
-      unitId,
-      rentAmount,
-      paymentFrequency
-    });
-    
+
     await tenant.save();
 
-    // ✅ Update the chosen unit (mark as occupied)
     if (unitId) {
       await Units.findByIdAndUpdate(
         unitId,
@@ -74,11 +67,10 @@ export const createTenant = async (req, res) => {
       );
     }
 
-    // ✅ Send clear response
     res.status(201).json({
       success: true,
       message: "Tenant created and unit updated successfully",
-      tenant, // so your frontend can check `data.tenant`
+      tenant,
     });
   } catch (err) {
     console.error("Error creating tenant:", err);
@@ -88,7 +80,6 @@ export const createTenant = async (req, res) => {
     });
   }
 };
-
 
 // ✅ Get single tenant
 export const getTenant = async (req, res) => {
@@ -198,6 +189,37 @@ export const archiveTenant = async (req, res) => {
     });
   } catch (err) {
     console.error("Error archiving tenant:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getTenants = async (req, res) => {
+  try {
+    const tenants = await Tenants.find().populate("unitId").lean();
+
+    const today = new Date();
+
+    await updateOverdueTenants();
+
+    const updatedTenants = await Promise.all(
+      tenants.map(async (t) => {
+        let status = t.status;
+
+        // Check for overdue: if nextDueDate passed and balance > 0
+        if (t.balance > 0 && new Date(t.nextDueDate) < today) {
+          status = "Overdue";
+
+          // Update DB so the tenant's status is consistent
+          await Tenants.findByIdAndUpdate(t._id, { status });
+        }
+
+        return { ...t, status };
+      })
+    );
+
+    res.status(200).json({ success: true, data: updatedTenants, message: "Tenants loading successful" });
+  } catch (err) {
+    console.error("Error fetching tenants:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
