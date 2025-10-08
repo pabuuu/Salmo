@@ -20,14 +20,14 @@ const Table = ({ columns, data }) => {
           {data.length > 0 ? (
             data.map((row) => (
               <tr
-                key={row._id} // use unique row id
+                key={row._id}
                 className="text-dark"
                 style={{ cursor: "pointer" }}
                 onClick={() => navigate(`/tenants/profile/${row._id}`)}
               >
                 {columns.map((col) => (
                   <td
-                    key={`${row._id}-${col.key}`} // unique per cell
+                    key={`${row._id}-${col.key}`}
                     className="py-3"
                   >
                     {col.render ? col.render(row[col.key], row) : row[col.key]}

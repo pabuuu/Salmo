@@ -179,7 +179,6 @@ function Tenants() {
             />
           </div>
         </div>
-
         <div className="d-flex flex-wrap gap-2 mb-3">
           {filters.map((f) => (
             <button
