@@ -18,6 +18,7 @@ export default function MaintenancePost() {
   const [selectedAvailableUnit, setSelectedAvailableUnit] = useState(null);
 
   const [task, setTask] = useState("");
+  const [description, setDescription] = useState("");
   const [schedule, setSchedule] = useState("");
   const [status, setStatus] = useState("Pending");
 
@@ -106,7 +107,8 @@ export default function MaintenancePost() {
       const payload = {
         unit: unitId,
         task,
-        schedule: new Date(schedule), // convert to Date
+        description, // new description field
+        schedule: new Date(schedule),
         status,
       };
 
@@ -118,8 +120,14 @@ export default function MaintenancePost() {
       );
 
       if (response.data.success) {
-        // Update unit status
-        const newUnitStatus = status === "Completed" ? "Occupied" : "Maintenance";
+        // Update unit status accordingly
+        let newUnitStatus;
+        if (status === "Completed") {
+          newUnitStatus = activeTab === "available" ? "Available" : "Occupied";
+        } else {
+          newUnitStatus = "Maintenance";
+        }
+
         try {
           await axios.put(`http://localhost:5050/api/units/${unitId}`, {
             status: newUnitStatus,
@@ -238,6 +246,7 @@ export default function MaintenancePost() {
               </div>
             )}
 
+            {/* Task */}
             <div className="d-flex mt-4 gap-3 align-items-center">
               <div className="flex-grow-1">
                 <label className="form-label">Task</label>
@@ -261,6 +270,19 @@ export default function MaintenancePost() {
               </div>
             </div>
 
+            {/* Description */}
+            <div className="mt-4">
+              <label className="form-label">Description</label>
+              <textarea
+                className="custom-input form-control"
+                placeholder="Enter detailed description of the maintenance task"
+                rows="4"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Status */}
             <div className="d-flex mt-4 gap-3 align-items-center">
               <div className="flex-grow-1">
                 <label className="form-label">Status</label>

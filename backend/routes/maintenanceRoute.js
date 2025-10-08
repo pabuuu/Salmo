@@ -4,9 +4,13 @@ import {
   createMaintenance,
   updateMaintenance,
   deleteMaintenance,
+  getMaintenanceById, // ✅ add this
 } from "../controllers/maintenanceController.js";
 
 const router = express.Router();
+
+// ✅ Add this route before others that use :id if possible
+router.get("/:id", getMaintenanceById);
 
 // Get all maintenances
 router.get("/", getMaintenances);
