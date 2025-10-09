@@ -24,8 +24,8 @@ import MaintenanceProfile from "./Routes/Maintenance/MaintenanceProfile.js";
 import SidebarLayout from "./components/SidebarLayout";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
-  const role = localStorage.getItem("role");
+  const [loggedIn, setLoggedIn] = useState(!!sessionStorage.getItem("token"));
+  const role = sessionStorage.getItem("role");
 
   return (
     <Router>
