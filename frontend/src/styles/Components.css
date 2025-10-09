@@ -12,6 +12,7 @@
     outline:1px solid gray;
     border-radius: 1rem;
 }
+
 .custom-input{
     padding-left: 0.5rem;
     padding-top: 0.5rem;
@@ -53,6 +54,11 @@
     
 }
 
+/* ids */
+#borderless{
+    outline:none;
+}
+
 /* effects */
 .custom-button:hover{
     background-color: rgb(48, 48, 48) ;
@@ -63,4 +69,14 @@
 .dropdown-item:active{
     background-color: rgb(215, 215, 215);
     color: black;
+}
+.numeral-text{
+    font-size: 4rem;
+}
+.hover-card{
+    background-color: rgb(255, 255, 255);
+}
+.hover-card:hover{
+    background-color: var(--bg-primary-button);
+    color: white;
 }

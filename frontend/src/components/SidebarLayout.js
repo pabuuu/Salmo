@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import Logo from '../assets/logo.png'
 
 export default function SidebarLayout({ children, role,setLoggedIn }) {
-  const DESKTOP_WIDTH = 200;
+  const DESKTOP_WIDTH = 240;
+  // 200 orignal
   const MOBILE_WIDTH = 240;
   const BUBBLE_DIAMETER = 40; // smaller bubble
   const BUBBLE_LEFT_COLLAPSED = 4; // move a bit more to the left
@@ -12,6 +15,19 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMedium, setIsMedium] = useState(window.innerWidth < 1024);
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        setCurrentUser(decoded); 
+      } catch (err) {
+        console.error("Invalid token", err);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     function handleResize() {
@@ -70,28 +86,32 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
         }}
       >
         <div className="px-2">
-          <h5 className="text-center mb-3">Menu</h5>
-
-          <SidebarLink to="/dashboard" label="Dashboard" icon="fa-chart-line" />
-          <SidebarLink to="/tenants" label="Tenants" icon="fa-users" />
-          <SidebarLink to="/units" label="Units" icon="fa-building-user" />
+          <div className="d-flex justify-content-center flex-column mb-2">
+            <img src={Logo} alt="Logo" width="200" className="img-fluid mb-2" />
+            <span className="text-uppercase fw-bold ">{currentUser ? currentUser.role : ""}</span>
+          </div>
+          <span className="text-start text-muted fw-bold">Menu</span>
+          <SidebarLink to="/dashboard" label="Dashboard" icon="fa-chart-line" className=" py-5" />
+          <SidebarLink to="/tenants" label="Tenants" icon="fa-users" className=" py-5" />
+          <SidebarLink to="/units" label="Units" icon="fa-building-user" className=" py-5" />
           <SidebarLink
             to="/maintenance"
             label="Maintenance"
             icon="fa-screwdriver-wrench"
+            className=" py-5"
           />
 
           {role === "admin" && (
             <>
-              <SidebarLink to="/payments" label="Payments" icon="fa-coins" />
-              <SidebarLink to="/expenses" label="Expenses" icon="fa-money-bill-wave" />
+              <SidebarLink to="/payments" label="Payments" icon="fa-coins" className=" py-5"/>
+              <SidebarLink to="/expenses" label="Expenses" icon="fa-money-bill-wave" className=" py-5" />
             </>
           )}
         </div>
 
         <button
           onClick={handleLogout}
-          className="border-0 bg-transparent text-start w-100 px-3 py-2 fw-semibold d-flex align-items-center"
+          className="border-0 bg-transparent text-start w-100 px-3 py-2 fw-semibold d-flex align-items-center mb-3"
           style={{ color: "#1e293b", gap: "10px" }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "#f1f5f9";
