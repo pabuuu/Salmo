@@ -123,7 +123,7 @@ export default function TenantsProfile(){
                 </Dropdown>
               </div>
             </div>
-            <div className="d-flex gap-2 mt-3 align-items-start">
+            {/* <div className="d-flex gap-2 mt-3 align-items-start">
               <div style={{ width: "25%" }}>
                 <label className="form-label p-0 m-0">Amount to Pay</label>
                 <input
@@ -161,7 +161,7 @@ export default function TenantsProfile(){
                   > Yearly</button></li>
                 </Dropdown>
               </div>
-            </div>
+            </div> */}
             <div className="d-flex gap-2">
               <button className="custom-button fw-normal px-4 bg-light border text-muted" type="button"  onClick={()=>{{
                 // to previous page
