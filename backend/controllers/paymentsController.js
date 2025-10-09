@@ -101,3 +101,12 @@ export const getTenantPayments = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+export const getAllPayments = async (req, res) => {
+  try {
+    const payments = await paymentsSchema.find().sort({ paymentDate: 1 }).lean();
+    res.status(200).json({ success: true, data: payments });
+  } catch (err) {
+    console.error("Error fetching all payments:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
