@@ -34,7 +34,7 @@ function App() {
           <Routes>
             {/* Default route */}
             <Route path="/" element={<Navigate to="/dashboard" />} />
-
+            
             {/* General routes (accessible to all roles) */}
             <Route path="/dashboard" element={<Dashboard />} />
 

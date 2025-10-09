@@ -14,7 +14,7 @@ const createAdmin = async () => {
   try {
     const username = "admin";
     const password = "admin123"; 
-    const role = "admin";
+    const role = "Admin";
 
     //check if exists
     const existing = await User.findOne({ username });
