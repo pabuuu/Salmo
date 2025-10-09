@@ -89,7 +89,7 @@ function Payments() {
         let bgColor = "";
         if (row.status === "Paid") bgColor = "bg-success text-white";
         else if (row.status === "Partial") bgColor = "bg-warning text-dark";
-        else if (row.status === "Overdue") bgColor = "bg-danger text-white";
+        else if (row.status === "Unpaid") bgColor = "bg-danger text-white";
 
         return <span className={`px-2 py-1 rounded ${bgColor}`}>{row.status || "Active"}</span>;
       },
@@ -161,7 +161,7 @@ function Payments() {
               }
               className="bg-dark"
             >
-              {["all", "Paid", "Partial", "Overdue"].map((status) => (
+              {["all", "Paid", "Partial", "Unpaid"].map((status) => (
                 <li key={status}>
                   <button className="dropdown-item" onClick={() => setStatusFilter(status)}>
                     {status === "all" ? "All" : status}
