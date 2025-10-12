@@ -8,8 +8,8 @@ const PaymentsTable = ({ columns, data }) => {
     return <p className="text-center text-muted">No data available</p>;
 
   return (
-    <div className="table-responsive">
-      <table className="table table-hover align-middle">
+    <div className="table-responsive rounded">
+      <table className="table table-hover align-middle ">
         <thead className="table-dark">
           <tr>
             {columns.map((col) => (

@@ -3,6 +3,8 @@
     "axios": "^1.12.2",
     "bootstrap": "^5.3.8",
     "dayjs": "^1.11.18",
-    "jwt-decode": "^4.0.0"
+    "jwt-decode": "^4.0.0",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.9"
   }
 }

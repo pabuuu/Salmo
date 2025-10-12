@@ -116,7 +116,7 @@ function Dashboard() {
             </Link>
           </div>
         </div>
-        <div className="row g-2 mt-3">
+        <div className="row g-2 mt-3 mb-3">
           <div className="col-12">
             <Card width="100%" height="auto" className="py-4 px-0">
               <div className="d-flex flex-row gap-2">
@@ -128,6 +128,11 @@ function Dashboard() {
             </Card>
           </div>
         </div>
+        <Link to={'/tenants'} className="text-decoration-none">
+          <Card width="250px" height="250px" className="hover-card m-0 p-0">
+            <h3 className=" mb-0 numeral-text">{tenants.length}</h3>
+          </Card>
+        </Link>
       </Card>
     </div>
   )
