@@ -7,6 +7,7 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
 
   const handleLogin = async (e) => {
@@ -68,13 +69,30 @@ export default function Login() {
               onChange={(e) => setUsername(e.target.value)}
               className="custom-input my-1"
             />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="custom-input my-1"
-            />
+            <div className="position-relative my-1">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="custom-input w-100 pe-5"
+              />
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  color: "#888",
+                  fontSize: "0.9rem",
+                  userSelect: "none",
+                }}
+              >
+                {showPassword ? <i class="fa fa-solid fa-eye"></i> : <i class="fa fa-regular fa-eye-slash"></i>}
+              </span>
+            </div>
             <button type="submit" className="custom-button">Login</button>
           </form>
           <p className="warning-msg">{message}</p>
