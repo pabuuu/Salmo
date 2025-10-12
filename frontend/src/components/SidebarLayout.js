@@ -44,8 +44,8 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
     : sidebarWidth - BUBBLE_RIGHT_OVERLAP;
 
   function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("role");
     setLoggedIn(false); 
     navigate("/", { replace: true });
   }
