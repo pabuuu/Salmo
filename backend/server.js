@@ -7,6 +7,7 @@ import tenantRouter from "./routes/tenantRoute.js";
 import unitRouter from "./routes/unitRoute.js";
 import maintenanceRouter from "./routes/maintenanceRoute.js"; 
 import paymentRoute from "./routes/paymentRoute.js";
+import expenseRoute from "./routes/expenseRoute.js";
 import testEmailRoutes from "./routes/testEmailRoutes.js";
 import { initScheduler } from "./utils/mailScheduler.js";
 
@@ -27,6 +28,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
 app.use("/api/maintenances", maintenanceRouter); // ✅ mount maintenance routes
+app.use("/api/expenses", expenseRoute);
 app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
 // Health check
