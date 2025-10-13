@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import Notification from '../components/Notification.js'
 import Logo from '../assets/logo.png'
 
 export default function SidebarLayout({ children, role,setLoggedIn }) {
@@ -16,18 +17,7 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
   const [isMedium, setIsMedium] = useState(window.innerWidth < 1024);
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
-  
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setCurrentUser(decoded); 
-      } catch (err) {
-        console.error("Invalid token", err);
-      }
-    }
-  }, []);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     function handleResize() {
@@ -68,7 +58,7 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
         }}
       />
 
-      {/* === Sidebar === */}
+      {/* === sidebar mismp=== */} 
       <aside
         className={`d-flex flex-column justify-content-between bg-white shadow ${
           isMedium ? "position-fixed" : "position-relative"
@@ -110,13 +100,13 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
         </div>
 
         <button
-          onClick={handleLogout}
+          onClick={()=> setShowConfirm(true)}
           className="border-0 bg-transparent text-start w-100 px-3 py-2 fw-semibold d-flex align-items-center mb-3"
           style={{ color: "#1e293b", gap: "10px" }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "#f1f5f9";
             e.currentTarget.style.color = "#0f172a";
-          }}
+          }}    
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
             e.currentTarget.style.color = "#1e293b";
@@ -125,6 +115,27 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
           <i className="fa-solid fa-right-from-bracket"></i>
           Logout
         </button>
+        {showConfirm && (
+        <Notification
+          type="warning"
+          message="Are you sure you want to log out?"
+          actions={[
+            {
+              label: "Yes",
+              onClick: () => {
+                handleLogout();
+                setShowConfirm(false);
+              },
+            },
+            {
+              label: "Cancel",
+              onClick: () => setShowConfirm(false),
+            },
+          ]}
+          onClose={() => setShowConfirm(false)}
+          icon="⚠️"
+        />
+      )}
       </aside>
 
       {/* === Bubble Toggle (mobile) === */}
