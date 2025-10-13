@@ -3,6 +3,9 @@
     --bg-primary-text:black;
     --bg-primary-button: #222222;
 }
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
 
 .card{
     background-color: var(--bg-primary-light);
@@ -53,12 +56,43 @@
     background-color: white;
     
 }
+.small-card{
+    border: 1px solid black;
+    height: 80px ;
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 1rem;
+}
 
 /* ids */
 #borderless{
     outline:none;
 }
+#person{
+    background-image: url("../assets/backgrounds/person.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
 
+#expense{
+    background-image: url("../assets/backgrounds/expense.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+#cogs{
+    background-image: url("../assets/backgrounds/cogs.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+#bar{
+    background-image: url("../assets/backgrounds/bar.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
 /* effects */
 .custom-button:hover{
     background-color: rgb(48, 48, 48) ;
@@ -74,9 +108,10 @@
     font-size: 4rem;
 }
 .hover-card{
-    background-color: rgb(255, 255, 255);
+    background-color:var(--bg-primary-button);
+    color: white    ;
 }
 .hover-card:hover{
-    background-color: var(--bg-primary-button);
+    transform: scale(1.01);
     color: white;
 }

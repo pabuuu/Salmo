@@ -44,8 +44,8 @@ export default function IncomeChart() {
         datasets: [{
           label: 'Income (₱) ',
           data: sortedKeys.map(k => incomeByPeriod[k]),
-          borderColor: 'rgba(75, 192, 192, 1)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: '#222222',
+          backgroundColor: '#222222',
           tension: 0.3
         }]
       };
@@ -84,7 +84,7 @@ export default function IncomeChart() {
         <button className="btn btn-sm btn-dark px-3 py-2" onClick={() => setFilter('Quarterly')}>Quarterly</button>
         <button className="btn btn-sm btn-dark px-3 py-2" onClick={() => setFilter('Yearly')}>Yearly</button>
       </div>
-      <div style={{ height: '300px' }}>
+      <div style={{ height: '240px' }}>
         <canvas ref={chartRef}></canvas>
       </div>
       <div style={{ marginTop: '10px', fontWeight: 'bold' }}>
