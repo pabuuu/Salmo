@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Card from "../components/Card";
 import Logo from '../assets/logo.png'
 import { useNavigate } from "react-router-dom";
+import login_image from '../assets/backgrounds/login_img.png'
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -53,9 +54,13 @@ export default function Login() {
   };
 
   return (
-    <div className="d-flex align-items-center justify-content-center vh-100">
-      <Card>
-          <div className="header mb-4 ">
+    <div className="d-flex vh-100 ">
+      <div className="row w-100 m-3">
+        <div className="col-12 col-md-8">
+          <img src={login_image} className="h-100 w-100 img-fluid img" style={{display:'flex',objectFit:'contain'}}/>
+        </div>
+        <div className="col-12 col-md-4 border d-flex flex-column h-100 justify-content-center bg-white border rounded px-4 shadow">
+          <div className="header mb-4">
             <div className="d-flex justify-content-center">
               <img src={Logo} alt="Logo" width="210" className="img-fluid" />
             </div>
@@ -75,7 +80,7 @@ export default function Login() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="custom-input w-100 pe-5"
+                className="custom-input w-100 pe-5" 
               />
               <span
                 onClick={() => setShowPassword(!showPassword)}
@@ -96,7 +101,8 @@ export default function Login() {
             <button type="submit" className="custom-button">Login</button>
           </form>
           <p className="warning-msg">{message}</p>
-        </Card>
+        </div>
+      </div>
     </div>
   );
 }
