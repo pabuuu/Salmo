@@ -1,4 +1,5 @@
 import express from "express";
+import multer from "multer";
 import {
   createExpense,
   getExpenses,
@@ -8,11 +9,17 @@ import {
 } from "../controllers/expensesController.js";
 
 const router = express.Router();
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-router.post("/", createExpense);
+// POST with receipt
+router.post("/", upload.single("receiptImage"), createExpense);
+
+// PUT with receipt
+router.put("/:id", upload.single("receiptImage"), updateExpense);
+
 router.get("/", getExpenses);
 router.get("/:id", getExpenseById);
-router.put("/:id", updateExpense);
 router.delete("/:id", deleteExpense);
 
 export default router;
