@@ -1,3 +1,4 @@
+// frontend/src/Routes/Expenses/ExpensesProfile.js
 import React, { useEffect, useState } from "react";
 import Card from "../../components/Card";
 import CustomButton from "../../components/CustomBottom";
@@ -16,14 +17,20 @@ export default function ExpensesProfile() {
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [imageFile, setImageFile] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState("");
 
   // Fetch expense by ID
   useEffect(() => {
+    setLoading(true);
     axios
       .get(`http://localhost:5050/api/expenses/${id}`)
       .then((res) => {
-        if (res.data.success) setExpense(res.data.expense);
-        else setNotification({ type: "error", message: "Expense not found" });
+        if (res.data.success) {
+          setExpense(res.data.expense);
+          setReceiptPreviewUrl(res.data.expense.receiptImage || "");
+        } else {
+          setNotification({ type: "error", message: "Expense not found" });
+        }
       })
       .catch(() =>
         setNotification({ type: "error", message: "Expense not found" })
@@ -31,32 +38,31 @@ export default function ExpensesProfile() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Handle update with receipt validation
+  // Handle expense update (backend handles Supabase upload)
   const handleUpdate = async () => {
-    if (
-      expense.status === "Paid" &&
-      !imageFile &&
-      !expense.receiptImage
-    ) {
+    if (expense.status === "Paid" && !imageFile && !expense.receiptImage) {
       return setNotification({
         type: "error",
         message: "You must upload a receipt image to mark as Paid.",
       });
     }
 
-    const formData = new FormData();
-    formData.append("title", expense.title);
-    formData.append("description", expense.description);
-    formData.append("category", expense.category);
-    formData.append("amount", expense.amount);
-    formData.append("status", expense.status);
-
-    // Only append unitId / maintenanceId if exists
-    if (expense.unitId) formData.append("unitId", expense.unitId._id || expense.unitId);
-    if (expense.maintenanceId) formData.append("maintenanceId", expense.maintenanceId._id || expense.maintenanceId);
-    if (imageFile) formData.append("receiptImage", imageFile);
-
     try {
+      const formData = new FormData();
+      formData.append("title", expense.title);
+      formData.append("description", expense.description);
+      formData.append("category", expense.category);
+      formData.append("amount", expense.amount);
+      formData.append("status", expense.status);
+      if (expense.unitId)
+        formData.append("unitId", expense.unitId._id || expense.unitId);
+      if (expense.maintenanceId)
+        formData.append(
+          "maintenanceId",
+          expense.maintenanceId._id || expense.maintenanceId
+        );
+      if (imageFile) formData.append("receiptImage", imageFile);
+
       const res = await axios.put(
         `http://localhost:5050/api/expenses/${id}`,
         formData,
@@ -64,18 +70,25 @@ export default function ExpensesProfile() {
       );
 
       if (res.data.success) {
-        setNotification({ type: "success", message: "Expense updated!" });
         setExpense(res.data.expense);
+        setNotification({ type: "success", message: "Expense updated!" });
         setImageFile(null);
+        setReceiptPreviewUrl(res.data.expense.receiptImage || "");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Update failed:", err);
       setNotification({ type: "error", message: "Update failed" });
     }
   };
 
+  // Preview receipt image
   const handleViewReceipt = () => {
-    if (expense.receiptImage) setShowReceiptModal(true);
+    if (imageFile) {
+      setReceiptPreviewUrl(URL.createObjectURL(imageFile));
+    } else if (expense.receiptImage) {
+      setReceiptPreviewUrl(expense.receiptImage);
+    }
+    setShowReceiptModal(true);
   };
 
   if (loading) return <LoadingScreen />;
@@ -92,7 +105,7 @@ export default function ExpensesProfile() {
       <ReceiptModal
         show={showReceiptModal}
         onClose={() => setShowReceiptModal(false)}
-        receiptUrl={expense.receiptImage ? `http://localhost:5050/uploads/${expense.receiptImage}` : ""}
+        receiptUrl={receiptPreviewUrl}
       />
 
       <Card width="100%" height="100%">
@@ -178,14 +191,13 @@ export default function ExpensesProfile() {
                 />
                 {(expense.receiptImage || imageFile) && (
                   <div className="mt-1 d-flex align-items-center gap-2">
-                    <span className="text-muted">Current receipt:</span>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-info"
+                    <span>Current receipt:</span>
+                    <CustomButton
+                      label="View Receipt"
+                      variant="info"
+                      size="sm"
                       onClick={handleViewReceipt}
-                    >
-                      View Receipt
-                    </button>
+                    />
                   </div>
                 )}
               </>
