@@ -3,22 +3,29 @@ import Maintenance from "../models/Maintenance.js";
 import Units from "../models/Units.js";
 import { supabase } from "../supabase.js"; // Supabase client
 
-// Helper: upload file to Supabase and return public URL
+// 🧩 Helper: upload file to Supabase and return its public URL
 const uploadToSupabase = async (file) => {
   if (!file) return null;
 
-  const fileName = `${Date.now()}_${file.originalname}`;
-  const { error } = await supabase.storage
-    .from("receipts") // your Supabase bucket
-    .upload(fileName, file.buffer, { contentType: file.mimetype });
+  const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`;
+  const { error: uploadError } = await supabase.storage
+    .from("receipt") // your Supabase bucket
+    .upload(fileName, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true, // allows replacing existing filename if necessary
+    });
 
-  if (error) throw new Error("Failed to upload to Supabase");
+  if (uploadError) throw new Error(`Failed to upload to Supabase: ${uploadError.message}`);
 
-  const { publicURL } = supabase.storage.from("receipts").getPublicUrl(fileName);
-  return publicURL;
+  const { data: urlData, error: urlError } = supabase.storage
+    .from("receipt")
+    .getPublicUrl(fileName);
+
+  if (urlError || !urlData?.publicUrl) throw new Error("Failed to get Supabase public URL");
+  return urlData.publicUrl;
 };
 
-// 🟢 Create Expense
+// 🟢 CREATE Expense
 export const createExpense = async (req, res) => {
   try {
     const { title, description, category, amount, status, maintenanceId, unitId } = req.body;
@@ -30,7 +37,8 @@ export const createExpense = async (req, res) => {
     let linkedMaintenance = null;
     if (category === "Maintenance" && maintenanceId) {
       linkedMaintenance = await Maintenance.findOne({ _id: maintenanceId, status: "In Process" });
-      if (!linkedMaintenance) return res.status(404).json({ success: false, message: "Maintenance not found or not In Process." });
+      if (!linkedMaintenance)
+        return res.status(404).json({ success: false, message: "Maintenance not found or not In Process." });
     }
 
     let linkedUnit = null;
@@ -39,7 +47,7 @@ export const createExpense = async (req, res) => {
       if (!linkedUnit) return res.status(404).json({ success: false, message: "Unit not found." });
     }
 
-    // Upload receipt if file exists
+    // Upload to Supabase
     const receiptUrl = req.file ? await uploadToSupabase(req.file) : null;
 
     const expense = new Expense({
@@ -50,7 +58,7 @@ export const createExpense = async (req, res) => {
       status: status || "Pending",
       maintenanceId: linkedMaintenance?._id || null,
       unitId: linkedUnit?._id || null,
-      receiptImage: receiptUrl,
+      receiptImage: receiptUrl, // ✅ store full Supabase URL
     });
 
     await expense.save();
@@ -61,12 +69,43 @@ export const createExpense = async (req, res) => {
 
     res.status(201).json({ success: true, message: "Expense created successfully.", expense: populatedExpense });
   } catch (err) {
-    console.error("❌ Error creating expense:", err);
-    res.status(500).json({ success: false, message: "Server error creating expense." });
+    console.error("❌ Error creating expense:", err.message);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 🟠 Update Expense
+// 🟡 READ: Get all Expenses
+export const getExpenses = async (req, res) => {
+  try {
+    const expenses = await Expense.find()
+      .populate({ path: "maintenanceId", select: "task status unit", populate: { path: "unit", select: "unitNo location" } })
+      .populate({ path: "unitId", select: "unitNo location" })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, expenses });
+  } catch (err) {
+    console.error("❌ Error fetching expenses:", err.message);
+    res.status(500).json({ success: false, message: "Server error fetching expenses." });
+  }
+};
+
+// 🟣 READ: Get Expense by ID
+export const getExpenseById = async (req, res) => {
+  try {
+    const expense = await Expense.findById(req.params.id)
+      .populate({ path: "maintenanceId", select: "task status unit", populate: { path: "unit", select: "unitNo location" } })
+      .populate({ path: "unitId", select: "unitNo location" });
+
+    if (!expense) return res.status(404).json({ success: false, message: "Expense not found." });
+
+    res.status(200).json({ success: true, expense });
+  } catch (err) {
+    console.error("❌ Error fetching expense:", err.message);
+    res.status(500).json({ success: false, message: "Server error fetching expense." });
+  }
+};
+
+// 🟠 UPDATE Expense
 export const updateExpense = async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id);
@@ -82,9 +121,10 @@ export const updateExpense = async (req, res) => {
     if (unitId) expense.unitId = unitId;
     if (maintenanceId) expense.maintenanceId = maintenanceId;
 
-    // Upload new receipt if provided
+    // If a new file is uploaded, replace the old one in Supabase
     if (req.file) {
-      expense.receiptImage = await uploadToSupabase(req.file);
+      const receiptUrl = await uploadToSupabase(req.file);
+      expense.receiptImage = receiptUrl; // ✅ replace with new Supabase link
     }
 
     await expense.save();
@@ -95,27 +135,27 @@ export const updateExpense = async (req, res) => {
 
     res.json({ success: true, expense: populatedExpense });
   } catch (err) {
-    console.error("❌ Error updating expense:", err);
-    res.status(500).json({ success: false, message: "Server error updating expense." });
+    console.error("❌ Error updating expense:", err.message);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 🔴 Delete Expense
+// 🔴 DELETE Expense
 export const deleteExpense = async (req, res) => {
   try {
     const expense = await Expense.findByIdAndDelete(req.params.id);
     if (!expense) return res.status(404).json({ success: false, message: "Expense not found." });
 
-    // Delete receipt from Supabase
+    // Delete file from Supabase
     if (expense.receiptImage) {
       const fileName = expense.receiptImage.split("/").pop();
-      const { error } = await supabase.storage.from("receipts").remove([fileName]);
-      if (error) console.error("❌ Supabase delete error:", error);
+      const { error } = await supabase.storage.from("receipt").remove([fileName]);
+      if (error) console.error("❌ Supabase delete error:", error.message);
     }
 
     res.json({ success: true, message: "Expense deleted successfully." });
   } catch (err) {
-    console.error("❌ Error deleting expense:", err);
+    console.error("❌ Error deleting expense:", err.message);
     res.status(500).json({ success: false, message: "Server error deleting expense." });
   }
 };

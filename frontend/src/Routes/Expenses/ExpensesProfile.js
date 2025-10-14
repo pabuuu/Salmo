@@ -95,7 +95,7 @@ export default function ExpensesProfile() {
   if (!expense) return <p className="text-center mt-5">Expense not found.</p>;
 
   return (
-    <div className="d-flex h-100 w-100">
+    <div className="d-flex justify-content-center align-items-start py-4 px-2 w-100">
       <Notification
         type={notification.type}
         message={notification.message}
@@ -109,109 +109,123 @@ export default function ExpensesProfile() {
       />
 
       <Card width="100%" height="100%">
-        <div className="mx-5 p-3">
-          <h1>Edit Expense</h1>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleUpdate();
-            }}
-            className="mt-3"
-          >
-            <label>Title</label>
-            <input
-              className="form-control mb-3"
-              value={expense.title}
-              onChange={(e) =>
-                setExpense({ ...expense, title: e.target.value })
-              }
-            />
+        <div className="container-fluid">
+          <div className="row justify-content-center">
+            <div className="col-12 col-md-8 col-lg-6 p-4">
+              <h1 className="text-center mb-4">Edit Expense</h1>
 
-            <label>Description</label>
-            <textarea
-              className="form-control mb-3"
-              value={expense.description}
-              onChange={(e) =>
-                setExpense({ ...expense, description: e.target.value })
-              }
-            />
-
-            <label>Category</label>
-            <select
-              className="form-select mb-3"
-              value={expense.category}
-              onChange={(e) =>
-                setExpense({ ...expense, category: e.target.value })
-              }
-            >
-              <option>Maintenance</option>
-              <option>Supplies</option>
-              <option>Utilities</option>
-              <option>Other</option>
-            </select>
-
-            <label>Amount (₱)</label>
-            <input
-              type="number"
-              className="form-control mb-3"
-              value={expense.amount}
-              onChange={(e) =>
-                setExpense({ ...expense, amount: e.target.value })
-              }
-            />
-
-            <label>Status</label>
-            <select
-              className="form-select mb-3"
-              value={expense.status}
-              onChange={(e) => {
-                const newStatus = e.target.value;
-                if (newStatus === "Paid" && !expense.receiptImage && !imageFile) {
-                  return setNotification({
-                    type: "error",
-                    message: "Cannot mark as Paid without a receipt image.",
-                  });
-                }
-                setExpense({ ...expense, status: newStatus });
-              }}
-            >
-              <option>Pending</option>
-              <option>Approved</option>
-              <option>Paid</option>
-            </select>
-
-            {(expense.status === "Approved" || expense.status === "Paid") && (
-              <>
-                <label>Upload Receipt Image (jpg/png/etc.)</label>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleUpdate();
+                }}
+              >
+                <label>Title</label>
                 <input
-                  type="file"
                   className="form-control mb-3"
-                  accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files[0])}
+                  value={expense.title}
+                  onChange={(e) =>
+                    setExpense({ ...expense, title: e.target.value })
+                  }
                 />
-                {(expense.receiptImage || imageFile) && (
-                  <div className="mt-1 d-flex align-items-center gap-2">
-                    <span>Current receipt:</span>
-                    <CustomButton
-                      label="View Receipt"
-                      variant="info"
-                      size="sm"
-                      onClick={handleViewReceipt}
-                    />
-                  </div>
-                )}
-              </>
-            )}
 
-            <div className="d-flex gap-3 mt-4">
-              <CustomButton
-                label="Cancel"
-                variant="secondary"
-                onClick={() => navigate("/expenses")}
-              />
-              <CustomButton label="Update" type="submit" variant="primary" />
+                <label>Description</label>
+                <textarea
+                  className="form-control mb-3"
+                  value={expense.description}
+                  onChange={(e) =>
+                    setExpense({ ...expense, description: e.target.value })
+                  }
+                />
+
+                <label>Category</label>
+                <select
+                  className="form-select mb-3"
+                  value={expense.category}
+                  onChange={(e) =>
+                    setExpense({ ...expense, category: e.target.value })
+                  }
+                >
+                  <option>Maintenance</option>
+                  <option>Supplies</option>
+                  <option>Utilities</option>
+                  <option>Other</option>
+                </select>
+
+                <label>Amount (₱)</label>
+                <input
+                  type="number"
+                  className="form-control mb-3"
+                  value={expense.amount}
+                  onChange={(e) =>
+                    setExpense({ ...expense, amount: e.target.value })
+                  }
+                />
+
+                <label>Status</label>
+                <select
+                  className="form-select mb-3"
+                  value={expense.status}
+                  onChange={(e) => {
+                    const newStatus = e.target.value;
+                    if (
+                      newStatus === "Paid" &&
+                      !expense.receiptImage &&
+                      !imageFile
+                    ) {
+                      return setNotification({
+                        type: "error",
+                        message:
+                          "Cannot mark as Paid without a receipt image.",
+                      });
+                    }
+                    setExpense({ ...expense, status: newStatus });
+                  }}
+                >
+                  <option>Pending</option>
+                  <option>Approved</option>
+                  <option>Paid</option>
+                </select>
+
+                {(expense.status === "Approved" ||
+                  expense.status === "Paid") && (
+                  <>
+                    <label>Upload Receipt Image (jpg/png/etc.)</label>
+                    <input
+                      type="file"
+                      className="form-control mb-3"
+                      accept="image/*"
+                      onChange={(e) => setImageFile(e.target.files[0])}
+                    />
+                    {(expense.receiptImage || imageFile) && (
+                      <div className="mt-1 d-flex align-items-center gap-2 flex-wrap">
+                        <span>Current receipt:</span>
+                        <CustomButton
+                          label="View Receipt"
+                          variant="info"
+                          size="sm"
+                          onClick={handleViewReceipt}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div className="d-flex flex-wrap justify-content-center gap-3 mt-4">
+                  <CustomButton
+                    label="Cancel"
+                    variant="secondary"
+                    onClick={() => navigate("/expenses")}
+                  />
+                  <CustomButton
+                    label="Update"
+                    type="submit"
+                    variant="primary"
+                  />
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       </Card>
     </div>
