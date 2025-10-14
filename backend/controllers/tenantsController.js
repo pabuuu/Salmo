@@ -1,8 +1,11 @@
 import Tenants from '../models/Tenants.js';
 import Units from '../models/Units.js';
+import Payments from "../models/PaymentsSchema.js";
 import dayjs from "dayjs"
-
 import { updateOverdueTenants } from '../utils/updateOverdues.js';
+import { recalcTenantBalance } from './paymentsController.js';
+import { getNextDueDate } from '../utils/dateUtils.js';
+
 // ✅ Load all tenants with their unit details
 export const load = async (req, res) => {
   try {
@@ -12,7 +15,7 @@ export const load = async (req, res) => {
 
     res.json({ success: true, data: tenants, message: "Tenants loading successful" });
   } catch (err) {
-    console.error("Error loading tenants:", err);
+    console.error("Error loading tenants:", err)  ;
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -20,66 +23,67 @@ export const load = async (req, res) => {
 // ✅ Create Tenant
 export const createTenant = async (req, res) => {
   try {
-    const {
+    const { firstName, lastName, email, contactNumber, unitId, paymentFrequency, initialPayment = 0 } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName) return res.status(400).json({ success: false, message: "First and last name required" });
+    if (!unitId) return res.status(400).json({ success: false, message: "Unit must be selected" });
+    if (!paymentFrequency) return res.status(400).json({ success: false, message: "Payment frequency is required" });
+
+    const unit = await Units.findById(unitId);
+    if (!unit) return res.status(404).json({ success: false, message: "Unit not found" });
+    if (unit.status === "Occupied") return res.status(400).json({ success: false, message: "Unit already occupied" });
+
+    const rentAmount = unit.rentAmount;
+    if (!rentAmount || rentAmount <= 0) return res.status(400).json({ success: false, message: "Invalid rent amount" });
+    if (initialPayment > rentAmount) return res.status(400).json({ success: false, message: "Initial payment exceeds rent" });
+
+    // Initial status & balance
+    let balance = Math.max(rentAmount - initialPayment, 0);
+    let status = balance === 0 ? "Paid" : initialPayment > 0 ? "Partial" : "Pending";
+    let nextDueDate = balance === 0 ? getNextDueDate(new Date(), paymentFrequency) : new Date(); // only advance if fully paid
+
+    // Create tenant
+    const tenant = await Tenants.create({
       firstName,
       lastName,
       email,
       contactNumber,
       unitId,
-      rentAmount,
       paymentFrequency,
-    } = req.body;
-
-    if (!rentAmount || rentAmount <= 0) {
-      return res.status(400).json({ success: false, message: "Rent amount is required and must be positive" });
-    }
-
-    if (!paymentFrequency) {
-      return res.status(400).json({ success: false, message: "Payment frequency is required" });
-    }
-
-    // ✅ Automatically compute next due date
-    let nextDueDate = new Date();
-    if (paymentFrequency === "Monthly") nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-    else if (paymentFrequency === "Quarterly") nextDueDate.setMonth(nextDueDate.getMonth() + 3);
-    else if (paymentFrequency === "Yearly") nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
-
-    // ✅ Create tenant
-    const tenant = new Tenants({
-      firstName,
-      lastName,
-      email,
-      contactNumber,
-      unitId,
-      rentAmount,
-      paymentFrequency,
+      initialPayment,
+      balance,
+      status,
       nextDueDate,
-      balance: rentAmount,
     });
 
-    await tenant.save();
+    // Mark unit as occupied
+    await Units.findByIdAndUpdate(unitId, { status: "Occupied", tenant: tenant._id });
 
-    if (unitId) {
-      await Units.findByIdAndUpdate(
+    // Record initial payment if any
+    if (initialPayment > 0) {
+      await Payments.create({
+        tenantId: tenant._id,
         unitId,
-        { status: "Occupied", tenant: tenant._id },
-        { new: true }
-      );
+        amount: initialPayment,
+        paymentDate: new Date(),
+        paymentMethod: "Initial Payment",
+        notes: "Recorded during tenant creation",
+        status, // Partial or Paid
+      });
+
+      // Recalculate balance/status properly
+      await recalcTenantBalance(tenant._id);
     }
 
-    res.status(201).json({
-      success: true,
-      message: "Tenant created and unit updated successfully",
-      tenant,
-    });
+    res.status(201).json({ success: true, message: "Tenant created successfully", tenant });
   } catch (err) {
     console.error("Error creating tenant:", err);
-    res.status(500).json({
-      success: false,
-      message: err.message || "Failed to create tenant",
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
+
 
 // ✅ Get single tenant
 export const getTenant = async (req, res) => {
@@ -195,31 +199,48 @@ export const archiveTenant = async (req, res) => {
 
 export const getTenants = async (req, res) => {
   try {
-    const tenants = await Tenants.find().populate("unitId").lean();
+    // 1️⃣ Ensure balances and statuses are up-to-date
+    const tenantsFromDb = await Tenants.find()
+      .populate({
+        path: "unitId",
+        select: "unitNo rentAmount location status",
+      })
+      .lean();
 
     const today = new Date();
 
-    await updateOverdueTenants();
+    const updatedTenants = tenantsFromDb.map((t) => {
+      const balance = t.balance ?? t.unitId?.rentAmount ?? 0;
+      let status = t.status || "Pending";
 
-    const updatedTenants = await Promise.all(
-      tenants.map(async (t) => {
-        let status = t.status;
+      if (balance === 0) {
+        status = "Paid";
+      } else if (balance > 0 && t.initialPayment > 0) {
+        status = "Partial"; // Partially paid tenants stay Partial
+      } else if (balance > 0 && t.initialPayment === 0 && new Date(t.nextDueDate) < today) {
+        status = "Overdue"; // Only completely unpaid past due are Overdue
+      } else if (balance > 0) {
+        status = "Pending";
+      }
 
-        // Check for overdue: if nextDueDate passed and balance > 0
-        if (t.balance > 0 && new Date(t.nextDueDate) < today) {
-          status = "Overdue";
+      return {
+        ...t,
+        status,
+        rentAmount: t.unitId?.rentAmount ?? 0,
+      };
+    });
 
-          // Update DB so the tenant's status is consistent
-          await Tenants.findByIdAndUpdate(t._id, { status });
-        }
-
-        return { ...t, status };
-      })
-    );
-
-    res.status(200).json({ success: true, data: updatedTenants, message: "Tenants loading successful" });
+    res.status(200).json({
+      success: true,
+      data: updatedTenants,
+      message: "Tenants loaded successfully",
+    });
   } catch (err) {
     console.error("Error fetching tenants:", err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message || "Failed to load tenants",
+    });
   }
 };
+
