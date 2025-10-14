@@ -1,7 +1,5 @@
-// backend/utils/scheduler.js
 import cron from "node-cron";
 import { updateOverdueTenants } from "../utils/updateOverdues.js";
-
 
 export const initScheduler = () => {
   console.log("✅ Scheduler initialized.");
@@ -15,5 +13,4 @@ export const initScheduler = () => {
       console.error("❌ Error running overdue check:", err);
     }
   });
-
 };

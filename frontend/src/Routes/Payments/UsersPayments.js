@@ -8,7 +8,6 @@ function UsersPayments() {
   const [tenant, setTenant] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-
   // Fetch tenant + payments data
   useEffect(() => {
     const fetchTenantPayments = async () => {
@@ -39,7 +38,7 @@ function UsersPayments() {
           </h2>
           <p className="text-muted mb-0">
             Unit: {tenant.unitId ? tenant.unitId.unitNo : "N/A"} | Rent:{" "}
-            {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(tenant.rentAmount)}{" "}
+            {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(tenant.unitId.rentAmount)}{" "}
             ({tenant.paymentFrequency}) | Status:{" "}
             <span className={tenant.status === "Overdue" ? "text-danger" : "text-success"}>
               {tenant.status}

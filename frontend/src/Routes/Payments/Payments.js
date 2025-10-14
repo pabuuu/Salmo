@@ -15,6 +15,7 @@ function Payments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortKey, setSortKey] = useState("newest");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [units, setUnits] = useState([]);
 
   const navigate = useNavigate();
 
@@ -25,6 +26,16 @@ function Payments() {
       setFilteredTenants(res.data.data);
     } catch (err) {
       console.error("Error fetching tenants:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchUnits = async () => {
+    try {
+      const res = await axios.get("http://localhost:5050/api/units");
+      setUnits(res.data.data);
+    } catch (err) {
+      console.error("Error fetching Units:", err);
     } finally {
       setLoading(false);
     }
@@ -73,9 +84,12 @@ function Payments() {
     {
       key: "rentAmount",
       label: "Rent Amount",
-      render: (amt) =>
-        new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amt),
-    },
+      render: (_, row) =>
+        new Intl.NumberFormat("en-PH", {
+          style: "currency",
+          currency: "PHP",
+        }).format(row.unitId.rentAmount),
+    },    
     {
       key: "balance",
       label: "Balance",

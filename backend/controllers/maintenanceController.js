@@ -57,7 +57,7 @@ export const createMaintenance = async (req, res) => {
       tenant: tenant || null,
       unit,
       task,
-      description: description || "", // ✅ include description
+      description: description || "", 
       schedule,
       status,
     });

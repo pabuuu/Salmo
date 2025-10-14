@@ -12,9 +12,9 @@ export default function TenantsPost() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [contactNumber, setContactNumber] = useState('');
-  const [rentalAmount, setRentalAmount] = useState('');
   const [paymentFrequency, setPaymentFrequency] = useState('');
-  const [rentAmount, setRentAmount] = useState('')
+  const [initialPayment, setInitial] = useState('');
+  const [error, setError] = useState("");
   // location & units
   const [location, setLocation] = useState('');
   const [availableUnits, setAvailableUnits] = useState([]);
@@ -49,6 +49,16 @@ export default function TenantsPost() {
   // handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
+    const selectedUnit = availableUnits.find((u) => u._id === unitId);
+    const rentAmount = selectedUnit?.rentAmount || 0;
+  
+    if (Number(initialPayment) > rentAmount) {
+      alert(`⚠️ Initial payment cannot exceed rent amount (${rentAmount.toLocaleString()}₱).`);
+      return;
+    }
+    setError("");
+  
     try {
       const response = await fetch("http://localhost:5050/api/tenants/create", {
         method: "POST",
@@ -59,14 +69,14 @@ export default function TenantsPost() {
           email,
           contactNumber,
           unitId,
-          rentAmount: Number(rentalAmount), // ✅ map rentalAmount → rentAmount
           paymentFrequency,
+          initialPayment,
           isArchived: false,
         }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok && data.tenant) {
         alert("✅ Tenant created successfully!");
         navigate("/tenants");
@@ -78,6 +88,7 @@ export default function TenantsPost() {
       alert("Something went wrong while creating tenant.");
     }
   };
+  
 
   // handlers
   const handleLocationSelect = (loc) => {
@@ -177,7 +188,7 @@ export default function TenantsPost() {
                     availableUnits.map((unit) => (
                       <li key={unit._id}>
                         <button type="button" className="dropdown-item" onClick={() => handleUnitSelect(unit)}>
-                          {`Unit ${unit.unitNo} (₱${unit.rentAmount})`}
+                          {`Unit ${unit.unitNo}`}
                         </button>
                       </li>
                     ))
@@ -188,16 +199,17 @@ export default function TenantsPost() {
               </div>
             </div>
             <div className="d-flex gap-2 mt-3 align-items-start">
-              <div style={{ width: "25%" }}>
-                <label className="form-label">Amount to Pay</label>
+            <div style={{ width: "25%" }}>
+                <label className="form-label">Initial Payment</label>
                 <input
                   type="number"
                   placeholder="0"
                   className="custom-input form-control"
-                  value={rentalAmount}
-                  onChange={(e) => setRentalAmount(e.target.value)}
+                  value={initialPayment}
+                  onChange={(e) => setInitial(e.target.value)}
                   required
                 />
+                {error && <span className="text-danger">{error}</span>}
               </div>
               <div style={{ width: "25%" }}>
                 <label className="form-label">Payment Frequency</label>

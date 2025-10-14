@@ -4,6 +4,7 @@ import axios, { all } from "axios";
 import LoadingScreen from "./views/Loading";
 import {Link} from "react-router-dom";
 import MonthlyIncomeChart from './components/Charts/MonthlyIncomeChart.js';
+import MaintenanceChart from "./components/Charts/MaintenanceChart.js";
 import { jwtDecode } from "jwt-decode";
 
 function Dashboard() {
@@ -171,7 +172,7 @@ function Dashboard() {
             </Link>
           </div>
           <div className="col-12 col-md-3">
-            <Card width="100%" height="160px" className="hover-card m-0 p-0" id={'expense'}>
+            <Card width="100%" height="160px" className="hover-card" id={'expense'}>
               <div className="w-100 h-100 d-flex flex-column justify-content-center">
                 <div className="d-flex align-items-center gap-2">
                   <i className="fs-5 fa fa-solid fa-money-bill-wave"></i>
@@ -183,16 +184,14 @@ function Dashboard() {
           </div>
           <div className="col-12 col-md-3">
             <Link to="/maintenance" className="text-decoration-none">
-              <Card width="100%" height="160px" className="hover-card" id={'cogs'}>
+              <Card width="100%" height="160px" className="hover-card" id="cogs">
                 <div className="w-100 h-100 d-flex flex-column justify-content-center">
-                  <div className="d-flex align-items-center gap-2">
+                  <div className="d-flex align-items-center gap-1 mb-2">
                     <i className="fs-5 fa fa-solid fa-wrench"></i>
                     <p className="fs-5 my-1">Maintenance</p>
                     <i className="ms-auto fs-5 fa fa-solid fa-up-right-from-square"></i>
                   </div>
-                  <h3 className="mb-0 numeral-text">
-                    {maintenances.length} <span className="fw-normal fs-4">remaining</span>
-                  </h3>
+                  <MaintenanceChart />
                 </div>
               </Card>
             </Link>
@@ -235,12 +234,12 @@ function Dashboard() {
                             <span>{payment.tenantName}</span>
                             <br/>
                             <div className="d-flex flex-row justify-content-between ">
-                              <span className="text-muted">
+                              <span>₱{payment.amount.toLocaleString()}</span>
+                              <em>{payment.paymentMethod}</em>
+                            </div>
+                            <span className="text-muted">
                                 {new Date(payment.paymentDate).toLocaleDateString()}
                               </span>
-                              <span>₱{payment.amount.toLocaleString()}</span>
-                            </div>
-                            <em>{payment.paymentMethod}</em>
                           </div>
                         </li>
                       ))}
