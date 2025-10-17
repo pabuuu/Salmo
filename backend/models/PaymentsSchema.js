@@ -4,12 +4,12 @@ const paymentSchema = new mongoose.Schema(
   {
     tenantId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Tenant", // links to the tenant
+      ref: "Tenants", // links to the tenant
       required: true,
     },
     unitId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Unit", // links to the rented unit
+      ref: "Units", // links to the rented unit
       required: true,
     },
     amount: {
