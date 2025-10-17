@@ -8,18 +8,46 @@ export const updateOverdueTenants = async () => {
     const nextWeek = new Date(today);
     nextWeek.setDate(today.getDate() + 7);
 
-    //mark overdue tenants
+    console.log("🕒 Running updateOverdueTenants...");
+
+    // 🔁 1. Refresh next period for fully paid tenants whose due date has arrived
+    const tenantsToRefresh = await Tenant.find({
+      nextDueDate: { $lte: today },
+      status: "Paid",
+      isArchived: false,
+    }).populate("unitId", "rentAmount paymentFrequency");
+
+    for (const tenant of tenantsToRefresh) {
+      const rentAmount = tenant.unitId?.rentAmount || 0;
+
+      tenant.balance = rentAmount;
+      tenant.status = "Unpaid";
+
+      const nextDue = new Date(tenant.nextDueDate);
+      if (tenant.unitId?.paymentFrequency === "Quarterly") {
+        nextDue.setMonth(nextDue.getMonth() + 3);
+      } else if (tenant.unitId?.paymentFrequency === "Yearly") {
+        nextDue.setFullYear(nextDue.getFullYear() + 1);
+      } else {
+        nextDue.setMonth(nextDue.getMonth() + 1);
+      }
+
+      tenant.nextDueDate = nextDue;
+      await tenant.save();
+
+      console.log(`🔄 Refreshed rent for ${tenant.firstName} ${tenant.lastName}`);
+    }
+
+    // 🚨 2. Mark overdue tenants (only Pending/Unpaid, not Partial)
     const overdueTenants = await Tenant.find({
       nextDueDate: { $lt: today },
-      status: { $ne: "Overdue" },
+      status: { $in: ["Pending", "Unpaid"] }, // <-- partial tenants are safe
       isArchived: false,
     });
 
     if (overdueTenants.length > 0) {
       await Promise.all(
-        overdueTenants.map((t) =>
-          Tenant.findByIdAndUpdate(t._id, { status: "Overdue" })
-        )
+        overdueTenants.map((t) => Tenant.findByIdAndUpdate(t._id, { status: "Overdue" }))
       );
 
       for (const tenant of overdueTenants) {
@@ -34,7 +62,7 @@ export const updateOverdueTenants = async () => {
       console.log(`🚨 Marked ${overdueTenants.length} tenants as Overdue.`);
     }
 
-    //jew today
+    // 📅 3. Rent due today reminders
     const dueToday = await Tenant.find({
       nextDueDate: {
         $gte: new Date(today.setHours(0, 0, 0, 0)),
@@ -53,7 +81,7 @@ export const updateOverdueTenants = async () => {
       }
     }
 
-    //due one week
+    // 📆 4. Upcoming (next week) reminders
     const dueNextWeek = await Tenant.find({
       nextDueDate: {
         $gte: new Date(nextWeek.setHours(0, 0, 0, 0)),
@@ -72,7 +100,7 @@ export const updateOverdueTenants = async () => {
       }
     }
 
-    console.log("✅ Overdue & reminder email check complete.");
+    console.log("✅ Overdue, reminders, and rent refresh check complete.");
   } catch (err) {
     console.error("❌ Error updating overdue tenants:", err);
   }

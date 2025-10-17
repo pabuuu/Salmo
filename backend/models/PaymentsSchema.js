@@ -22,12 +22,12 @@ const paymentSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["Cash", "GCash", "Bank Transfer", "Other"],
+      enum: ["Cash", "GCash", "Bank Transfer", "Other","Initial Payment"],
       default: "Cash",
     },
     status: {
       type: String,
-      enum: ["Paid", "Pending", "Overdue"],
+      enum: ["Paid", "Partial", "Pending", "Overdue"], // add Partial
       default: "Pending",
     },
     notes: {
