@@ -18,33 +18,31 @@ export default function IncomeChart() {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
   const [latestTotal, setLatestTotal] = useState(0);
-  const [filter, setFilter] = useState('Monthly');
+  const [filter, setFilter] = useState('Weekly');
 
-  // ✅ Weekly helper (starts Monday, returns key + readable label)
+  // compute week key + label (Mon–Sun)
   const getWeekKeyAndLabel = (date) => {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7; // Sunday = 7
-    d.setUTCDate(d.getUTCDate() + 1 - dayNum); // Move to Monday
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 1 - dayNum);
 
-    // Week number key (for grouping)
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     const daysSinceYearStart = Math.floor((d - yearStart) / 86400000);
     const weekNo = Math.floor(daysSinceYearStart / 7) + 1;
+
     const key = `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 
-    // Date range label (Mon–Sun)
     const monday = new Date(d);
     const sunday = new Date(d);
     sunday.setUTCDate(monday.getUTCDate() + 6);
 
-    const formatDate = (date) =>
-      date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
+    const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const label = `${formatDate(monday)}–${formatDate(sunday)}`;
+
     return { key, label };
   };
 
-  // ✅ Fetch and group payments
+  //fetch and group payments from backend
   const fetchPayments = async (selectedFilter) => {
     try {
       const res = await axios.get("http://localhost:5050/api/payments/all");
@@ -53,7 +51,9 @@ export default function IncomeChart() {
       const incomeByPeriod = {};
 
       payments.forEach(payment => {
+        if (!payment.amount || !payment.paymentDate) return;
         const date = new Date(payment.paymentDate);
+
         let key, label;
 
         if (selectedFilter === 'Weekly') {
@@ -81,13 +81,15 @@ export default function IncomeChart() {
         }
       });
 
+      //sort
       const sortedKeys = Object.keys(incomeByPeriod).sort();
 
+      // get latest total
       const latestKey = sortedKeys[sortedKeys.length - 1];
       const latestVal = incomeByPeriod[latestKey];
       setLatestTotal(typeof latestVal === 'object' ? latestVal.total : latestVal || 0);
 
-      // ✅ Chart data and options
+      // ✅ Prepare chart data
       const data = {
         labels: sortedKeys.map(k =>
           typeof incomeByPeriod[k] === 'object' ? incomeByPeriod[k].label : k
@@ -99,7 +101,8 @@ export default function IncomeChart() {
           ),
           borderColor: '#222222',
           backgroundColor: '#222222',
-          tension: 0.3
+          tension: 0.3,
+          fill: false
         }]
       };
 
@@ -110,10 +113,15 @@ export default function IncomeChart() {
           legend: { position: 'top' },
           title: { display: true, text: `Income (${selectedFilter})` }
         },
-        scales: { y: { beginAtZero: true } }
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: (value) => `₱${value.toLocaleString()}` }
+          }
+        }
       };
 
-      // ✅ Render Chart.js instance
+      // ✅ Render chart
       if (chartRef.current) {
         if (chartInstanceRef.current) chartInstanceRef.current.destroy();
         chartInstanceRef.current = new Chart(chartRef.current, { type: 'line', data, options });
@@ -131,34 +139,18 @@ export default function IncomeChart() {
     };
   }, [filter]);
 
-  // ✅ UI
   return (
     <div style={{ width: '100%' }}>
-      <div className="mb-1 d-flex gap-2 flex-wrap">
-        <button
-          className={`btn btn-sm px-3 py-2 ${filter === 'Weekly' ? 'btn-secondary' : 'btn-dark'}`}
-          onClick={() => setFilter('Weekly')}
-        >
-          Weekly
-        </button>
-        <button
-          className={`btn btn-sm px-3 py-2 ${filter === 'Monthly' ? 'btn-secondary' : 'btn-dark'}`}
-          onClick={() => setFilter('Monthly')}
-        >
-          Monthly
-        </button>
-        <button
-          className={`btn btn-sm px-3 py-2 ${filter === 'Quarterly' ? 'btn-secondary' : 'btn-dark'}`}
-          onClick={() => setFilter('Quarterly')}
-        >
-          Quarterly
-        </button>
-        <button
-          className={`btn btn-sm px-3 py-2 ${filter === 'Yearly' ? 'btn-secondary' : 'btn-dark'}`}
-          onClick={() => setFilter('Yearly')}
-        >
-          Yearly
-        </button>
+      <div className="mb-2 d-flex gap-2 flex-wrap">
+        {['Weekly', 'Monthly', 'Quarterly', 'Yearly'].map(period => (
+          <button
+            key={period}
+            className={`btn btn-sm px-3 py-2 ${filter === period ? 'btn-secondary' : 'btn-dark'}`}
+            onClick={() => setFilter(period)}
+          >
+            {period}
+          </button>
+        ))}
       </div>
 
       <div style={{ height: '240px' }}>
