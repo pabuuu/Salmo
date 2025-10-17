@@ -22,7 +22,7 @@ const unitsSchema = new mongoose.Schema({
   },
   notes: { type: String },
 
-  // ✅ Reference tenant
+  // Reference tenant
   tenant: { type: mongoose.Schema.Types.ObjectId, ref: "Tenants", default: null }
 }, { timestamps: true });
 

@@ -3,7 +3,7 @@ import Tenants from "../models/Tenants.js";
 import { getNextDueDate } from '../utils/dateUtils.js';
 
 
-// 🔹 Utility: recompute tenant balance + status from all payments
+// Utility: recompute tenant balance + status from all payments
 export const recalcTenantBalance = async (tenantId) => {
   const tenant = await Tenants.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
   if (!tenant) return;
@@ -57,7 +57,7 @@ export const createPayment = async (req, res) => {
       notes: notes || "",
     });
 
-    // ✅ Recalculate tenant balance & status correctly
+    // Recalculate tenant balance & status correctly
     await recalcTenantBalance(tenantId);
 
     // Fetch updated tenant after recalculation
@@ -75,9 +75,7 @@ export const createPayment = async (req, res) => {
   }
 };
 
-// =====================================================
-// 🔸 UPDATE PAYMENT
-// =====================================================
+
 export const updatePayment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -105,9 +103,6 @@ export const updatePayment = async (req, res) => {
   }
 };
 
-// =====================================================
-// 🔸 DELETE PAYMENT
-// =====================================================
 export const deletePayment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -128,9 +123,6 @@ export const deletePayment = async (req, res) => {
   }
 };
 
-// =====================================================
-// 🔸 GET TENANT PAYMENTS
-// =====================================================
 export const getTenantPayments = async (req, res) => {
   try {
     const tenantId = req.params.tenantId || req.params.id;

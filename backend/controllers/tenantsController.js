@@ -6,7 +6,7 @@ import { updateOverdueTenants } from '../utils/updateOverdues.js';
 import { recalcTenantBalance } from './paymentsController.js';
 import { getNextDueDate } from '../utils/dateUtils.js';
 
-// ✅ Load all tenants with their unit details
+// Load all tenants with their unit details
 export const load = async (req, res) => {
   try {
     const tenants = await Tenants.find()
@@ -20,7 +20,7 @@ export const load = async (req, res) => {
   }
 };
 
-// ✅ Create Tenant
+// Create Tenant
 export const createTenant = async (req, res) => {
   try {
     const { firstName, lastName, email, contactNumber, unitId, paymentFrequency, initialPayment = 0 } = req.body;
@@ -85,7 +85,7 @@ export const createTenant = async (req, res) => {
 
 
 
-// ✅ Get single tenant
+// Get single tenant
 export const getTenant = async (req, res) => {
   try {
     const tenant = await Tenants.findById(req.params.id)
@@ -100,7 +100,7 @@ export const getTenant = async (req, res) => {
   }
 };
 
-// ✅ Update tenant
+// Update tenant
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
@@ -159,7 +159,7 @@ export const update = async (req, res) => {
   }
 };
 
-// ✅ Delete tenant
+// Delete tenant
 export const archiveTenant = async (req, res) => {
   try {
     const { id } = req.params;
@@ -173,7 +173,7 @@ export const archiveTenant = async (req, res) => {
     const newStatus = !tenant.isArchived;
     tenant.isArchived = newStatus;
 
-    // ✅ Disable validation so it won’t require all fields again
+    // Disable validation so it won’t require all fields again
     await tenant.save({ validateBeforeSave: false });
 
     // Free unit only if archiving
@@ -199,7 +199,7 @@ export const archiveTenant = async (req, res) => {
 
 export const getTenants = async (req, res) => {
   try {
-    // 1️⃣ Ensure balances and statuses are up-to-date
+    // Ensure balances and statuses are up-to-date
     const tenantsFromDb = await Tenants.find()
       .populate({
         path: "unitId",
