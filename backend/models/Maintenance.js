@@ -5,7 +5,7 @@ const maintenanceSchema = new mongoose.Schema(
     tenant: { type: mongoose.Schema.Types.ObjectId, ref: "Tenants", required: false },
     unit: { type: mongoose.Schema.Types.ObjectId, ref: "Units", required: true },
     task: { type: String, required: true },
-    description: { type: String, required: false }, // ✅ ADD THIS LINE
+    description: { type: String, required: false }, // ADD THIS LINE
     schedule: { type: Date, required: true },
     status: {
       type: String,
