@@ -214,7 +214,6 @@ function Dashboard() {
               </div>
             </Card>
           </div>
-
           <div className="col-12 col-md-3 d-flex">
             <Card className="p-1 px-0 flex-fill">
               <div className="px-1 d-flex flex-column h-100">
@@ -222,27 +221,34 @@ function Dashboard() {
                   <i className="fa me-3 fs-5 fa-solid fa-history text-dark"></i>
                   <span className="mb-0 fs-5">Recent Payments</span>
                 </div>
-                <div
-                  className="flex-grow-1"
-                  style={{ overflowY: "auto" }}
-                >
+                <div className="flex-grow-1" style={{ overflowY: "auto" }}>
                   {payments.length > 0 ? (
                     <ul className="list-unstyled mb-0">
-                      {payments.map((payment) => (
-                        <li key={payment._id} className="mb-2 hide-scrollbar" style={{overflowY:'scroll'}}>
-                          <div className="w-100">
-                            <span>{payment.tenantName}</span>
-                            <br/>
-                            <div className="d-flex flex-row justify-content-between ">
-                              <span>₱{payment.amount.toLocaleString()}</span>
-                              <em>{payment.paymentMethod}</em>
-                            </div>
-                            <span className="text-muted">
+                      {payments
+                        .slice(0, 8)
+                        .map((payment) => (
+                          <li
+                            key={payment._id}
+                            className="mb-2 hide-scrollbar"
+                            style={{ overflowY: "scroll" }}
+                          >
+                            <div className="w-100">
+                              <span>
+                                {payment.tenantId
+                                  ? `${payment.tenantId.firstName} ${payment.tenantId.lastName}`
+                                  : "Unknown Tenant"}
+                              </span>
+                              <br />
+                              <div className="d-flex flex-row justify-content-between">
+                                <span>₱{payment.amount.toLocaleString()}</span>
+                                <em>{payment.paymentMethod}</em>
+                              </div>
+                              <span className="text-muted">
                                 {new Date(payment.paymentDate).toLocaleDateString()}
                               </span>
-                          </div>
-                        </li>
-                      ))}
+                            </div>
+                          </li>
+                        ))}
                     </ul>
                   ) : (
                     <p className="text-muted">No recent payments</p>
@@ -251,6 +257,7 @@ function Dashboard() {
               </div>
             </Card>
           </div>
+
         </div>
       </Card>
     </div>
