@@ -4,6 +4,7 @@ import axios from "axios";
 import ExpensesTable from "../../components/ExpensesTable";
 import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
+import ReceiptModal from "../../components/ReceiptModal"; // ✅ import modal
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function Expenses() {
@@ -16,6 +17,10 @@ function Expenses() {
   const [categories, setCategories] = useState(["All"]);
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [deletingExpenseId, setDeletingExpenseId] = useState(null);
+
+  // 🧾 For receipt modal
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptUrl, setReceiptUrl] = useState("");
 
   useEffect(() => {
     if (location.state?.notification) {
@@ -76,10 +81,9 @@ function Expenses() {
     }
   };
 
-  // 🔹 Updated Move To logic
+  // 🔹 Updated Move To / View Receipt logic
   const handleMoveTo = async (expense) => {
     if (expense.status === "Pending") {
-      // Move to Approved
       try {
         await axios.put(`http://localhost:5050/api/expenses/${expense._id}`, { status: "Approved" });
         setNotification({ type: "success", message: `"${expense.title}" moved to Approved.` });
@@ -89,7 +93,6 @@ function Expenses() {
         setNotification({ type: "error", message: "Failed to update status." });
       }
     } else if (expense.status === "Approved") {
-      // Check if receipt exists
       if (!expense.receiptImage) {
         return setNotification({
           type: "error",
@@ -97,7 +100,6 @@ function Expenses() {
         });
       }
 
-      // Move to Paid
       try {
         await axios.put(`http://localhost:5050/api/expenses/${expense._id}`, { status: "Paid" });
         setNotification({ type: "success", message: `"${expense.title}" moved to Paid.` });
@@ -107,8 +109,9 @@ function Expenses() {
         setNotification({ type: "error", message: "Failed to move to Paid." });
       }
     } else if (expense.status === "Paid" && expense.receiptImage) {
-      // View Receipt
-      navigate(`/expenses/${expense._id}`);
+      // ✅ Instead of navigating, open receipt modal
+      setReceiptUrl(expense.receiptImage);
+      setShowReceiptModal(true);
     }
   };
 
@@ -126,7 +129,8 @@ function Expenses() {
       label: "Unit",
       render: (row) => {
         if (row.unitId) return `${row.unitId.unitNo || "Unknown"} (${row.unitId.location || "Unknown"})`;
-        if (row.maintenanceId && row.maintenanceId.unit) return `${row.maintenanceId.unit.unitNo || "Unknown"} (${row.maintenanceId.unit.location || "Unknown"})`;
+        if (row.maintenanceId && row.maintenanceId.unit)
+          return `${row.maintenanceId.unit.unitNo || "Unknown"} (${row.maintenanceId.unit.location || "Unknown"})`;
         return "—";
       },
     },
@@ -147,9 +151,11 @@ function Expenses() {
               handleMoveTo(row);
             }}
           >
-            {row.status === "Pending" ? "Move to Approved" :
-             row.status === "Approved" ? "Move to Paid" :
-             "View Receipt"}
+            {row.status === "Pending"
+              ? "Move to Approved"
+              : row.status === "Approved"
+              ? "Move to Paid"
+              : "View Receipt"}
           </button>
 
           <button
@@ -169,9 +175,7 @@ function Expenses() {
   ];
 
   const filteredExpenses = expenses
-    .filter((e) =>
-      `${e.title} ${e.category}`.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((e) => `${e.title} ${e.category}`.toLowerCase().includes(searchTerm.toLowerCase()))
     .filter((e) => selectedCategory === "All" || e.category === selectedCategory);
 
   const handleSort = (type) => {
@@ -197,6 +201,13 @@ function Expenses() {
         message={notification.message}
         actions={notification.actions}
         onClose={() => setNotification({ type: "", message: "" })}
+      />
+
+      {/* ✅ Receipt Modal */}
+      <ReceiptModal
+        show={showReceiptModal}
+        onClose={() => setShowReceiptModal(false)}
+        receiptUrl={receiptUrl}
       />
 
       <div className="mb-4">
@@ -228,9 +239,11 @@ function Expenses() {
               {["newest", "oldest", "az", "za"].map((sortKey) => (
                 <li key={sortKey}>
                   <button className="dropdown-item" onClick={() => handleSort(sortKey)}>
-                    {sortKey === "az" ? "Alphabetical ↑" :
-                     sortKey === "za" ? "Alphabetical ↓" :
-                     sortKey.charAt(0).toUpperCase() + sortKey.slice(1)}
+                    {sortKey === "az"
+                      ? "Alphabetical ↑"
+                      : sortKey === "za"
+                      ? "Alphabetical ↓"
+                      : sortKey.charAt(0).toUpperCase() + sortKey.slice(1)}
                   </button>
                 </li>
               ))}
@@ -274,7 +287,9 @@ function Expenses() {
             onRowClick={(row) => navigate(`/expenses/${row._id}`)}
           />
         ) : (
-          <div className="text-center py-4 text-muted">No expenses found matching your search/filter.</div>
+          <div className="text-center py-4 text-muted">
+            No expenses found matching your search/filter.
+          </div>
         )}
       </div>
     </div>
