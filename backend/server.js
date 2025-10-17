@@ -2,16 +2,24 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import tenantRouter from "./routes/tenantRoute.js";
 import unitRouter from "./routes/unitRoute.js";
 import maintenanceRouter from "./routes/maintenanceRoute.js"; 
 import paymentRoute from "./routes/paymentRoute.js";
+import expenseRoute from "./routes/expenseRoute.js";
 import testEmailRoutes from "./routes/testEmailRoutes.js";
 import { initScheduler } from "./utils/mailScheduler.js";
 
 dotenv.config();
 const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve uploads folder
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(cors());
 app.use(express.json());
@@ -27,6 +35,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
 app.use("/api/maintenances", maintenanceRouter); // ✅ mount maintenance routes
+app.use("/api/expenses", expenseRoute);
 app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
 // Health check
