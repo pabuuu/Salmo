@@ -1,9 +1,9 @@
 import Expense from "../models/Expense.js";
 import Maintenance from "../models/Maintenance.js";
 import Units from "../models/Units.js";
-import { supabase } from "../supabase.js"; // Supabase client
+import { supabase } from "../supabase.js"; 
 
-// 🧩 Helper: upload file to Supabase and return its public URL
+// Helper: upload file to Supabase and return its public URL
 const uploadToSupabase = async (file) => {
   if (!file) return null;
 
@@ -25,7 +25,7 @@ const uploadToSupabase = async (file) => {
   return urlData.publicUrl;
 };
 
-// 🟢 CREATE Expense
+// CREATE Expense
 export const createExpense = async (req, res) => {
   try {
     const { title, description, category, amount, status, maintenanceId, unitId } = req.body;
@@ -58,7 +58,7 @@ export const createExpense = async (req, res) => {
       status: status || "Pending",
       maintenanceId: linkedMaintenance?._id || null,
       unitId: linkedUnit?._id || null,
-      receiptImage: receiptUrl, // ✅ store full Supabase URL
+      receiptImage: receiptUrl, // store full Supabase URL
     });
 
     await expense.save();
@@ -69,12 +69,12 @@ export const createExpense = async (req, res) => {
 
     res.status(201).json({ success: true, message: "Expense created successfully.", expense: populatedExpense });
   } catch (err) {
-    console.error("❌ Error creating expense:", err.message);
+    console.error("Error creating expense:", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 🟡 READ: Get all Expenses
+// READ: Get all Expenses
 export const getExpenses = async (req, res) => {
   try {
     const expenses = await Expense.find()
@@ -84,12 +84,12 @@ export const getExpenses = async (req, res) => {
 
     res.status(200).json({ success: true, expenses });
   } catch (err) {
-    console.error("❌ Error fetching expenses:", err.message);
+    console.error("Error fetching expenses:", err.message);
     res.status(500).json({ success: false, message: "Server error fetching expenses." });
   }
 };
 
-// 🟣 READ: Get Expense by ID
+// READ: Get Expense by ID
 export const getExpenseById = async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id)
@@ -100,12 +100,12 @@ export const getExpenseById = async (req, res) => {
 
     res.status(200).json({ success: true, expense });
   } catch (err) {
-    console.error("❌ Error fetching expense:", err.message);
+    console.error("Error fetching expense:", err.message);
     res.status(500).json({ success: false, message: "Server error fetching expense." });
   }
 };
 
-// 🟠 UPDATE Expense
+// UPDATE Expense
 export const updateExpense = async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id);
@@ -124,7 +124,7 @@ export const updateExpense = async (req, res) => {
     // If a new file is uploaded, replace the old one in Supabase
     if (req.file) {
       const receiptUrl = await uploadToSupabase(req.file);
-      expense.receiptImage = receiptUrl; // ✅ replace with new Supabase link
+      expense.receiptImage = receiptUrl; // replace with new Supabase link
     }
 
     await expense.save();
@@ -135,12 +135,12 @@ export const updateExpense = async (req, res) => {
 
     res.json({ success: true, expense: populatedExpense });
   } catch (err) {
-    console.error("❌ Error updating expense:", err.message);
+    console.error("Error updating expense:", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 🔴 DELETE Expense
+// DELETE Expense
 export const deleteExpense = async (req, res) => {
   try {
     const expense = await Expense.findByIdAndDelete(req.params.id);
@@ -150,12 +150,12 @@ export const deleteExpense = async (req, res) => {
     if (expense.receiptImage) {
       const fileName = expense.receiptImage.split("/").pop();
       const { error } = await supabase.storage.from("receipt").remove([fileName]);
-      if (error) console.error("❌ Supabase delete error:", error.message);
+      if (error) console.error("Supabase delete error:", error.message);
     }
 
     res.json({ success: true, message: "Expense deleted successfully." });
   } catch (err) {
-    console.error("❌ Error deleting expense:", err.message);
+    console.error("Error deleting expense:", err.message);
     res.status(500).json({ success: false, message: "Server error deleting expense." });
   }
 };

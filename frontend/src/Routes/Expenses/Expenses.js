@@ -4,7 +4,7 @@ import axios from "axios";
 import ExpensesTable from "../../components/ExpensesTable";
 import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
-import ReceiptModal from "../../components/ReceiptModal"; // ✅ import modal
+import ReceiptModal from "../../components/ReceiptModal"; // import modal
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function Expenses() {
@@ -18,7 +18,7 @@ function Expenses() {
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [deletingExpenseId, setDeletingExpenseId] = useState(null);
 
-  // 🧾 For receipt modal
+  // For receipt modal
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptUrl, setReceiptUrl] = useState("");
 
@@ -81,7 +81,7 @@ function Expenses() {
     }
   };
 
-  // 🔹 Updated Move To / View Receipt logic
+  // Updated Move To / View Receipt logic
   const handleMoveTo = async (expense) => {
     if (expense.status === "Pending") {
       try {
@@ -109,7 +109,7 @@ function Expenses() {
         setNotification({ type: "error", message: "Failed to move to Paid." });
       }
     } else if (expense.status === "Paid" && expense.receiptImage) {
-      // ✅ Instead of navigating, open receipt modal
+      // Instead of navigating, open receipt modal
       setReceiptUrl(expense.receiptImage);
       setShowReceiptModal(true);
     }
