@@ -98,7 +98,7 @@ function Tenants() {
     },
     { 
       key: "status", 
-      label: "Status",
+      label: "Unit Status",
       render: (_, row) => (
         <span className={row.unitId?.status === "Occupied" ? "text-danger fw-bold" : "text-success"}>
           {row.unitId ? row.unitId.status : "N/A"}

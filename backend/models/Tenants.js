@@ -22,11 +22,11 @@ const TenantsSchema = new mongoose.Schema(
     unitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Units",
-      required: false,
-    },
-    rentAmount: {
-      type: Number,
       required: true,
+    },
+    initialPayment:{
+      type:Number,
+      required:true,
     },
     paymentFrequency: {
       type: String,
@@ -44,7 +44,7 @@ const TenantsSchema = new mongoose.Schema(
     },
     nextDueDate: {
       type: Date,
-      required: true,
+      required: false,
     },
     status: {
       type: String,
