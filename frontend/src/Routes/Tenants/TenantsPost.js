@@ -3,6 +3,7 @@ import Card from "../../components/Card.js";
 import Dropdown from "../../components/Dropdown.js";
 import LoadingScreen from "../../views/Loading.js";
 import { useNavigate } from "react-router-dom";
+import Notification from "../../components/Notification.js";
 
 export default function TenantsPost() {
   const navigate = useNavigate();
@@ -24,7 +25,11 @@ export default function TenantsPost() {
   const [unitLabel, setUnitLabel] = useState("Select Unit");
   const [locationLabel, setLocationLabel] = useState("Select Location");
   const [frequencyLabel, setFrequecyLabel] = useState("Select Frequency");
-
+  const [toast, setToast] = useState({
+    show: false,
+    type: "",
+    message: "",
+  });
   // fetch units when location changes
   useEffect(() => {
     if (location) {
@@ -49,16 +54,21 @@ export default function TenantsPost() {
   // handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const selectedUnit = availableUnits.find((u) => u._id === unitId);
     const rentAmount = selectedUnit?.rentAmount || 0;
-  
+
     if (Number(initialPayment) > rentAmount) {
-      alert(`⚠️ Initial payment cannot exceed rent amount (${rentAmount.toLocaleString()}₱).`);
+      setToast({
+        show: true,
+        type: "warning",
+        message: `⚠️ Initial payment cannot exceed rent amount (₱${rentAmount.toLocaleString()}).`,
+      });
       return;
     }
+
     setError("");
-  
+
     try {
       const response = await fetch("http://localhost:5050/api/tenants/create", {
         method: "POST",
@@ -74,21 +84,37 @@ export default function TenantsPost() {
           isArchived: false,
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok && data.tenant) {
-        alert("✅ Tenant created successfully!");
-        navigate("/tenants");
+        // success toast
+        setToast({
+          show: true,
+          type: "success",
+          message: "Tenant created successfully!",
+        });
+
+        //navigate 
+        setTimeout(() => navigate("/tenants"), 1200);
       } else {
-        alert("⚠️ " + (data.message || "Failed to create tenant"));
+        // failure toast
+        setToast({
+          show: true,
+          type: "warning",
+          message: data.message || "Failed to create tenant.",
+        });
       }
     } catch (error) {
       console.error("Error creating tenant:", error);
-      alert("Something went wrong while creating tenant.");
+      //error toast
+      setToast({
+        show: true,
+        type: "error",
+        message: "Something went wrong while creating tenant.",
+      });
     }
   };
-  
 
   // handlers
   const handleLocationSelect = (loc) => {
@@ -99,7 +125,7 @@ export default function TenantsPost() {
   };
 
   const handleUnitSelect = (unit) => {
-    setUnitId(unit._id); // ✅ store actual unitId
+    setUnitId(unit._id); // store actual unitId
     setUnitLabel(`Unit ${unit.unitNo}`); // show friendly label
   };
 
@@ -179,7 +205,6 @@ export default function TenantsPost() {
                   ))}
                 </Dropdown>
               </div>
-
               {/* units dropdown (dynamic) */}
               <div className="flex-grow-1">
                 <label className="form-label">Unit</label>
@@ -224,8 +249,13 @@ export default function TenantsPost() {
                 </Dropdown>
               </div>
             </div>
-
-            {/* --- buttons --- */}
+            {toast.show && (
+              <Notification
+                type={toast.type}
+                message={toast.message}
+                onClose={() => setToast({ show: false, type: "", message: "" })}
+              />
+            )}
             <div className="d-flex gap-2 mt-3">
               <button
                 className="custom-button fw-normal px-4 bg-light border text-muted"

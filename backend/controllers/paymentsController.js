@@ -1,11 +1,11 @@
 import PaymentsSchema from "../models/PaymentsSchema.js";
-import Tenant from "../models/Tenants.js";
+import Tenants from "../models/Tenants.js";
 import { getNextDueDate } from '../utils/dateUtils.js';
 
 
 // Utility: recompute tenant balance + status from all payments
 export const recalcTenantBalance = async (tenantId) => {
-  const tenant = await Tenant.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
+  const tenant = await Tenants.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
   if (!tenant) return;
 
   const payments = await PaymentsSchema.find({ tenantId });
@@ -37,9 +37,6 @@ export const recalcTenantBalance = async (tenantId) => {
   await tenant.save();
 };
 
-// =====================================================
-// CREATE PAYMENT
-// =====================================================
 export const createPayment = async (req, res) => {
   try {
     const { tenantId, amount, paymentDate, paymentMethod, notes } = req.body;
@@ -47,7 +44,7 @@ export const createPayment = async (req, res) => {
     if (!tenantId || !amount || amount <= 0)
       return res.status(400).json({ success: false, message: "tenantId and valid amount are required" });
 
-    const tenant = await Tenant.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
+    const tenant = await Tenants.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
     if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
 
     // Create payment record
@@ -64,7 +61,7 @@ export const createPayment = async (req, res) => {
     await recalcTenantBalance(tenantId);
 
     // Fetch updated tenant after recalculation
-    const updatedTenant = await Tenant.findById(tenantId);
+    const updatedTenant = await Tenants.findById(tenantId);
 
     return res.status(201).json({
       success: true,
@@ -78,9 +75,7 @@ export const createPayment = async (req, res) => {
   }
 };
 
-// =====================================================
-// UPDATE PAYMENT
-// =====================================================
+
 export const updatePayment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -108,9 +103,6 @@ export const updatePayment = async (req, res) => {
   }
 };
 
-// =====================================================
-// DELETE PAYMENT
-// =====================================================
 export const deletePayment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -131,16 +123,13 @@ export const deletePayment = async (req, res) => {
   }
 };
 
-// =====================================================
-// GET TENANT PAYMENTS
-// =====================================================
 export const getTenantPayments = async (req, res) => {
   try {
     const tenantId = req.params.tenantId || req.params.id;
     if (!tenantId)
       return res.status(400).json({ success: false, message: "tenantId required" });
 
-    const tenant = await Tenant.findById(tenantId).populate("unitId", "unitNo location rentAmount status");
+    const tenant = await Tenants.findById(tenantId).populate("unitId", "unitNo location rentAmount status");
     if (!tenant)
       return res.status(404).json({ success: false, message: "Tenant not found" });
 
@@ -156,9 +145,6 @@ export const getTenantPayments = async (req, res) => {
   }
 };
 
-// =====================================================
-// GET ALL PAYMENTS (ADMIN)
-// =====================================================
 export const getAllPayments = async (req, res) => {
   try {
     const payments = await PaymentsSchema

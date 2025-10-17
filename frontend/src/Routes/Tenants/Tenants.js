@@ -4,6 +4,7 @@ import axios from "axios";
 import Table from "../../components/Table";
 import LoadingScreen from "../../views/Loading";
 import { Link } from "react-router-dom";
+import Notification from '../../components/Notification.js'
 
 function Tenants() {
   const [tenants, setTenants] = useState([]);
@@ -11,6 +12,52 @@ function Tenants() {
   const [filter, setFilter] = useState("All");
   const [sortKey, setSortKey] = useState("newest");
   const [searchTerm, setSearchTerm] = useState("");
+  const [confirmModal, setConfirmModal] = useState({
+    show: false,
+    id: null,
+    isArchived: false,
+  });
+  const [toast, setToast] = useState({
+    show: false,
+    type: "",
+    message: "",
+  });
+  
+  const doArchive = async () => {
+    const { id, isArchived } = confirmModal;
+    const action = isArchived ? "unarchive" : "archive";
+
+    try {
+      await axios.put(`http://localhost:5050/api/tenants/${id}/archive`, {
+        isArchived: !isArchived,
+      });
+
+      setTenants((prev) =>
+        prev.map((tenant) =>
+          tenant._id === id ? { ...tenant, isArchived: !isArchived } : tenant
+        )
+      );
+
+      //show success toast
+      setToast({
+        show: true,
+        type: "success",
+        message: `Tenant ${action}d successfully!`,
+      });
+    } catch (err) {
+      console.error("Error updating tenant:", err);
+
+      // show error toast
+      setToast({
+        show: true,
+        type: "error",
+        message: "Failed to update tenant status.",
+      });
+    } finally {
+      setConfirmModal({ show: false, id: null, isArchived: false });
+    }
+  };
+  
 
   useEffect(() => {
     axios
@@ -20,26 +67,11 @@ function Tenants() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleArchive = async (e, id, isArchived) => {
+  const handleArchive = (e, id, isArchived) => {
     e.stopPropagation();
-    const action = isArchived ? "unarchive" : "archive";
-    if (!window.confirm(`Are you sure you want to ${action} this tenant?`)) return;
-
-    try {
-      await axios.put(`http://localhost:5050/api/tenants/${id}/archive`, {
-        isArchived: !isArchived,
-      });
-      setTenants((prev) =>
-        prev.map((tenant) =>
-          tenant._id === id ? { ...tenant, isArchived: !isArchived } : tenant
-        )
-      );
-      alert(`Tenant ${action}d successfully!`);
-    } catch (err) {
-      console.error(`Error trying to ${action} tenant:`, err);
-      alert("Failed to update tenant status.");
-    }
+    setConfirmModal({ show: true, id, isArchived });
   };
+  
 
   const filteredTenants = tenants.filter((tenant) => {
     if (filter === "Archived") return tenant.isArchived;
@@ -201,6 +233,33 @@ function Tenants() {
 
         <Table columns={columns} data={sortedTenants} />
       </div>
+      {/* confirmation Modal */}
+      {confirmModal.show && (
+        <Notification
+          type="warning"
+          message={`Are you sure you want to ${
+            confirmModal.isArchived ? "unarchive" : "archive"
+          } this tenant?`}
+          icon={<i className="fa-solid fa-triangle-exclamation"></i>}
+          actions={[
+            { label: "Yes", onClick: doArchive },
+            {
+              label: "Cancel",
+              onClick: () =>
+                setConfirmModal({ show: false, id: null, isArchived: false }),
+            },
+          ]}
+        />
+      )}
+
+      {/* ✅ Success/Error Toast */}
+      {toast.show && (
+        <Notification
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast({ show: false, type: "", message: "" })}
+        />
+      )}
     </div>
   );
 }
