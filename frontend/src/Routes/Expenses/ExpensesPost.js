@@ -27,7 +27,7 @@ export default function ExpensesPost() {
         const data = await res.json();
         if (res.ok && data.success) setMaintenanceList(data.maintenance || []);
       } catch (err) {
-        console.error("🔥 Error fetching maintenance:", err);
+        console.error("Error fetching maintenance:", err);
       }
     };
     fetchMaintenance();
@@ -41,7 +41,7 @@ export default function ExpensesPost() {
         const data = await res.json();
         if (res.ok && data.success) setUnitList(data.data || []);
       } catch (err) {
-        console.error("🔥 Error fetching units:", err);
+        console.error("Error fetching units:", err);
       }
     };
     fetchUnits();
@@ -74,7 +74,7 @@ const handleSubmit = async (e) => {
       setNotification({ type: "error", message: data.message || "Failed to add expense." });
     }
   } catch (err) {
-    console.error("❌ Request failed:", err);
+    console.error("Request failed:", err);
     setNotification({ type: "error", message: "Request failed." });
   }
 };

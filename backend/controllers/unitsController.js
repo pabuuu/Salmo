@@ -6,14 +6,14 @@ export const load = async (req, res) => {
   try {
     const { location } = req.query;
     const query = location ? { location } : {};
-    const units = await Units.find(query).populate("tenant"); // ✅ includes tenant info
+    const units = await Units.find(query).populate("tenant"); // includes tenant info
     res.json({ success: true, data: units });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// ✅ Load only available units for a specific location
+// Load only available units for a specific location
 export const getAvailableByLocation = async (req, res) => {
   try {
     const { location } = req.query; // ?location=MH Del Pilar
@@ -33,7 +33,7 @@ export const create = async (req, res) => {
   try {
     const { unitNo, rentAmount, status, location, notes } = req.body;
 
-    // ✅ Check uniqueness of unitNo within the SAME location
+    // Check uniqueness of unitNo within the SAME location
     const existing = await Units.findOne({ unitNo, location });
     if (existing) {
       return res.status(400).json({
@@ -45,7 +45,7 @@ export const create = async (req, res) => {
     const unit = new Units({ unitNo, rentAmount, status, location, notes });
     await unit.save();
 
-    // ✅ Re-fetch with populated tenant (will be null at creation)
+    // Re-fetch with populated tenant (will be null at creation)
     const populatedUnit = await Units.findById(unit._id).populate("tenant");
 
     res.json({ success: true, message: "Unit created successfully", data: populatedUnit });
@@ -71,7 +71,7 @@ export const update = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    // ✅ Optional: if updating unitNo/location, re-check uniqueness
+    // Optional: if updating unitNo/location, re-check uniqueness
     if (updateData.unitNo || updateData.location) {
       const unit = await Units.findById(id);
       if (!unit) {
@@ -95,7 +95,7 @@ export const update = async (req, res) => {
       }
     }
 
-    // ✅ Update and populate tenant
+    // Update and populate tenant
     const updated = await Units.findByIdAndUpdate(id, updateData, { new: true })
       .populate("tenant");
 
@@ -110,7 +110,7 @@ export const getOne = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // ✅ populate tenant so you get tenant details
+    // populate tenant so you get tenant details
     const unit = await Units.findById(id).populate("tenant");
 
     if (!unit) {
@@ -123,7 +123,7 @@ export const getOne = async (req, res) => {
   }
 };
 
-// ✅ Assign a tenant to a unit (reference ID, not string)
+// Assign a tenant to a unit (reference ID, not string)
 export const assignTenant = async (req, res) => {
   try {
     const { id } = req.params; // unitId
@@ -138,25 +138,25 @@ export const assignTenant = async (req, res) => {
       return res.status(400).json({ success: false, message: "Unit is already occupied" });
     }
 
-    // ✅ Make sure tenant exists
+    // Make sure tenant exists
     const tenant = await Tenants.findById(tenantId);
     if (!tenant) {
       return res.status(404).json({ success: false, message: "Tenant not found" });
     }
 
-    // ✅ Store reference
+    // Store reference
     unit.tenant = tenant._id;
     unit.status = "Occupied";
     await unit.save();
 
-    // ✅ Update tenant side
+    // Update tenant side
     tenant.unitId = unit._id;
     await tenant.save();
 
     res.json({
       success: true,
       message: "Tenant assigned and unit marked as Occupied",
-      data: await unit.populate("tenant") // ✅ returns tenant details
+      data: await unit.populate("tenant") // returns tenant details
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -172,11 +172,11 @@ export const removeTenant = async (req, res) => {
       return res.status(404).json({ success: false, message: "Unit not found" });
     }
 
-    unit.tenant = null; // ✅ clear reference
+    unit.tenant = null; // clear reference
     unit.status = "Available";
     await unit.save();
 
-    // ✅ Clear tenant reference
+    // Clear tenant reference
     await Tenants.findOneAndUpdate({ unitId: unit._id }, { unitId: null });
 
     res.json({

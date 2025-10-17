@@ -3,7 +3,7 @@ import Tenant from "../models/Tenants.js";
 import { getNextDueDate } from '../utils/dateUtils.js';
 
 
-// 🔹 Utility: recompute tenant balance + status from all payments
+// Utility: recompute tenant balance + status from all payments
 export const recalcTenantBalance = async (tenantId) => {
   const tenant = await Tenant.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
   if (!tenant) return;
@@ -38,7 +38,7 @@ export const recalcTenantBalance = async (tenantId) => {
 };
 
 // =====================================================
-// 🔸 CREATE PAYMENT
+// CREATE PAYMENT
 // =====================================================
 export const createPayment = async (req, res) => {
   try {
@@ -60,7 +60,7 @@ export const createPayment = async (req, res) => {
       notes: notes || "",
     });
 
-    // ✅ Recalculate tenant balance & status correctly
+    // Recalculate tenant balance & status correctly
     await recalcTenantBalance(tenantId);
 
     // Fetch updated tenant after recalculation
@@ -79,7 +79,7 @@ export const createPayment = async (req, res) => {
 };
 
 // =====================================================
-// 🔸 UPDATE PAYMENT
+// UPDATE PAYMENT
 // =====================================================
 export const updatePayment = async (req, res) => {
   try {
@@ -109,7 +109,7 @@ export const updatePayment = async (req, res) => {
 };
 
 // =====================================================
-// 🔸 DELETE PAYMENT
+// DELETE PAYMENT
 // =====================================================
 export const deletePayment = async (req, res) => {
   try {
@@ -132,7 +132,7 @@ export const deletePayment = async (req, res) => {
 };
 
 // =====================================================
-// 🔸 GET TENANT PAYMENTS
+// GET TENANT PAYMENTS
 // =====================================================
 export const getTenantPayments = async (req, res) => {
   try {
@@ -157,7 +157,7 @@ export const getTenantPayments = async (req, res) => {
 };
 
 // =====================================================
-// 🔸 GET ALL PAYMENTS (ADMIN)
+// GET ALL PAYMENTS (ADMIN)
 // =====================================================
 export const getAllPayments = async (req, res) => {
   try {

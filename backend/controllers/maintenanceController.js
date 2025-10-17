@@ -2,7 +2,7 @@ import Maintenance from "../models/Maintenance.js";
 import Tenant from "../models/Tenants.js";
 import Unit from "../models/Units.js";
 
-// 🟡 Get ALL maintenance records
+// Get ALL maintenance records
 export const getMaintenances = async (req, res) => {
   try {
     const maintenances = await Maintenance.find()
@@ -36,12 +36,12 @@ export const getMaintenances = async (req, res) => {
 
     res.json({ success: true, data: populatedMaintenances });
   } catch (err) {
-    console.error("❌ Error fetching maintenances:", err);
+    console.error("Error fetching maintenances:", err);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-// 🟢 Create a maintenance record
+// Create a maintenance record
 export const createMaintenance = async (req, res) => {
   try {
     const { tenant, unit, task, description, schedule, status } = req.body;
@@ -66,12 +66,12 @@ export const createMaintenance = async (req, res) => {
 
     res.status(201).json({ success: true, data: maintenance });
   } catch (err) {
-    console.error("❌ Error creating maintenance:", err);
+    console.error("Error creating maintenance:", err);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-// 🔵 Get single maintenance by ID
+// Get single maintenance by ID
 export const getMaintenanceById = async (req, res) => {
   try {
     const maintenance = await Maintenance.findById(req.params.id)
@@ -84,12 +84,12 @@ export const getMaintenanceById = async (req, res) => {
 
     res.json(maintenance);
   } catch (error) {
-    console.error("❌ Error fetching maintenance:", error);
+    console.error("Error fetching maintenance:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// 🟠 Update maintenance record
+// Update maintenance record
 export const updateMaintenance = async (req, res) => {
   try {
     const { id } = req.params;
@@ -99,12 +99,12 @@ export const updateMaintenance = async (req, res) => {
 
     res.json({ success: true, data: updated });
   } catch (err) {
-    console.error("❌ Error updating maintenance:", err);
+    console.error("Error updating maintenance:", err);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-// 🔴 Delete maintenance
+// Delete maintenance
 export const deleteMaintenance = async (req, res) => {
   try {
     const { id } = req.params;
@@ -114,12 +114,12 @@ export const deleteMaintenance = async (req, res) => {
 
     res.json({ success: true, message: "Maintenance deleted successfully" });
   } catch (err) {
-    console.error("❌ Error deleting maintenance:", err);
+    console.error("Error deleting maintenance:", err);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-// 🟢 Get all "In Process" maintenances
+// Get all "In Process" maintenances
 export const getInProcessMaintenances = async (req, res) => {
   try {
     const maintenances = await Maintenance.find({ status: "In Process" })
@@ -127,9 +127,9 @@ export const getInProcessMaintenances = async (req, res) => {
       .populate("unit", "unitNo location")
       .sort({ createdAt: -1 });
 
-    res.json({ success: true, maintenance: maintenances }); // 👈 CHANGED "data" → "maintenance"
+    res.json({ success: true, maintenance: maintenances }); // CHANGED "data" → "maintenance"
   } catch (error) {
-    console.error("🔥 Full error log (in-process route):", error);
+    console.error("Full error log (in-process route):", error);
     res.status(500).json({
       success: false,
       message: "Server error fetching in-process maintenances.",

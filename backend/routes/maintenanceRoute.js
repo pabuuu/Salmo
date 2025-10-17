@@ -10,7 +10,7 @@ import {
 
 const router = express.Router();
 
-// ✅ Get all "In Process" maintenances with populated Unit + Tenant
+// Get all "In Process" maintenances with populated Unit + Tenant
 router.get("/in-process", async (req, res) => {
   try {
     const maintenance = await Maintenance.find({ status: "In Process" })
@@ -24,10 +24,10 @@ router.get("/in-process", async (req, res) => {
   }
 });
 
-// 🧩 Other routes
+// Other routes
 router.get("/", getMaintenances);
 router.post("/", createMaintenance);
-router.get("/:id", getMaintenanceById); // ⚠️ Keep this AFTER /in-process
+router.get("/:id", getMaintenanceById); // Keep this AFTER /in-process
 router.put("/:id", updateMaintenance);
 router.delete("/:id", deleteMaintenance);
 
