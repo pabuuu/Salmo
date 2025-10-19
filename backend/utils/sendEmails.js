@@ -2,14 +2,20 @@ import nodemailer from "nodemailer";
 
 export const sendEmail = async (tenant, subject, message) => {
   try {
-    //mail transport
+    // mail transport
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,      
-        pass: process.env.EMAIL_PASS,   
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
+
+    // format balance if available
+    const formattedBalance =
+      tenant.balance !== undefined && tenant.balance !== null
+        ? `₱${Number(tenant.balance).toLocaleString()}`
+        : "Not specified";
 
     // email 
     const mailOptions = {
@@ -26,13 +32,30 @@ export const sendEmail = async (tenant, subject, message) => {
               ${message}
             </p>
 
+            ${
+              tenant.balance !== undefined && tenant.balance !== null
+                ? `
+                <div style="margin: 15px 0; padding: 10px; background-color: #e0f2fe; border-left: 4px solid #1e40af; border-radius: 5px;">
+                  <strong>Current Outstanding Balance:</strong>
+                  <span style="font-size: 16px; color: #1e40af; font-weight: bold;">${formattedBalance}</span>
+                </div>
+                `
+                : ""
+            }
+
             <hr style="margin: 20px 0; border: none; border-top: 1px dashed lightgray;" />
 
-            <p style="font-size: 13px; color: #6b7280;">
+            <h3 style="color: #1e40af; font-size: 16px;">Payment Information</h3>
+            <p style="font-size: 14px; line-height: 1.6; color: #374151;">
+              <strong>GCash Account Name:</strong> R Angeles Property Leasing<br/>
+              <strong>GCash Number:</strong> 09XX-XXX-4321<br/>
+              <strong>Reference Format:</strong> [Your Full Name] - Rent Payment
+            </p>
+
+            <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
               This is an automated notice from <strong>R Angeles Property Leasing</strong>.<br/>
               Please contact us if you’ve already made your payment.
             </p>
-
             <div style="margin-top: 10px;">
               <a href="mailto:${process.env.EMAIL_USER}" style="color: #1e40af; text-decoration: none;">
                 📧 Reply to this email
