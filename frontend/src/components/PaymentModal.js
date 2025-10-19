@@ -7,28 +7,37 @@ function PaymentModal({ show, onClose, tenant, onSuccess }) {
   const [method, setMethod] = useState("Cash");
   const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
+  const [receipt, setReceipt] = useState(null);
 
   if (!show || !tenant) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+  
     try {
-      await axios.post("http://localhost:5050/api/payments/create", {
-        tenantId: tenant._id,
-        amount,
-        paymentDate,
-        paymentMethod: method,
-        notes:remarks,
+      const formData = new FormData();
+      formData.append("tenantId", tenant._id);
+      formData.append("amount", amount);
+      formData.append("paymentDate", paymentDate);
+      formData.append("paymentMethod", method);
+      formData.append("notes", remarks);
+      if (receipt) formData.append("receipt", receipt); // 👈 include image file
+  
+      await axios.post("http://localhost:5050/api/payments/create", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
+  
       onSuccess();
       onClose();
     } catch (err) {
       console.error("Error recording payment:", err);
+      alert("Failed to record payment.");
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="modal d-block" tabIndex="-1" style={{ background: "rgba(0,0,0,0.5)" }}>
@@ -76,7 +85,15 @@ function PaymentModal({ show, onClose, tenant, onSuccess }) {
                   <option>Check</option>
                 </select>
               </div>
-
+              <div className="mb-3">
+                <label className="form-label">Upload Receipt (optional)</label>
+                <input
+                  type="file"
+                  className="form-control"
+                  accept="image/*"
+                  onChange={(e) => setReceipt(e.target.files[0])}
+                />
+              </div>
               <div className="mb-3">
                 <label className="form-label">Remarks</label>
                 <textarea
