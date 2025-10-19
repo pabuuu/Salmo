@@ -1,14 +1,23 @@
 import express from "express";
-import { createPayment, getTenantPayments ,getAllPayments} from "../controllers/paymentsController.js";
+import multer from "multer";
+import {
+  createPayment,
+  getTenantPayments,
+  getAllPayments
+} from "../controllers/paymentsController.js";
 
 const paymentRoute = express.Router();
 
-// create payment
-paymentRoute.post("/create", createPayment);
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-// get tenant payments — keep both patterns so your frontend works either way
-paymentRoute.get("/:id/payments", getTenantPayments);           // existing style: /api/payments/:id/payments
-paymentRoute.get("/tenant/:tenantId", getTenantPayments);      // explicit: /api/payments/tenant/:tenantId
+paymentRoute.post("/create", upload.single("receipt"), createPayment);
+
+// 🔹 Get tenant payments
+paymentRoute.get("/:id/payments", getTenantPayments);  
+paymentRoute.get("/tenant/:tenantId", getTenantPayments);  // e.g., /api/payments/tenant/123
+
+// 🔹 Get all payments
 paymentRoute.get("/all", getAllPayments);
 
 export default paymentRoute;

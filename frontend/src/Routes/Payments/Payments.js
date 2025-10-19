@@ -130,7 +130,7 @@ function Payments() {
 
     const now = new Date();
     const pad = (n) => String(n).padStart(2, "0");
-    const filename = `payments_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+    const filename = `PAYMENTS${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
       now.getDate()
     )}_${pad(now.getHours())}${pad(now.getMinutes())}.csv`;
 
@@ -142,6 +142,7 @@ function Payments() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+  
   const columns = [
     { key: "firstName", label: "First Name" },
     { key: "lastName", label: "Last Name" },

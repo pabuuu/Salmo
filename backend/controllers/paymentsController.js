@@ -1,9 +1,33 @@
 import PaymentsSchema from "../models/PaymentsSchema.js";
 import Tenants from "../models/Tenants.js";
+import { supabase } from "../supabase.js";
 import { getNextDueDate } from '../utils/dateUtils.js';
 
 
 // Utility: recompute tenant balance + status from all payments
+const uploadToSupabase = async (file) => {
+  if (!file) return null;
+
+  const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`;
+  const { error: uploadError } = await supabase.storage
+    .from("payment receipts") // your bucket name
+    .upload(fileName, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
+
+  if (uploadError) throw new Error(`Failed to upload to Supabase: ${uploadError.message}`);
+
+  const { data: urlData, error: urlError } = supabase.storage
+    .from("payment receipts")
+    .getPublicUrl(fileName);
+
+  if (urlError || !urlData?.publicUrl)
+    throw new Error("Failed to get Supabase public URL");
+
+  return urlData.publicUrl;
+};
+
 export const recalcTenantBalance = async (tenantId) => {
   const tenant = await Tenants.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
   if (!tenant) return;
@@ -40,6 +64,7 @@ export const recalcTenantBalance = async (tenantId) => {
 export const createPayment = async (req, res) => {
   try {
     const { tenantId, amount, paymentDate, paymentMethod, notes } = req.body;
+    const file = req.file; // file comes from multer
 
     if (!tenantId || !amount || amount <= 0)
       return res.status(400).json({ success: false, message: "tenantId and valid amount are required" });
@@ -47,7 +72,12 @@ export const createPayment = async (req, res) => {
     const tenant = await Tenants.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
     if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
 
-    // Create payment record
+    // ✅ Upload receipt if provided
+    let receiptUrl = null;
+    if (file) {
+      receiptUrl = await uploadToSupabase(file);
+    }
+
     const payment = await PaymentsSchema.create({
       tenantId,
       unitId: tenant.unitId,
@@ -55,12 +85,12 @@ export const createPayment = async (req, res) => {
       paymentDate: paymentDate || new Date(),
       paymentMethod: paymentMethod || "Cash",
       notes: notes || "",
+      receiptUrl, 
     });
 
-    // Recalculate tenant balance & status correctly
+    // ✅ Recalculate tenant balance
     await recalcTenantBalance(tenantId);
 
-    // Fetch updated tenant after recalculation
     const updatedTenant = await Tenants.findById(tenantId);
 
     return res.status(201).json({
