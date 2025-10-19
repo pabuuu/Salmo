@@ -18,7 +18,7 @@ const router = express.Router();
 router.get("/send-test", async (req, res) => {
   try {
     const fakeTenant = {
-      firstName: "Chinese",
+      firstName: "Regular",
       lastName: "Man",
       email: "toms212003@gmail.com",
     };
@@ -32,7 +32,13 @@ router.get("/send-test", async (req, res) => {
         <strong>GCash Number:</strong> 09XX-XXX-4321<br/>
         <strong>Reference Format:</strong> [Your Full Name] - Rent Payment
       </p>
-
+      <a href="https://drive.google.com/uc?export=view&id=18xwW2J83n_DfYYG4-pMvSiS3P0xwopIp" target="_blank">
+        <img
+          src="https://drive.google.com/uc?export=view&id=18xwW2J83n_DfYYG4-pMvSiS3P0xwopIp"
+          alt="GCash QR Code"
+          style="width:320px; border-radius:12px; margin-top:12px;"
+        />
+      </a>
       <p style="font-size: 13px; color: #6b7280; margin-top: 12px;">
         <em>Please verify the payment details before sending any funds. This is a test payment block for mail testing only.</em>
       </p>

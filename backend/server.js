@@ -34,7 +34,7 @@ initScheduler();
 app.use("/api/auth", authRoutes);
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
-app.use("/api/maintenances", maintenanceRouter); // ✅ mount maintenance routes
+app.use("/api/maintenances", maintenanceRouter); 
 app.use("/api/expenses", expenseRoute);
 app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
