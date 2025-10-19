@@ -4,7 +4,7 @@ import axios from "axios";
 import ExpensesTable from "../../components/ExpensesTable";
 import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
-import ReceiptModal from "../../components/ReceiptModal"; // import modal
+import ReceiptModal from "../../components/ReceiptModal";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function Expenses() {
@@ -17,8 +17,6 @@ function Expenses() {
   const [categories, setCategories] = useState(["All"]);
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [deletingExpenseId, setDeletingExpenseId] = useState(null);
-
-  // For receipt modal
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptUrl, setReceiptUrl] = useState("");
 
@@ -81,7 +79,6 @@ function Expenses() {
     }
   };
 
-  // Updated Move To / View Receipt logic
   const handleMoveTo = async (expense) => {
     if (expense.status === "Pending") {
       try {
@@ -109,11 +106,93 @@ function Expenses() {
         setNotification({ type: "error", message: "Failed to move to Paid." });
       }
     } else if (expense.status === "Paid" && expense.receiptImage) {
-      // Instead of navigating, open receipt modal
       setReceiptUrl(expense.receiptImage);
       setShowReceiptModal(true);
     }
   };
+
+  // CSV helper functions
+  const escapeCSV = (value) => {
+    if (value === null || value === undefined) return "";
+    const str = String(value);
+    if (/[",\n\r]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+    return str;
+  };
+
+  const downloadCSV = () => {
+  if (!expenses || expenses.length === 0) {
+    alert("No expenses to export.");
+    return;
+  }
+
+  const headers = ["Title", "Amount", "Status", "Unit", "Location", "Date Created", "Expense ID"];
+  let csvContent = "";
+
+  let grandTotal = 0;
+
+  // Group expenses by category
+  const grouped = categories.filter((c) => c !== "All").map((cat) => ({
+    category: cat,
+    items: expenses.filter((e) => e.category === cat),
+  }));
+
+  grouped.forEach((group) => {
+    csvContent += `\r\nCategory: ${group.category}\r\n`;
+    csvContent += headers.join(",") + "\r\n";
+
+    let categoryTotal = 0;
+
+    group.items.forEach((e) => {
+      let unitNo = "";
+      let location = "";
+      if (e.unitId) {
+        unitNo = e.unitId.unitNo || "";
+        location = e.unitId.location || "";
+      } else if (e.maintenanceId?.unit) {
+        unitNo = e.maintenanceId.unit.unitNo || "";
+        location = e.maintenanceId.unit.location || "";
+      }
+
+      const createdAt = e.createdAt ? new Date(e.createdAt).toISOString() : "";
+      const amount = Number(e.amount) || 0;
+      categoryTotal += amount;
+      grandTotal += amount;
+
+      csvContent += [
+        escapeCSV(e.title),
+        escapeCSV(`₱${amount.toLocaleString()}`),
+        escapeCSV(e.status),
+        escapeCSV(unitNo),
+        escapeCSV(location),
+        escapeCSV(createdAt),
+        escapeCSV(e._id),
+      ].join(",") + "\r\n";
+    });
+
+    // Add category subtotal in Title and Amount columns, bolded
+    csvContent += `"**Subtotal**","**₱${categoryTotal.toLocaleString()}**",,,,,\r\n`;
+  });
+
+  // Add grand total at the very end, bolded
+  csvContent += `\r\n"**Grand Total**","**₱${grandTotal.toLocaleString()}**",,,,,\r\n`;
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const filename = `EXPENSES_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+    now.getDate()
+  )}_${pad(now.getHours())}${pad(now.getMinutes())}.csv`;
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
 
   const columns = [
     { key: "title", label: "Title" },
@@ -203,7 +282,6 @@ function Expenses() {
         onClose={() => setNotification({ type: "", message: "" })}
       />
 
-      {/* ✅ Receipt Modal */}
       <ReceiptModal
         show={showReceiptModal}
         onClose={() => setShowReceiptModal(false)}
@@ -255,7 +333,13 @@ function Expenses() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <button className="custom-button fw-normal px-4">Search</button>
+
+            <button className="px-4 py-2 rounded btn bg-white border" onClick={downloadCSV}>
+              <div className="d-flex gap-2 align-items-center">
+                <i className="fa fa-solid fa-download text-success fw-bold"></i>
+                <span className="text-success fw-bold">CSV</span>
+              </div>
+            </button>
           </div>
         </div>
 

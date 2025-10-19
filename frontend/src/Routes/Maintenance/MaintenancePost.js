@@ -39,15 +39,8 @@ export default function MaintenancePost() {
         if (tenantsRes.data.success) setTenants(tenantsRes.data.data);
 
         if (unitsRes.data.success) {
-          const unitsWithoutTenant = unitsRes.data.data.filter(
-            (u) =>
-              u.status === "Available" &&
-              !tenantsRes.data.data.some((t) => {
-                const tid = t.unitId?._id || t.unitId;
-                return tid === u._id;
-              })
-          );
-          setAvailableUnits(unitsWithoutTenant);
+          const availableOnly = unitsRes.data.data.filter((u) => u.status === "Available");
+          setAvailableUnits(availableOnly);
         }
       } catch (err) {
         console.error(err);
@@ -115,9 +108,9 @@ export default function MaintenancePost() {
       if (tenantId) payload.tenant = tenantId;
 
       const response = await axios.post(
-        "http://localhost:5050/api/maintenances/create",
-        payload
-      );
+      "http://localhost:5050/api/maintenances",
+      payload
+    );
 
       if (response.data.success) {
         // Update unit status accordingly
