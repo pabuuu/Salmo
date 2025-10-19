@@ -33,6 +33,10 @@ const paymentSchema = new mongoose.Schema(
     notes: {
       type: String,
     },
+    receiptUrl:{
+      type:String,
+      default: null,
+    }
   },
   { timestamps: true }
 );

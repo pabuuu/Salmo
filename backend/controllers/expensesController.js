@@ -3,7 +3,6 @@ import Maintenance from "../models/Maintenance.js";
 import Units from "../models/Units.js";
 import { supabase } from "../supabase.js"; 
 
-// Helper: upload file to Supabase and return its public URL
 const uploadToSupabase = async (file) => {
   if (!file) return null;
 

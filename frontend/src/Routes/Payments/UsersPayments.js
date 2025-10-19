@@ -71,6 +71,7 @@ function UsersPayments() {
                   <th>Amount</th>
                   <th>Method</th>
                   <th>Remarks</th>
+                  <th>Receipt</th>
                   <th>Next Due</th>
                 </tr>
               </thead>
@@ -86,6 +87,19 @@ function UsersPayments() {
                     </td>
                     <td>{p.paymentMethod}</td>
                     <td>{p.notes || "-"}</td>
+
+                    {/* 👇 Receipt Column */}
+                    <td>
+                      {p.receiptUrl ? (
+                        <a href={p.receiptUrl} target="_blank" rel="noopener noreferrer">
+                          <i className="fa fa-file-image text-primary"></i>
+                        </a>
+                      
+                      ) : (
+                        <span className="text-muted">No Receipt</span>
+                      )}
+                    </td>
+
                     <td>
                       {tenant.nextDueDate
                         ? new Date(tenant.nextDueDate).toLocaleDateString()
