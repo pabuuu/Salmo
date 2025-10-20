@@ -246,3 +246,30 @@ export const getTenants = async (req, res) => {
   }
 };
 
+// Delete tenant permanently
+export const deleteTenant = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const tenant = await Tenants.findById(id);
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: "Tenant not found" });
+    }
+
+    // Free the unit if tenant has one
+    if (tenant.unitId) {
+      await Units.findByIdAndUpdate(tenant.unitId, {
+        status: "Available",
+        tenant: null,
+      });
+    }
+
+    // Delete tenant record
+    await Tenants.findByIdAndDelete(id);
+
+    res.status(200).json({ success: true, message: "Tenant deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting tenant:", err);
+    res.status(500).json({ success: false, message: "Failed to delete tenant" });
+  }
+};
