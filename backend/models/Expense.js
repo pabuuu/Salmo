@@ -8,7 +8,7 @@ const expenseSchema = new mongoose.Schema(
     amount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["Pending", "Approved", "Paid"], // Removed Under Maintenance
+      enum: ["Pending", "Approved", "Paid"], 
       default: "Pending",
     },
     maintenanceId: {

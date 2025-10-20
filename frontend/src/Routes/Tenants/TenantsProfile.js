@@ -4,18 +4,21 @@ import { useNavigate, useNavigation, useParams } from "react-router";
 import Dropdown from "../../components/Dropdown.js";
 import axios from "axios";
 import LoadingScreen from "../../views/Loading";
+import Notification from "../../components/Notification.js";
 
 export default function TenantsProfile(){
     //useState  & decaltation
   const { id } = useParams();
   const navigate = useNavigate();
   const [tenant, setTenant] = useState(null);
+  const [notification, setNotification] = useState({ message: "", type: "info" });
+
   //useEffect
   useEffect(() => {
     const fetchTenant = async () => {
       try {
         const res = await axios.get(`http://localhost:5050/api/tenants/${id}`);
-        setTenant(res.data.data);
+        setTenant(res.data.data[0]);
       } catch (err) {
         console.error("Error fetching tenant:", err);
       }
@@ -27,11 +30,17 @@ export default function TenantsProfile(){
     e.preventDefault();
     try {
       await axios.put(`http://localhost:5050/api/tenants/${id}`, tenant);
-      alert("Tenant updated successfully!");
-      navigate(-1); 
+      setNotification({
+        message: "Tenant updated successfully!",
+        type: "success",
+      });
+      setTimeout(() => navigate(-1), 1500);
     } catch (err) {
       console.error("Error updating tenant:", err);
-      alert("Failed to update tenant");
+      setNotification({
+        message: "Failed to update tenant.",
+        type: "error",
+      });
     }
   };
 
@@ -106,21 +115,22 @@ export default function TenantsProfile(){
               </div>
               <div className="flex-grow-1">
                 <label className="form-label p-0 m-0">Unit</label>
-                <Dropdown label={tenant.rentalUnit} width={"100%"} height={"42px"} disabled={true}>
-                  <li><button type="button" className="dropdown-item" >Unit A</button></li>
-                  <li><button type="button" className="dropdown-item">Unit B</button></li>
-                </Dropdown>
+                <Dropdown
+                  label={tenant.unitId ? `Unit ${tenant.unitId.unitNo}` : "No unit"}
+                  width={"100%"}
+                  height={"42px"}
+                  disabled={true}
+                />
               </div>
               <div className="flex-grow-1">
                 <label className="form-label p-0 m-0">Location</label>
-                <Dropdown label={tenant.location} width={"100%"} height={"42px"} disabled={true}>
-                  <li><button type="button" className="dropdown-item">Kambal Road GB</button></li>
-                  <li><button type="button" className="dropdown-item">MH Del Pilar</button></li>
-                  <li><button type="button" className="dropdown-item">Easterview</button></li>
-                  <li><button type="button" className="dropdown-item">GSIS</button></li>
-                  <li><button type="button" className="dropdown-item">Bulet</button></li>
-                  <li><button type="button" className="dropdown-item">Liamson</button></li>
-                </Dropdown>
+                <Dropdown
+                  label={tenant.unitId ? tenant.unitId.location : "No location"}
+                  width={"100%"}
+                  height={"42px"}
+                  disabled={true}
+                />
+
               </div>
             </div>
             {/* <div className="d-flex gap-2 mt-3 align-items-start">
@@ -174,6 +184,13 @@ export default function TenantsProfile(){
           )}
         </div>
       </Card>
+      {notification.message && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification({ message: "", type: "" })}
+        />
+      )}
     </div>
     );
 }
