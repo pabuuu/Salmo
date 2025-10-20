@@ -4,6 +4,11 @@ import Logo from '../assets/logo.png'
 import { useNavigate } from "react-router-dom";
 import login_image from '../assets/backgrounds/login_img.png'
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +37,7 @@ export default function Login() {
 
     try {
       // call API
-      const res = await fetch("http://localhost:5050/api/auth/login", {
+      const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
