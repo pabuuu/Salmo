@@ -7,6 +7,11 @@ import MonthlyIncomeChart from './components/Charts/MonthlyIncomeChart.js';
 import MaintenanceChart from "./components/Charts/MaintenanceChart.js";
 import { jwtDecode } from "jwt-decode";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 function Dashboard() {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +36,7 @@ function Dashboard() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5050/api/tenants")
+      .get(`${BASE_URL}/api/tenants`)
       .then((res) => setTenants(res.data.data))
       .catch((err) => console.error("Error fetching tenants:", err))
       .finally(() => setLoading(false));
@@ -41,8 +46,8 @@ function Dashboard() {
     const fetchData = async () => {
       try {
         const [tenantsRes, paymentsRes] = await Promise.all([
-          axios.get("http://localhost:5050/api/tenants"),
-          axios.get("http://localhost:5050/api/payments/all"),
+          axios.get(`${BASE_URL}/api/tenants`),
+          axios.get(`${BASE_URL}/api/payments/all`),
         ]);
   
         const tenants = tenantsRes.data.data;
@@ -86,7 +91,7 @@ function Dashboard() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5050/api/units")
+      .get(`${BASE_URL}/api/units`)
       .then((res) => {
         const allUnits = res.data.data;
         const occupiedCount = allUnits.filter(unit => unit.status === "Occupied").length;
@@ -102,7 +107,7 @@ function Dashboard() {
     const fetchMaintenances = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("http://localhost:5050/api/maintenances");
+        const res = await axios.get(`${BASE_URL}/api/maintenances`);
         // Filter only Pending maintenances
         const pendingMaintenances = (res.data.data || []).filter(
           (item) => item.status === "Pending"
