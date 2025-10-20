@@ -11,6 +11,7 @@ const BASE_URL =
     ? "http://localhost:5050/api"
     : "https://rangeles.online/api";
 
+
 function Tenants() {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
