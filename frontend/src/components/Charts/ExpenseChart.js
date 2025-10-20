@@ -14,13 +14,13 @@ import axios from 'axios';
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
-export default function IncomeChart() {
+export default function ExpenseOutput() {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
   const [latestTotal, setLatestTotal] = useState(0);
   const [filter, setFilter] = useState('Weekly');
 
-  // compute week key + label (Mon–Sun)
+  // helper to compute week label (Mon–Sun)
   const getWeekKeyAndLabel = (date) => {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     const dayNum = d.getUTCDay() || 7;
@@ -36,23 +36,25 @@ export default function IncomeChart() {
     const sunday = new Date(d);
     sunday.setUTCDate(monday.getUTCDate() + 6);
 
-    const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const label = `${formatDate(monday)}–${formatDate(sunday)}`;
+    const formatDate = (date) =>
+      date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
+    const label = `${formatDate(monday)}–${formatDate(sunday)}`;
     return { key, label };
   };
 
-  //fetch and group payments from backend
-  const fetchPayments = async (selectedFilter) => {
+  // fetch & group expenses
+  const fetchExpenses = async (selectedFilter) => {
     try {
-      const res = await axios.get("http://localhost:5050/api/payments/all");
-      const payments = res.data.data || [];
+      const res = await axios.get("http://localhost:5050/api/expenses");
+      const expenses = res.data.expenses || [];
 
-      const incomeByPeriod = {};
 
-      payments.forEach(payment => {
-        if (!payment.amount || !payment.paymentDate) return;
-        const date = new Date(payment.paymentDate);
+      const expenseByPeriod = {};
+
+      expenses.forEach(expense => {
+        if (!expense.amount || !expense.createdAt) return;
+        const date = new Date(expense.createdAt);
 
         let key, label;
 
@@ -60,47 +62,47 @@ export default function IncomeChart() {
           const { key: weekKey, label: weekLabel } = getWeekKeyAndLabel(date);
           key = weekKey;
           label = weekLabel;
-          if (!incomeByPeriod[key]) incomeByPeriod[key] = { total: 0, label };
-          incomeByPeriod[key].total += payment.amount;
+          if (!expenseByPeriod[key]) expenseByPeriod[key] = { total: 0, label };
+          expenseByPeriod[key].total += expense.amount;
 
         } else if (selectedFilter === 'Monthly') {
           key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-          if (!incomeByPeriod[key]) incomeByPeriod[key] = 0;
-          incomeByPeriod[key] += payment.amount;
+          if (!expenseByPeriod[key]) expenseByPeriod[key] = 0;
+          expenseByPeriod[key] += expense.amount;
 
         } else if (selectedFilter === 'Quarterly') {
           const quarter = Math.floor(date.getMonth() / 3) + 1;
           key = `${date.getFullYear()}-Q${quarter}`;
-          if (!incomeByPeriod[key]) incomeByPeriod[key] = 0;
-          incomeByPeriod[key] += payment.amount;
+          if (!expenseByPeriod[key]) expenseByPeriod[key] = 0;
+          expenseByPeriod[key] += expense.amount;
 
         } else if (selectedFilter === 'Yearly') {
           key = `${date.getFullYear()}`;
-          if (!incomeByPeriod[key]) incomeByPeriod[key] = 0;
-          incomeByPeriod[key] += payment.amount;
+          if (!expenseByPeriod[key]) expenseByPeriod[key] = 0;
+          expenseByPeriod[key] += expense.amount;
         }
       });
 
-      //sort
-      const sortedKeys = Object.keys(incomeByPeriod).sort();
+      // sort keys for chart order
+      const sortedKeys = Object.keys(expenseByPeriod).sort();
 
-      // get latest total
+      // latest total
       const latestKey = sortedKeys[sortedKeys.length - 1];
-      const latestVal = incomeByPeriod[latestKey];
+      const latestVal = expenseByPeriod[latestKey];
       setLatestTotal(typeof latestVal === 'object' ? latestVal.total : latestVal || 0);
 
-      // ✅ Prepare chart data
+      // prepare chart data
       const data = {
         labels: sortedKeys.map(k =>
-          typeof incomeByPeriod[k] === 'object' ? incomeByPeriod[k].label : k
+          typeof expenseByPeriod[k] === 'object' ? expenseByPeriod[k].label : k
         ),
         datasets: [{
-          label: 'Income (₱)',
+          label: 'Expenses (₱)',
           data: sortedKeys.map(k =>
-            typeof incomeByPeriod[k] === 'object' ? incomeByPeriod[k].total : incomeByPeriod[k]
+            typeof expenseByPeriod[k] === 'object' ? expenseByPeriod[k].total : expenseByPeriod[k]
           ),
-          borderColor: 'green',
-          backgroundColor: 'green',
+          borderColor: '#c1121f',
+          backgroundColor: '#c1121f',
           tension: 0.3,
           fill: false
         }]
@@ -111,7 +113,7 @@ export default function IncomeChart() {
         maintainAspectRatio: false,
         plugins: {
           legend: { position: 'top' },
-          title: { display: true, text: `Income (${selectedFilter})` }
+          title: { display: true, text: `Expenses (${selectedFilter})` }
         },
         scales: {
           y: {
@@ -121,19 +123,19 @@ export default function IncomeChart() {
         }
       };
 
-      // ✅ Render chart
+      // render chart
       if (chartRef.current) {
         if (chartInstanceRef.current) chartInstanceRef.current.destroy();
         chartInstanceRef.current = new Chart(chartRef.current, { type: 'line', data, options });
       }
 
     } catch (err) {
-      console.error("Error fetching payments:", err);
+      console.error('Error fetching expenses:', err);
     }
   };
 
   useEffect(() => {
-    fetchPayments(filter);
+    fetchExpenses(filter);
     return () => {
       if (chartInstanceRef.current) chartInstanceRef.current.destroy();
     };
@@ -145,7 +147,7 @@ export default function IncomeChart() {
         {['Weekly', 'Monthly', 'Quarterly', 'Yearly'].map(period => (
           <button
             key={period}
-            className={`btn btn-sm px-3 py-2 ${filter === period ? 'btn-success' : 'btn-dark'}`}
+            className={`btn btn-sm px-3 py-2 ${filter === period ? 'btn-danger' : 'btn-dark'}`}
             onClick={() => setFilter(period)}
           >
             {period}

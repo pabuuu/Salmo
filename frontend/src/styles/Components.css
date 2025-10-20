@@ -88,10 +88,10 @@
     background-position: center;
 }
 #bar{
-    background-image: url("../assets/backgrounds/bar.png");
+    /* background-image: url("../assets/backgrounds/bar.png");
     background-size: cover;
     background-repeat: no-repeat;
-    background-position: center;
+    background-position: center; */
 }
 /* effects */
 .custom-button:hover{

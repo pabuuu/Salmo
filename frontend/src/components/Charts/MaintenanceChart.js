@@ -66,7 +66,7 @@ export default function MaintenanceChart() {
   }, [data]);
 
   return (
-    <div className="w-100 d-flex justify-content-center align-items-center" style={{ height: "70px" }}>
+    <div className="w-100 d-flex justify-content-center align-items-center" style={{ height: "130px" }}>
       <canvas ref={chartRef} style={{ width: "100%", height: "100%" }} />
     </div>
   );

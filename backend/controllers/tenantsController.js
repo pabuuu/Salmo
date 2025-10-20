@@ -91,7 +91,8 @@ export const getTenant = async (req, res) => {
     const tenant = await Tenants.findById(req.params.id)
       .populate("unitId", "unitNo location rentAmount status");
 
-    if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
+    if (!tenant)
+      return res.status(404).json({ success: false, message: "Tenant not found" });
 
     res.json({ success: true, data: tenant });
   } catch (err) {
@@ -99,6 +100,7 @@ export const getTenant = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // Update tenant
 export const update = async (req, res) => {

@@ -27,7 +27,7 @@ const paymentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Paid", "Partial", "Pending", "Overdue"], // add Partial
+      enum: ["Paid", "Partial", "Pending", "Overdue"], 
       default: "Pending",
     },
     notes: {
