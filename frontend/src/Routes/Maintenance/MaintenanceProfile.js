@@ -6,11 +6,6 @@ import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
 import axios from "axios";
 
-const BASE_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5050/api"
-    : "https://rangeles.online/api";
-
 export default function MaintenanceProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -29,7 +24,7 @@ export default function MaintenanceProfile() {
   const fetchMaintenance = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${BASE_URL}/api/maintenances/${id}`);
+      const res = await axios.get(`http://localhost:5050/api/maintenances/${id}`);
       setMaintenance(res.data);
     } catch (err) {
       console.error("Error fetching maintenance record:", err);
@@ -59,7 +54,7 @@ export default function MaintenanceProfile() {
 
   const updateStatus = async (newStatus) => {
     try {
-      await axios.put(`${BASE_URL}/api/maintenances/${id}`, {
+      await axios.put(`http://localhost:5050/api/maintenances/${id}`, {
         status: newStatus,
       });
       fetchMaintenance();
@@ -75,7 +70,7 @@ export default function MaintenanceProfile() {
 
   const deleteMaintenance = async () => {
     try {
-      await axios.delete(`${BASE_URL}/api/maintenances/${id}`);
+      await axios.delete(`http://localhost:5050/api/maintenances/${id}`);
       setNotification({
         type: "success",
         message: "Maintenance deleted successfully.",

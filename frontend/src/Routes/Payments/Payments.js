@@ -6,11 +6,6 @@ import { useNavigate, Link } from "react-router-dom";
 import PaymentModal from "../../components/PaymentModal";
 import Dropdown from "../../components/Dropdown"; 
 
-const BASE_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5050/api"
-    : "https://rangeles.online/api";
-
 function Payments() {
   const [tenants, setTenants] = useState([]);
   const [filteredTenants, setFilteredTenants] = useState([]);
@@ -26,7 +21,7 @@ function Payments() {
 
   const fetchTenants = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/tenants`);
+      const res = await axios.get("http://localhost:5050/api/tenants");
       setTenants(res.data.data);
       setFilteredTenants(res.data.data);
     } catch (err) {
@@ -37,7 +32,7 @@ function Payments() {
   };
   const fetchUnits = async () => {
     try {
-      const res = await axios.get(`{BASE_URL}/api/units`);
+      const res = await axios.get("http://localhost:5050/api/units");
       setUnits(res.data.data);
     } catch (err) {
       console.error("Error fetching Units:", err);

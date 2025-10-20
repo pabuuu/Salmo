@@ -6,11 +6,6 @@ import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
 import { Link, useLocation } from "react-router-dom";
 
-const BASE_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5050/api"
-    : "https://rangeles.online/api";
-
 function Units() {
   const location = useLocation();
   const [units, setUnits] = useState([]);
@@ -36,7 +31,7 @@ function Units() {
         : "";
 
     axios
-      .get(`${BASE_URL}/api/units${params}`)
+      .get(`http://localhost:5050/api/units${params}`)
       .then((res) => {
         const data = res.data.data || [];
         setUnits(data);
@@ -85,7 +80,7 @@ function Units() {
   const handleDelete = async (id) => {
     setDeletingUnitId(id);
     try {
-      const res = await axios.delete(`${BASE_URL}/api/units/${id}`);
+      const res = await axios.delete(`http://localhost:5050/api/units/${id}`);
       if (res.data.success) {
         setNotification({
           type: "success",

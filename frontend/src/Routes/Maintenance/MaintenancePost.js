@@ -6,11 +6,6 @@ import CustomButton from "../../components/CustomBottom.js";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const BASE_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5050/api"
-    : "https://rangeles.online/api";
-
 export default function MaintenancePost() {
   const navigate = useNavigate();
 
@@ -37,8 +32,8 @@ export default function MaintenancePost() {
     const fetchData = async () => {
       try {
         const [tenantsRes, unitsRes] = await Promise.all([
-          axios.get(`${BASE_URL}/api/tenants`),
-          axios.get(`${BASE_URL}/api/units`),
+          axios.get("http://localhost:5050/api/tenants"),
+          axios.get("http://localhost:5050/api/units"),
         ]);
 
         if (tenantsRes.data.success) setTenants(tenantsRes.data.data);
@@ -68,7 +63,7 @@ export default function MaintenancePost() {
           return;
         }
 
-        const res = await axios.get(`${BASE_URL}/api/units/${unitId}`);
+        const res = await axios.get(`http://localhost:5050/api/units/${unitId}`);
         if (res.data.success) {
           setUnit({ unitNo: res.data.data.unitNo, location: res.data.data.location });
         }
@@ -113,7 +108,7 @@ export default function MaintenancePost() {
       if (tenantId) payload.tenant = tenantId;
 
       const response = await axios.post(
-      `${BASE_URL}/api/maintenances`,
+      "http://localhost:5050/api/maintenances",
       payload
     );
 
@@ -127,7 +122,7 @@ export default function MaintenancePost() {
         }
 
         try {
-          await axios.put(`${BASE_URL}/api/units/${unitId}`, {
+          await axios.put(`http://localhost:5050/api/units/${unitId}`, {
             status: newUnitStatus,
           });
         } catch (err) {
