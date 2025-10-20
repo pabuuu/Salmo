@@ -2,6 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend } from "chart.js";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
 
 export default function MaintenanceChart() {
@@ -12,7 +17,7 @@ export default function MaintenanceChart() {
   useEffect(() => {
     const fetchMaintenances = async () => {
       try {
-        const res = await axios.get("http://localhost:5050/api/maintenances");
+        const res = await axios.get(`${BASE_URL}/api/maintenances`);
         const maintenances = res.data.data || [];
         const pending = maintenances.filter((m) => m.status === "Pending").length;
         const inProcess = maintenances.filter((m) => m.status === "In Process").length;
