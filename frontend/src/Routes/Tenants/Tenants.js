@@ -4,12 +4,7 @@ import axios from "axios";
 import Table from "../../components/Table";
 import LoadingScreen from "../../views/Loading";
 import { Link } from "react-router-dom";
-import Notification from "../../components/Notification.js";
-
-const BASE_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5050/api"
-    : "https://rangeles.online/api";
+import Notification from '../../components/Notification.js'
 
 
 function Tenants() {
@@ -22,20 +17,19 @@ function Tenants() {
     show: false,
     id: null,
     isArchived: false,
-    isDelete: false,
   });
   const [toast, setToast] = useState({
     show: false,
     type: "",
     message: "",
   });
-
+  
   const doArchive = async () => {
     const { id, isArchived } = confirmModal;
     const action = isArchived ? "unarchive" : "archive";
 
     try {
-      await axios.put(`${BASE_URL}/api/tenants/${id}/archive`, {
+      await axios.put(`http://localhost:5050/api/tenants/${id}/archive`, {
         isArchived: !isArchived,
       });
 
@@ -45,6 +39,7 @@ function Tenants() {
         )
       );
 
+      //show success toast
       setToast({
         show: true,
         type: "success",
@@ -52,41 +47,22 @@ function Tenants() {
       });
     } catch (err) {
       console.error("Error updating tenant:", err);
+
+      // show error toast
       setToast({
         show: true,
         type: "error",
         message: "Failed to update tenant status.",
       });
     } finally {
-      setConfirmModal({ show: false, id: null, isArchived: false, isDelete: false });
+      setConfirmModal({ show: false, id: null, isArchived: false });
     }
   };
-
-  const doDelete = async () => {
-    const { id } = confirmModal;
-    try {
-      await axios.delete(`${BASE_URL}/api/tenants/${id}`);
-      setTenants((prev) => prev.filter((tenant) => tenant._id !== id));
-      setToast({
-        show: true,
-        type: "success",
-        message: "Tenant deleted successfully!",
-      });
-    } catch (err) {
-      console.error("Failed to delete tenant:", err);
-      setToast({
-        show: true,
-        type: "error",
-        message: "Failed to delete tenant.",
-      });
-    } finally {
-      setConfirmModal({ show: false, id: null, isArchived: false, isDelete: false });
-    }
-  };
+  
 
   useEffect(() => {
     axios
-      .get(`${BASE_URL}/api/tenants`)
+      .get("http://localhost:5050/api/tenants")
       .then((res) => setTenants(res.data.data))
       .catch((err) => console.error("Error fetching tenants:", err))
       .finally(() => setLoading(false));
@@ -94,13 +70,9 @@ function Tenants() {
 
   const handleArchive = (e, id, isArchived) => {
     e.stopPropagation();
-    setConfirmModal({ show: true, id, isArchived, isDelete: false });
+    setConfirmModal({ show: true, id, isArchived });
   };
-
-  const handleDelete = (e, id) => {
-    e.stopPropagation();
-    setConfirmModal({ show: true, id, isArchived: true, isDelete: true });
-  };
+  
 
   const filteredTenants = tenants.filter((tenant) => {
     if (filter === "Archived") return tenant.isArchived;
@@ -139,77 +111,59 @@ function Tenants() {
     { key: "lastName", label: "Last Name" },
     { key: "email", label: "Email" },
     { key: "contactNumber", label: "Contact Number" },
-    {
-      key: "unitNo",
-      label: "Unit",
-      render: (_, row) => (row.unitId ? `Unit ${row.unitId.unitNo}` : "-"),
+    { 
+      key: "unitNo", 
+      label: "Unit", 
+      render: (_, row) => row.unitId ? `Unit ${row.unitId.unitNo}` : "-"
     },
-    {
-      key: "location",
+    { 
+      key: "location", 
       label: "Location",
-      render: (_, row) => (row.unitId ? row.unitId.location : "-"),
+      render: (_, row) => row.unitId ? row.unitId.location : "-"
     },
-    {
-      key: "amount",
+    { 
+      key: "amount", 
       label: "Amount",
-      render: (_, row) =>
-        row.unitId
-          ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
-              row.unitId.rentAmount
-            )
-          : "-",
+      render: (_, row) => row.unitId 
+        ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" })
+            .format(row.unitId.rentAmount) 
+        : "-"
     },
-    {
-      key: "status",
+    { 
+      key: "status", 
       label: "Unit Status",
       render: (_, row) => (
-        <span
-          className={row.unitId?.status === "Occupied" ? "text-danger fw-bold" : "text-success"}
-        >
+        <span className={row.unitId?.status === "Occupied" ? "text-danger fw-bold" : "text-success"}>
           {row.unitId ? row.unitId.status : "N/A"}
         </span>
-      ),
+      )
     },
-    {
-      key: "createdAt",
+    { 
+      key: "createdAt", 
       label: "Date Created",
-      render: (val) =>
-        new Date(val).toLocaleDateString("en-PH", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }),
+      render: (val) => new Date(val).toLocaleDateString("en-PH", { 
+        year: "numeric", month: "short", day: "numeric" 
+      })
     },
-    {
+    { 
       key: "actions",
       label: "Actions",
       render: (val, row) => (
-        <div className="d-flex gap-2">
-          <button
-            className={`btn btn-sm ${row.isArchived ? "btn-success" : "btn-danger"}`}
-            onClick={(e) => handleArchive(e, row._id, row.isArchived)}
-          >
-            {row.isArchived ? "Unarchive" : "Archive"}
-          </button>
-          {row.isArchived && (
-            <button
-              className="btn btn-sm btn-outline-danger"
-              onClick={(e) => handleDelete(e, row._id)}
-            >
-              Delete
-            </button>
-          )}
-        </div>
+        <button
+          className={`btn btn-sm ${row.isArchived ? "btn-success" : "btn-danger"}`}
+          onClick={(e) => handleArchive(e, row._id, row.isArchived)}
+        >
+          {row.isArchived ? "Unarchive" : "Archive"}
+        </button>
       ),
     },
   ];
 
-  if (loading)
-    return (
-      <div className="d-flex vh-100 w-100 align-items-center justify-content-center">
-        <LoadingScreen />
-      </div>
-    );
+  if (loading) return (
+    <div className="d-flex vh-100 w-100 align-items-center justify-content-center">
+      <LoadingScreen/>
+    </div>
+  );
 
   const filters = ["All", "Active", "Archived"];
 
@@ -222,10 +176,7 @@ function Tenants() {
 
       <div className="w-100 mb-3">
         <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-          <Link
-            className="green-btn py-2 px-3 fw-normal text-decoration-none"
-            to={"/tenants/create"}
-          >
+          <Link className="green-btn py-2 px-3 fw-normal text-decoration-none" to={'/tenants/create'}>
             Add Tenant <span className="ms-2 fw-bold">+</span>
           </Link>
 
@@ -242,12 +193,11 @@ function Tenants() {
             >
               {["newest", "oldest", "az", "za"].map((key) => (
                 <li key={key}>
-                  <button className="dropdown-item" onClick={() => handleSort(key)}>
-                    {key === "az"
-                      ? "Alphabetical ↑"
-                      : key === "za"
-                      ? "Alphabetical ↓"
-                      : key.charAt(0).toUpperCase() + key.slice(1)}
+                  <button
+                    className="dropdown-item"
+                    onClick={() => handleSort(key)}
+                  >
+                    {key === "az" ? "Alphabetical ↑" : key === "za" ? "Alphabetical ↓" : key.charAt(0).toUpperCase() + key.slice(1)}
                   </button>
                 </li>
               ))}
@@ -284,28 +234,20 @@ function Tenants() {
 
         <Table columns={columns} data={sortedTenants} />
       </div>
-
       {/* confirmation Modal */}
       {confirmModal.show && (
         <Notification
-          type={confirmModal.isDelete ? "danger" : "warning"}
-          message={
-            confirmModal.isDelete
-              ? "Are you sure you want to delete this tenant?"
-              : `Are you sure you want to ${
-                  confirmModal.isArchived ? "unarchive" : "archive"
-                } this tenant?`
-          }
+          type="warning"
+          message={`Are you sure you want to ${
+            confirmModal.isArchived ? "unarchive" : "archive"
+          } this tenant?`}
           icon={<i className="fa-solid fa-triangle-exclamation"></i>}
           actions={[
-            {
-              label: "Yes",
-              onClick: confirmModal.isDelete ? doDelete : doArchive,
-            },
+            { label: "Yes", onClick: doArchive },
             {
               label: "Cancel",
               onClick: () =>
-                setConfirmModal({ show: false, id: null, isArchived: false, isDelete: false }),
+                setConfirmModal({ show: false, id: null, isArchived: false }),
             },
           ]}
         />

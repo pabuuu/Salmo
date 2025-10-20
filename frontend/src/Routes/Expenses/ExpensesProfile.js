@@ -8,11 +8,6 @@ import axios from "axios";
 import LoadingScreen from "../../views/Loading";
 import ReceiptModal from "../../components/ReceiptModal";
 
-const BASE_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5050/api"
-    : "https://rangeles.online/api";
-
 export default function ExpensesProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,7 +23,7 @@ export default function ExpensesProfile() {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`${BASE_URL}/api/expenses/${id}`)
+      .get(`http://localhost:5050/api/expenses/${id}`)
       .then((res) => {
         if (res.data.success) {
           setExpense(res.data.expense);
@@ -69,7 +64,7 @@ export default function ExpensesProfile() {
       if (imageFile) formData.append("receiptImage", imageFile);
 
       const res = await axios.put(
-        `${BASE_URL}/api/expenses/${id}`,
+        `http://localhost:5050/api/expenses/${id}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
