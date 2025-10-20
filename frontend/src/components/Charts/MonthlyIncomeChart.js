@@ -12,6 +12,12 @@ import {
 } from 'chart.js';
 import axios from 'axios';
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
+
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
 export default function IncomeChart() {
@@ -45,7 +51,7 @@ export default function IncomeChart() {
   //fetch and group payments from backend
   const fetchPayments = async (selectedFilter) => {
     try {
-      const res = await axios.get("http://localhost:5050/api/payments/all");
+      const res = await axios.get(`${BASE_URL}/api/payments/all`);
       const payments = res.data.data || [];
 
       const incomeByPeriod = {};

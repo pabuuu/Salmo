@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 function PaymentModal({ show, onClose, tenant, onSuccess }) {
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState("");
@@ -24,7 +29,7 @@ function PaymentModal({ show, onClose, tenant, onSuccess }) {
       formData.append("notes", remarks);
       if (receipt) formData.append("receipt", receipt); // 👈 include image file
   
-      await axios.post("http://localhost:5050/api/payments/create", formData, {
+      await axios.post(`${BASE_URL}/api/payments/create`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
   
