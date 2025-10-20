@@ -6,6 +6,11 @@ import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
 import axios from "axios";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 export default function UnitsProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,7 +26,7 @@ export default function UnitsProfile() {
   useEffect(() => {
     const fetchUnit = async () => {
       try {
-        const res = await axios.get(`http://localhost:5050/api/units/${id}`);
+        const res = await axios.get(`${BASE_URL}/api/units/${id}`);
         if (res.data.success && res.data.data) {
           setUnit(res.data.data);
         } else {
@@ -40,7 +45,7 @@ export default function UnitsProfile() {
   // Handle the actual update
   const handleUpdate = async () => {
     try {
-      const res = await axios.put(`http://localhost:5050/api/units/${id}`, unit);
+      const res = await axios.put(`h${BASE_URL}/api/units/${id}`, unit);
       if (res.data.success) {
         setNotification({
           type: "success",
