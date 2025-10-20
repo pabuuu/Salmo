@@ -4,7 +4,9 @@ import axios, { all } from "axios";
 import LoadingScreen from "./views/Loading";
 import {Link} from "react-router-dom";
 import MonthlyIncomeChart from './components/Charts/MonthlyIncomeChart.js';
+import ExpenseOutput from './components/Charts/ExpenseChart.js';
 import MaintenanceChart from "./components/Charts/MaintenanceChart.js";
+import OccupancyChart from './components/Charts/OccupancyChart.js'
 import { jwtDecode } from "jwt-decode";
 
 function Dashboard() {
@@ -16,7 +18,7 @@ function Dashboard() {
   const [maintenances, setMaintenances] = useState([]);
   const [completed, setCompleted] = useState([]);
   const [currentUser, setCurrentUser] = useState([])
-
+  const [overdueTenants, setOverdueTenants] = useState([]);
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (token) {
@@ -32,11 +34,17 @@ function Dashboard() {
   useEffect(() => {
     axios
       .get("http://localhost:5050/api/tenants")
-      .then((res) => setTenants(res.data.data))
+      .then((res) => {
+        const allTenants = res.data.data || [];
+        const overdueTenants = allTenants.filter(t => t.status === "Overdue");
+  
+        setTenants(allTenants);
+        setOverdueTenants(overdueTenants);
+      })
       .catch((err) => console.error("Error fetching tenants:", err))
       .finally(() => setLoading(false));
   }, []);
-
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -145,8 +153,8 @@ function Dashboard() {
           {/* Active Tenants */}
           <div className="col-12 col-md-3">
             <Link to="/tenants" className="text-decoration-none">
-              <Card width="100%" height="160px" className="hover-card m-0 p-0" id={"person"}>
-                <div className="w-100 h-100 d-flex flex-column justify-content-center">
+              <Card width="100%" height="200px" className="hover-card m-0 p-0" id={"person"}>
+                <div className=" d-flex flex-column justify-content-center">
                   <div className="d-flex align-items-center gap-2">
                     <i className="fs-5 fa fa-solid fa-user-group"></i>
                     <p className="fs-5 my-1">Active Tenants</p>
@@ -159,32 +167,33 @@ function Dashboard() {
           </div>
           <div className="col-12 col-md-3">
             <Link to="/units" className="text-decoration-none">
-              <Card width="100%" height="160px" className="hover-card" id={'bar'}>
+              <Card width="100%" height="200px" className="hover-card" id={'bar'}>
                 <div className="w-100 h-100 d-flex flex-column justify-content-center">
                   <div className="d-flex align-items-center gap-2">
                     <i className="fs-5 fa fa-solid fa-chart-simple"></i>
                     <p className="fs-5 my-1">Occupancy Rate</p>
                     <i className="ms-auto fs-5 fa fa-solid fa-up-right-from-square"></i>
                   </div>
-                  <h3 className="mb-0 numeral-text">{occupancyRate}%</h3>
+                  {/* <h3 className="mb-0 numeral-text">{occupancyRate}%</h3> */}
+                  <OccupancyChart/>
                 </div>
               </Card>
             </Link>
           </div>
           <div className="col-12 col-md-3">
-            <Card width="100%" height="160px" className="hover-card" id={'expense'}>
-              <div className="w-100 h-100 d-flex flex-column justify-content-center">
+            <Card width="100%" height="200px" className="hover-card" id={'expense'}>
+              <div className=" d-flex flex-column justify-content-center">
                 <div className="d-flex align-items-center gap-2">
-                  <i className="fs-5 fa fa-solid fa-money-bill-wave"></i>
-                  <p className="fs-5 my-1">Expenses (wip)</p>
+                  <i className="fs-5 fa fa-solid fa-warning "></i>
+                  <p className="fs-5 my-1">Overdue Tenants</p>
                 </div>
-                <h3 className="mb-0 numeral-text">{'13k'}</h3>
+                <h3 className="mb-0 numeral-text ">{overdueTenants.length}</h3>
               </div>
             </Card>
           </div>
           <div className="col-12 col-md-3">
             <Link to="/maintenance" className="text-decoration-none">
-              <Card width="100%" height="160px" className="hover-card" id="cogs">
+              <Card width="100%" height="200px" className="hover-card" id="cogs">
                 <div className="w-100 h-100 d-flex flex-column justify-content-center">
                   <div className="d-flex align-items-center gap-1 mb-2">
                     <i className="fs-5 fa fa-solid fa-wrench"></i>
@@ -257,8 +266,21 @@ function Dashboard() {
               </div>
             </Card>
           </div>
-
         </div>
+        <Card className="py-4 px-0 flex-fill w-100">
+          <div className="px-3 d-flex flex-column h-100">
+            <div className="d-flex flex-row gap-2 align-items-center mb-2">
+              <i className="fs-4 fa-solid fa-chart-simple"></i>
+              <h4 className="mb-0">Output Tracker</h4>
+            </div>
+            <span className="mb-3 d-block">
+              Track changes in outputs over time on all payments made
+            </span>
+            <div className="flex-grow-1">
+              <ExpenseOutput/>
+            </div>
+          </div>
+        </Card>
       </Card>
     </div>
   )

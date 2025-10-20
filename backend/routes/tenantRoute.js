@@ -5,14 +5,15 @@ import {
   getTenants, 
   update, 
   archiveTenant,
-  deleteTenant      // <- import deleteTenant
+  deleteTenant,      // <- import deleteTenant
+  getTenant
 } from "../controllers/tenantsController.js";
 
 const tenantRouter = express.Router();
 
 tenantRouter.get("/", load);
 tenantRouter.post("/create", createTenant);
-tenantRouter.get("/:id", getTenants);
+tenantRouter.get("/:id", getTenant);           // Update tenant
 tenantRouter.put("/:id", update);
 tenantRouter.put("/:id/archive", archiveTenant);
 tenantRouter.delete("/:id", deleteTenant);   // <- add DELETE route
