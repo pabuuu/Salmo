@@ -5,6 +5,11 @@ import LoadingScreen from "../../views/Loading.js";
 import { useNavigate } from "react-router-dom";
 import Notification from "../../components/Notification.js";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 export default function TenantsPost() {
   const navigate = useNavigate();
 
@@ -33,7 +38,7 @@ export default function TenantsPost() {
   // fetch units when location changes
   useEffect(() => {
     if (location) {
-      fetch(`http://localhost:5050/api/units/getAvailableByLocation?location=${location}`)
+      fetch(`${BASE_URL}/units/getAvailableByLocation?location=${location}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
@@ -70,7 +75,7 @@ export default function TenantsPost() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5050/api/tenants/create", {
+      const response = await fetch(`${BASE_URL}${BASE_URL}/tenants/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
