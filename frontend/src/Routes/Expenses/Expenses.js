@@ -175,11 +175,11 @@ function Expenses() {
     });
 
     // Add category subtotal in Title and Amount columns, bolded
-    csvContent += `"**Subtotal**","**₱${categoryTotal.toLocaleString()}**",,,,,\r\n`;
+    csvContent += `"Subtotal","₱${categoryTotal.toLocaleString()}",,,,,\r\n`;
   });
 
   // Add grand total at the very end, bolded
-  csvContent += `\r\n"**Grand Total**","**₱${grandTotal.toLocaleString()}**",,,,,\r\n`;
+  csvContent += `\r\n"Grand Total","₱${grandTotal.toLocaleString()}",,,,,\r\n`;
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
