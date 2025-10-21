@@ -51,6 +51,11 @@ const TenantsSchema = new mongoose.Schema(
       enum: ["Paid", "Partial", "Overdue","Unpaid"],
       default: "Unpaid",
     },
+    receiptUrl: {
+      type: String,
+      default: "no receipt",
+    },
+    
   },
   { timestamps: true }
 );

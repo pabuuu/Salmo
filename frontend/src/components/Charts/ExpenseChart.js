@@ -48,12 +48,14 @@ export default function ExpenseOutput() {
     return { key, label };
   };
 
-  // fetch & group expenses
+  // fetch & group expenses (only Paid)
   const fetchExpenses = async (selectedFilter) => {
     try {
       const res = await axios.get(`${BASE_URL}/expenses`);
       const expenses = res.data.expenses || [];
 
+      // only include Paid expenses
+      expenses = expenses.filter(exp => exp.status === "Paid");
 
       const expenseByPeriod = {};
 
@@ -102,7 +104,7 @@ export default function ExpenseOutput() {
           typeof expenseByPeriod[k] === 'object' ? expenseByPeriod[k].label : k
         ),
         datasets: [{
-          label: 'Expenses (₱)',
+          label: 'Paid Expenses (₱)',
           data: sortedKeys.map(k =>
             typeof expenseByPeriod[k] === 'object' ? expenseByPeriod[k].total : expenseByPeriod[k]
           ),
@@ -118,7 +120,7 @@ export default function ExpenseOutput() {
         maintainAspectRatio: false,
         plugins: {
           legend: { position: 'top' },
-          title: { display: true, text: `Expenses (${selectedFilter})` }
+          title: { display: true, text: `Paid Expenses (${selectedFilter})` }
         },
         scales: {
           y: {

@@ -24,7 +24,9 @@ export default function TenantsPost() {
   // location & units
   const [location, setLocation] = useState('');
   const [availableUnits, setAvailableUnits] = useState([]);
-  const [unitId, setUnitId] = useState(""); // ✅ store unitId, not just label
+  const [unitId, setUnitId] = useState("");
+  const [receipt, setReceipt] = useState(null);
+
 
   // dropdown labels
   const [unitLabel, setUnitLabel] = useState("Select Unit");
@@ -59,10 +61,10 @@ export default function TenantsPost() {
   // handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     const selectedUnit = availableUnits.find((u) => u._id === unitId);
     const rentAmount = selectedUnit?.rentAmount || 0;
-
+  
     if (Number(initialPayment) > rentAmount) {
       setToast({
         show: true,
@@ -71,39 +73,35 @@ export default function TenantsPost() {
       });
       return;
     }
-
-    setError("");
-
+  
+    const formData = new FormData();
+    formData.append("firstName", firstName);
+    formData.append("lastName", lastName);
+    formData.append("email", email);
+    formData.append("contactNumber", contactNumber);
+    formData.append("unitId", unitId);
+    formData.append("paymentFrequency", paymentFrequency);
+    formData.append("initialPayment", initialPayment);
+    formData.append("isArchived", false);
+  
+    if (receipt) formData.append("receipt", receipt); // 👈 attach file
+  
     try {
       const response = await fetch(`${BASE_URL}${BASE_URL}/tenants/create`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
-          contactNumber,
-          unitId,
-          paymentFrequency,
-          initialPayment,
-          isArchived: false,
-        }),
+        body: formData, // 👈 FormData instead of JSON
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok && data.tenant) {
-        // success toast
         setToast({
           show: true,
           type: "success",
           message: "Tenant created successfully!",
         });
-
-        //navigate 
         setTimeout(() => navigate("/tenants"), 1200);
       } else {
-        // failure toast
         setToast({
           show: true,
           type: "warning",
@@ -112,7 +110,6 @@ export default function TenantsPost() {
       }
     } catch (error) {
       console.error("Error creating tenant:", error);
-      //error toast
       setToast({
         show: true,
         type: "error",
@@ -120,6 +117,7 @@ export default function TenantsPost() {
       });
     }
   };
+  
 
   // handlers
   const handleLocationSelect = (loc) => {
@@ -229,7 +227,7 @@ export default function TenantsPost() {
               </div>
             </div>
             <div className="d-flex gap-2 mt-3 align-items-start">
-            <div style={{ width: "25%" }}>
+              <div style={{ width: "25%" }}>
                 <label className="form-label">Initial Payment</label>
                 <input
                   type="number"
@@ -241,6 +239,7 @@ export default function TenantsPost() {
                 />
                 {error && <span className="text-danger">{error}</span>}
               </div>
+
               <div style={{ width: "25%" }}>
                 <label className="form-label">Payment Frequency</label>
                 <Dropdown label={frequencyLabel} width={"100%"} height={"42px"}>
@@ -253,7 +252,19 @@ export default function TenantsPost() {
                   ))}
                 </Dropdown>
               </div>
+
+              {/* 👇 Upload Receipt beside Frequency */}
+              <div style={{ width: "25%" }}>
+                <label className="form-label">Upload Receipt (optional)</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="form-control"
+                  onChange={(e) => setReceipt(e.target.files[0])}
+                />
+              </div>
             </div>
+
             {toast.show && (
               <Notification
                 type={toast.type}

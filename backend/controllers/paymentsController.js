@@ -4,13 +4,12 @@ import { supabase } from "../supabase.js";
 import { getNextDueDate } from '../utils/dateUtils.js';
 
 
-// Utility: recompute tenant balance + status from all payments
 const uploadToSupabase = async (file) => {
   if (!file) return null;
 
   const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`;
   const { error: uploadError } = await supabase.storage
-    .from("payment receipts") // your bucket name
+    .from("payment receipts") 
     .upload(fileName, file.buffer, {
       contentType: file.mimetype,
       upsert: true,
@@ -29,7 +28,8 @@ const uploadToSupabase = async (file) => {
 };
 
 export const recalcTenantBalance = async (tenantId) => {
-  const tenant = await Tenants.findById(tenantId).populate("unitId", "rentAmount paymentFrequency");
+  const tenant = await Tenants.findById(tenantId)
+    .populate("unitId", "rentAmount paymentFrequency");
   if (!tenant) return;
 
   const payments = await PaymentsSchema.find({ tenantId });
@@ -38,24 +38,42 @@ export const recalcTenantBalance = async (tenantId) => {
   const rentAmount = tenant.unitId?.rentAmount || 0;
   const frequency = tenant.paymentFrequency || tenant.unitId?.paymentFrequency || "Monthly";
 
-  let balance = Math.max(rentAmount - totalPaid, 0);
-  let status = "Pending";
-  let nextDueDate = tenant.nextDueDate || new Date();
+  if (!rentAmount || rentAmount <= 0) return;
 
-  if (balance === 0) {
-    status = "Paid";
-    // Advance next due date if fully paid
-    if (!tenant.nextDueDate || tenant.balance > 0) {
-      nextDueDate = getNextDueDate(new Date(), frequency);
-    }
-  } else if (balance > 0 && totalPaid > 0) {
-    status = "Partial"; // <-- this ensures partial payments are NOT overdue
-  } else if (balance > 0 && totalPaid === 0) {
-    // Only mark overdue if completely unpaid AND past due date
-    if (new Date(tenant.nextDueDate) < new Date()) status = "Overdue";
+  // 🧮 How many months worth of rent total have been paid
+  const fullPeriodsPaid = Math.floor(totalPaid / rentAmount);
+
+  // 🗓 Determine how many months have already been advanced
+  const today = new Date();
+  const originalNextDue = tenant.nextDueDate || today;
+
+  // how many months ahead of today the nextDueDate already is
+  const monthsAhead = Math.max(
+    0,
+    (originalNextDue.getFullYear() - today.getFullYear()) * 12 +
+      (originalNextDue.getMonth() - today.getMonth())
+  );
+
+  // Only advance for *newly covered* months
+  const newPeriodsToAdvance = Math.max(0, fullPeriodsPaid - monthsAhead);
+
+  let nextDueDate = originalNextDue;
+  for (let i = 0; i < newPeriodsToAdvance; i++) {
+    nextDueDate = getNextDueDate(nextDueDate, frequency);
   }
 
-  tenant.balance = balance;
+  const remainingBalance = rentAmount - (totalPaid % rentAmount);
+
+  let status = "Pending";
+  if (remainingBalance === rentAmount && fullPeriodsPaid > 0) {
+    status = "Paid";
+  } else if (remainingBalance < rentAmount && remainingBalance > 0) {
+    status = "Partial";
+  } else if (totalPaid === 0 && new Date(tenant.nextDueDate) < today) {
+    status = "Overdue";
+  }
+
+  tenant.balance = remainingBalance;
   tenant.status = status;
   tenant.nextDueDate = nextDueDate;
   await tenant.save();
@@ -88,7 +106,7 @@ export const createPayment = async (req, res) => {
       receiptUrl, 
     });
 
-    // ✅ Recalculate tenant balance
+    //Recalculate tenant balance
     await recalcTenantBalance(tenantId);
 
     const updatedTenant = await Tenants.findById(tenantId);

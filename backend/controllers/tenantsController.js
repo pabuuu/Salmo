@@ -5,6 +5,8 @@ import dayjs from "dayjs"
 import { updateOverdueTenants } from '../utils/updateOverdues.js';
 import { recalcTenantBalance } from './paymentsController.js';
 import { getNextDueDate } from '../utils/dateUtils.js';
+import { supabase } from '../supabase.js';
+import multer from 'multer';
 
 // Load all tenants with their unit details
 export const load = async (req, res) => {
@@ -20,30 +22,75 @@ export const load = async (req, res) => {
   }
 };
 
+const uploadToSupabase = async (file) => {
+  if (!file) return null;
+
+  const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("payment receipts")
+    .upload(fileName, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
+
+  if (uploadError) throw new Error(`Supabase upload failed: ${uploadError.message}`);
+
+  const { data: urlData } = supabase.storage
+    .from("payment receipts")
+    .getPublicUrl(fileName);
+
+  return urlData?.publicUrl || null;
+};
+
+
 // Create Tenant
 export const createTenant = async (req, res) => {
   try {
-    const { firstName, lastName, email, contactNumber, unitId, paymentFrequency, initialPayment = 0 } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      contactNumber,
+      unitId,
+      paymentFrequency,
+      initialPayment = 0,
+    } = req.body;
 
-    // Validate required fields
-    if (!firstName || !lastName) return res.status(400).json({ success: false, message: "First and last name required" });
-    if (!unitId) return res.status(400).json({ success: false, message: "Unit must be selected" });
-    if (!paymentFrequency) return res.status(400).json({ success: false, message: "Payment frequency is required" });
+    // Basic validation
+    if (!firstName || !lastName)
+      return res.status(400).json({ success: false, message: "First and last name required" });
+    if (!unitId)
+      return res.status(400).json({ success: false, message: "Unit must be selected" });
+    if (!paymentFrequency)
+      return res.status(400).json({ success: false, message: "Payment frequency is required" });
 
     const unit = await Units.findById(unitId);
-    if (!unit) return res.status(404).json({ success: false, message: "Unit not found" });
-    if (unit.status === "Occupied") return res.status(400).json({ success: false, message: "Unit already occupied" });
+    if (!unit)
+      return res.status(404).json({ success: false, message: "Unit not found" });
+    if (unit.status === "Occupied")
+      return res.status(400).json({ success: false, message: "Unit already occupied" });
 
     const rentAmount = unit.rentAmount;
-    if (!rentAmount || rentAmount <= 0) return res.status(400).json({ success: false, message: "Invalid rent amount" });
-    if (initialPayment > rentAmount) return res.status(400).json({ success: false, message: "Initial payment exceeds rent" });
+    if (!rentAmount || rentAmount <= 0)
+      return res.status(400).json({ success: false, message: "Invalid rent amount" });
+    if (initialPayment > rentAmount)
+      return res.status(400).json({ success: false, message: "Initial payment exceeds rent" });
 
-    // Initial status & balance
-    let balance = Math.max(rentAmount - initialPayment, 0);
-    let status = balance === 0 ? "Paid" : initialPayment > 0 ? "Partial" : "Pending";
-    let nextDueDate = balance === 0 ? getNextDueDate(new Date(), paymentFrequency) : new Date(); // only advance if fully paid
+    // ✅ Upload receipt (optional)
+    let receiptUrl = null;
+    if (req.file) {
+      receiptUrl = await uploadToSupabase(req.file);
+    }
 
-    // Create tenant
+    // Compute balance/status
+    const balance = Math.max(rentAmount - initialPayment, 0);
+    const status =
+      balance === 0 ? "Paid" : initialPayment > 0 ? "Partial" : "Pending";
+    const nextDueDate =
+      balance === 0 ? getNextDueDate(new Date(), paymentFrequency) : new Date();
+
+    // 🏠 Create tenant
     const tenant = await Tenants.create({
       firstName,
       lastName,
@@ -55,12 +102,16 @@ export const createTenant = async (req, res) => {
       balance,
       status,
       nextDueDate,
+      receiptUrl,
     });
 
-    // Mark unit as occupied
-    await Units.findByIdAndUpdate(unitId, { status: "Occupied", tenant: tenant._id });
+    // 🏢 Mark unit as occupied
+    await Units.findByIdAndUpdate(unitId, {
+      status: "Occupied",
+      tenant: tenant._id,
+    });
 
-    // Record initial payment if any
+    // 💰 Record payment if any
     if (initialPayment > 0) {
       await Payments.create({
         tenantId: tenant._id,
@@ -69,21 +120,23 @@ export const createTenant = async (req, res) => {
         paymentDate: new Date(),
         paymentMethod: "Initial Payment",
         notes: "Recorded during tenant creation",
-        status, // Partial or Paid
+        status,
+        receiptUrl,
       });
 
-      // Recalculate balance/status properly
       await recalcTenantBalance(tenant._id);
     }
 
-    res.status(201).json({ success: true, message: "Tenant created successfully", tenant });
+    res.status(201).json({
+      success: true,
+      message: "Tenant created successfully",
+      tenant,
+    });
   } catch (err) {
-    console.error("Error creating tenant:", err);
+    console.error("❌ Error creating tenant:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
-
 
 // Get single tenant
 export const getTenant = async (req, res) => {
