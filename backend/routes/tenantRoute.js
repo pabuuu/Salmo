@@ -8,14 +8,17 @@ import {
   deleteTenant,      // <- import deleteTenant
   getTenant
 } from "../controllers/tenantsController.js";
+import multer from "multer";
 
 const tenantRouter = express.Router();
+// const upload = multer();
+const upload = multer();
 
 tenantRouter.get("/", load);
-tenantRouter.post("/create", createTenant);
-tenantRouter.get("/:id", getTenant);           // Update tenant
+tenantRouter.post("/create", upload.single("receipt"), createTenant);
+tenantRouter.get("/:id", getTenant);        
 tenantRouter.put("/:id", update);
 tenantRouter.put("/:id/archive", archiveTenant);
-tenantRouter.delete("/:id", deleteTenant);   // <- add DELETE route
+tenantRouter.delete("/:id", deleteTenant);  
 
 export default tenantRouter;
