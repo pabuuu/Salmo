@@ -4,6 +4,11 @@ import Notification from "../../components/Notification";
 import CustomButton from "../../components/CustomBottom";
 import { useNavigate } from "react-router-dom";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 export default function ExpensesPost() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -23,7 +28,7 @@ export default function ExpensesPost() {
   useEffect(() => {
     const fetchMaintenance = async () => {
       try {
-        const res = await fetch("http://localhost:5050/api/maintenances/in-process");
+        const res = await fetch(`${BASE_URL}/maintenances/in-process`);
         const data = await res.json();
         if (res.ok && data.success) setMaintenanceList(data.maintenance || []);
       } catch (err) {
@@ -37,7 +42,7 @@ export default function ExpensesPost() {
   useEffect(() => {
     const fetchUnits = async () => {
       try {
-        const res = await fetch("http://localhost:5050/api/units");
+        const res = await fetch(`${BASE_URL}/units`);
         const data = await res.json();
         if (res.ok && data.success) setUnitList(data.data || []);
       } catch (err) {
@@ -59,7 +64,7 @@ const handleSubmit = async (e) => {
   };
 
   try {
-    const res = await fetch("http://localhost:5050/api/expenses", {
+    const res = await fetch(`${BASE_URL}/expenses`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
