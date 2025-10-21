@@ -12,6 +12,11 @@ import {
 } from 'chart.js';
 import axios from 'axios';
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
 export default function ExpenseOutput() {
@@ -46,8 +51,8 @@ export default function ExpenseOutput() {
   // fetch & group expenses (only Paid)
   const fetchExpenses = async (selectedFilter) => {
     try {
-      const res = await axios.get("http://localhost:5050/api/expenses");
-      let expenses = res.data.expenses || [];
+      const res = await axios.get(`${BASE_URL}/expenses`);
+      const expenses = res.data.expenses || [];
 
       // only include Paid expenses
       expenses = expenses.filter(exp => exp.status === "Paid");

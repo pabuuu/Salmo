@@ -6,6 +6,10 @@ import LoadingScreen from "../../views/Loading";
 import { Link } from "react-router-dom";
 import Notification from "../../components/Notification.js";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
 
 function Tenants() {
   const [tenants, setTenants] = useState([]);
@@ -30,7 +34,7 @@ function Tenants() {
     const action = isArchived ? "unarchive" : "archive";
 
     try {
-      await axios.put(`http://localhost:5050/api/tenants/${id}/archive`, {
+      await axios.put(`${BASE_URL}/tenants/${id}/archive`, {
         isArchived: !isArchived,
       });
 
@@ -60,7 +64,7 @@ function Tenants() {
   const doDelete = async () => {
     const { id } = confirmModal;
     try {
-      await axios.delete(`http://localhost:5050/api/tenants/${id}`);
+      await axios.delete(`${BASE_URL}/tenants/${id}`);
       setTenants((prev) => prev.filter((tenant) => tenant._id !== id));
       setToast({
         show: true,
@@ -81,7 +85,7 @@ function Tenants() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5050/api/tenants")
+      .get(`${BASE_URL}/tenants`)
       .then((res) => setTenants(res.data.data))
       .catch((err) => console.error("Error fetching tenants:", err))
       .finally(() => setLoading(false));

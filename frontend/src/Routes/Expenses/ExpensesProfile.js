@@ -8,6 +8,11 @@ import axios from "axios";
 import LoadingScreen from "../../views/Loading";
 import ReceiptModal from "../../components/ReceiptModal";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 export default function ExpensesProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,7 +28,7 @@ export default function ExpensesProfile() {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`http://localhost:5050/api/expenses/${id}`)
+      .get(`${BASE_URL}/expenses/${id}`)
       .then((res) => {
         if (res.data.success) {
           setExpense(res.data.expense);
@@ -64,7 +69,7 @@ export default function ExpensesProfile() {
       if (imageFile) formData.append("receiptImage", imageFile);
 
       const res = await axios.put(
-        `http://localhost:5050/api/expenses/${id}`,
+        `${BASE_URL}/expenses/${id}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -74,7 +79,18 @@ export default function ExpensesProfile() {
         setNotification({ type: "success", message: "Expense updated!" });
         setImageFile(null);
         setReceiptPreviewUrl(res.data.expense.receiptImage || "");
-      }
+      
+      setTimeout(() => {
+        navigate("/expenses", {
+          state: {
+            notification: {
+              type: "success",
+              message: `"${expense.title}" was successfully updated.`,
+            },
+          },
+        });
+      }, 1000);
+    }
     } catch (err) {
       console.error("Update failed:", err);
       setNotification({ type: "error", message: "Update failed" });

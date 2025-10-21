@@ -5,6 +5,11 @@ import Notification from "../../components/Notification.js";
 import CustomButton from "../../components/CustomBottom.js"; // ✅ Import our reusable button
 import { useNavigate } from "react-router-dom";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 export default function UnitsPost() {
   const navigate = useNavigate();
 
@@ -24,7 +29,7 @@ export default function UnitsPost() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:5050/api/units/create", {
+      const response = await fetch(`${BASE_URL}/units/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
