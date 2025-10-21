@@ -79,7 +79,18 @@ export default function ExpensesProfile() {
         setNotification({ type: "success", message: "Expense updated!" });
         setImageFile(null);
         setReceiptPreviewUrl(res.data.expense.receiptImage || "");
-      }
+      
+      setTimeout(() => {
+        navigate("/expenses", {
+          state: {
+            notification: {
+              type: "success",
+              message: `"${expense.title}" was successfully updated.`,
+            },
+          },
+        });
+      }, 1000);
+    }
     } catch (err) {
       console.error("Update failed:", err);
       setNotification({ type: "error", message: "Update failed" });
