@@ -103,7 +103,7 @@ function Expenses() {
       }
 
       try {
-        await axios.put(`${BASE_URL}/${expense._id}`, { status: "Paid" });
+        await axios.put(`${BASE_URL}/expenses${expense._id}`, { status: "Paid" });
         setNotification({ type: "success", message: `"${expense.title}" moved to Paid.` });
         fetchExpenses();
       } catch (err) {
