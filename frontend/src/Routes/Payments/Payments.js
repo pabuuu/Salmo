@@ -4,7 +4,8 @@ import PaymentsTable from "../../components/PaymentsTable";
 import LoadingScreen from "../../views/Loading";
 import { useNavigate, Link } from "react-router-dom";
 import PaymentModal from "../../components/PaymentModal";
-import Dropdown from "../../components/Dropdown"; 
+import Dropdown from "../../components/Dropdown";
+import * as XLSX from "xlsx";
 
 function Payments() {
   const [tenants, setTenants] = useState([]);
@@ -72,76 +73,86 @@ function Payments() {
     setFilteredTenants(temp);
   }, [searchTerm, sortKey, statusFilter, tenants]);
 
-  const escapeCSV = (value) => {
-    if (value === null || value === undefined) return "";
-    const str = String(value);
-    if (/[",\n\r]/.test(str)) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
-
-  const downloadCSV = () => {
+  const downloadXLSX = () => {
     if (!filteredTenants || filteredTenants.length === 0) {
       alert("No data to export.");
       return;
     }
-
-    const headers = [
-      "First Name",
-      "Last Name",
-      "Contact Number",
-      "Unit",
-      "Location",
-      "Rent Amount",
-      "Balance",
-      "Status",
-      "Next Due Date",
-      "Created At",
-      "Tenant ID",
-    ];
-
-    const rows = filteredTenants.map((t) => {
-      const unitNo = t.unitId?.unitNo ?? "";
-      const rentAmount = t.unitId?.rentAmount ?? "";
-      const balance = t.balance ?? 0;
-      const nextDueDate = t.nextDueDate ? new Date(t.nextDueDate).toISOString() : "";
-      const createdAt = t.createdAt ? new Date(t.createdAt).toISOString() : "";
-
-      return [
-        escapeCSV(t.firstName ?? ""),
-        escapeCSV(t.lastName ?? ""),
-        escapeCSV(t.contactNumber ?? ""),
-        escapeCSV(unitNo ? `Unit ${unitNo}` : ""),
-        escapeCSV(t.unitId?.location),
-        escapeCSV(rentAmount),
-        escapeCSV(balance),
-        escapeCSV(t.status ?? ""),
-        escapeCSV(nextDueDate),
-        escapeCSV(createdAt),
-        escapeCSV(t._id ?? ""),
-      ].join(",");
+    
+    const groupedByLocation = {};
+    filteredTenants.forEach((t) => {
+      const location = t.unitId?.location || "Unknown";
+      if (!groupedByLocation[location]) groupedByLocation[location] = [];
+      groupedByLocation[location].push(t);
     });
 
-    const csvContent = [headers.join(","), ...rows].join("\r\n");
+    const workbook = XLSX.utils.book_new();
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+    const generateSheetData = (tenants) => {
+      const rows = tenants.map((t) => ({
+        "First Name": t.firstName || "",
+        "Last Name": t.lastName || "",
+        "Contact Number": t.contactNumber || "",
+        "Unit": t.unitId?.unitNo ? `Unit ${t.unitId.unitNo}` : "",
+        "Location": t.unitId?.location || "",
+        "Rent Amount (₱)": t.unitId?.rentAmount || 0,
+        "Balance (₱)": t.balance || 0,
+        "Status": t.status || "",
+        "Next Due Date": t.nextDueDate
+          ? new Date(t.nextDueDate).toLocaleDateString()
+          : "",
+        "Created At": t.createdAt
+          ? new Date(t.createdAt).toLocaleDateString()
+          : "",
+        "Tenant ID": t._id || "",
+      }));
+
+      const totalBalance = tenants.reduce((sum, t) => sum + (t.balance || 0), 0);
+      const totalRent = tenants.reduce(
+        (sum, t) => sum + (t.unitId?.rentAmount || 0),
+        0
+      );
+      rows.push({});
+      rows.push({
+        "First Name": "",
+        "Last Name": "",
+        "Contact Number": "",
+        "Unit": "",
+        "Location": "",
+        "Rent Amount (₱)": `TOTAL RENT: ₱${totalRent.toLocaleString()}`,
+        "Balance (₱)": `TOTAL BALANCE: ₱${totalBalance.toLocaleString()}`,
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+
+      const colWidths = Object.keys(rows[0]).map((key) => ({
+        wch: Math.max(
+          key.length + 3,
+          ...rows.map((r) => String(r[key] || "").length + 2)
+        ),
+      }));
+      worksheet["!cols"] = colWidths;
+
+      return worksheet;
+    };
+
+    const allSheet = generateSheetData(filteredTenants);
+    XLSX.utils.book_append_sheet(workbook, allSheet, "All");
+
+    Object.entries(groupedByLocation).forEach(([location, tenants]) => {
+      const sheet = generateSheetData(tenants);
+      XLSX.utils.book_append_sheet(workbook, sheet, location.substring(0, 31));
+    });
 
     const now = new Date();
     const pad = (n) => String(n).padStart(2, "0");
-    const filename = `PAYMENTS${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
-      now.getDate()
-    )}_${pad(now.getHours())}${pad(now.getMinutes())}.csv`;
+    const filename = `TENANT_PAYMENTS_${now.getFullYear()}-${pad(
+      now.getMonth() + 1
+    )}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.xlsx`;
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    XLSX.writeFile(workbook, filename);
   };
+
   
   const columns = [
     { key: "firstName", label: "First Name" },
@@ -265,11 +276,10 @@ function Payments() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          <button className="px-4 py-2 rounded btn bg-white border" onClick={downloadCSV}>
+          <button className="px-4 py-2 rounded btn bg-white border" onClick={downloadXLSX}>
             <div className="d-flex gap-2 align-items-center">
               <i className="fa fa-solid fa-download text-success fw-bold"></i>
-              <span className="text-success fw-bold">CSV</span>
+              <span className="text-success fw-bold">XLSX</span>
             </div>
           </button>
         </div>
