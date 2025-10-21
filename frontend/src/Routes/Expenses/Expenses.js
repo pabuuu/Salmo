@@ -7,6 +7,11 @@ import Notification from "../../components/Notification";
 import ReceiptModal from "../../components/ReceiptModal";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 function Expenses() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,7 +35,7 @@ function Expenses() {
   const fetchExpenses = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5050/api/expenses");
+      const res = await axios.get(`${BASE_URL}/expenses`);
       const data = res.data.expenses || [];
       setExpenses(data);
 
@@ -64,7 +69,7 @@ function Expenses() {
   const handleDelete = async (id) => {
     setDeletingExpenseId(id);
     try {
-      const res = await axios.delete(`http://localhost:5050/api/expenses/${id}`);
+      const res = await axios.delete(`${BASE_URL}/expenses/${id}`);
       if (res.data.success) {
         setNotification({ type: "success", message: "Expense deleted successfully!" });
         fetchExpenses();
@@ -82,7 +87,7 @@ function Expenses() {
   const handleMoveTo = async (expense) => {
     if (expense.status === "Pending") {
       try {
-        await axios.put(`http://localhost:5050/api/expenses/${expense._id}`, { status: "Approved" });
+        await axios.put(`${BASE_URL}/expenses/${expense._id}`, { status: "Approved" });
         setNotification({ type: "success", message: `"${expense.title}" moved to Approved.` });
         fetchExpenses();
       } catch (err) {
@@ -98,7 +103,7 @@ function Expenses() {
       }
 
       try {
-        await axios.put(`http://localhost:5050/api/expenses/${expense._id}`, { status: "Paid" });
+        await axios.put(`${BASE_URL}/expenses/${expense._id}`, { status: "Paid" });
         setNotification({ type: "success", message: `"${expense.title}" moved to Paid.` });
         fetchExpenses();
       } catch (err) {
@@ -170,11 +175,11 @@ function Expenses() {
     });
 
     // Add category subtotal in Title and Amount columns, bolded
-    csvContent += `"**Subtotal**","**₱${categoryTotal.toLocaleString()}**",,,,,\r\n`;
+    csvContent += `"Subtotal","₱${categoryTotal.toLocaleString()}",,,,,\r\n`;
   });
 
   // Add grand total at the very end, bolded
-  csvContent += `\r\n"**Grand Total**","**₱${grandTotal.toLocaleString()}**",,,,,\r\n`;
+  csvContent += `\r\n"Grand Total","₱${grandTotal.toLocaleString()}",,,,,\r\n`;
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);

@@ -3,6 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import LoadingScreen from "../../views/Loading";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 function UsersPayments() {
   const { id } = useParams(); // tenant ID from URL
   const [tenant, setTenant] = useState(null);
@@ -12,7 +17,7 @@ function UsersPayments() {
   useEffect(() => {
     const fetchTenantPayments = async () => {
       try {
-        const res = await axios.get(`http://localhost:5050/api/payments/tenant/${id}`);
+        const res = await axios.get(`${BASE_URL}/payments/tenant/${id}`);
         setTenant(res.data.data.tenant);
         setPayments(res.data.data.payments || []);
       } catch (err) {

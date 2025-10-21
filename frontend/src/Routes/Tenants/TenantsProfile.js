@@ -6,6 +6,11 @@ import axios from "axios";
 import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification.js";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 export default function TenantsProfile(){
     //useState  & decaltation
   const { id } = useParams();
@@ -17,8 +22,8 @@ export default function TenantsProfile(){
   useEffect(() => {
     const fetchTenant = async () => {
       try {
-        const res = await axios.get(`http://localhost:5050/api/tenants/${id}`);
-        setTenant(res.data.data);
+        const res = await axios.get(`${BASE_URL}/tenants/${id}`);
+        setTenant(res.data.data[0]);
       } catch (err) {
         console.error("Error fetching tenant:", err);
       }
@@ -29,7 +34,7 @@ export default function TenantsProfile(){
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5050/api/tenants/${id}`, tenant);
+      await axios.put(`${BASE_URL}/tenants/${id}`, tenant);
       setNotification({
         message: "Tenant updated successfully!",
         type: "success",

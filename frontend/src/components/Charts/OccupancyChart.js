@@ -2,6 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { Chart, PieController, ArcElement, Tooltip, Legend } from "chart.js";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 Chart.register(PieController, ArcElement, Tooltip, Legend);
 
 export default function OccupancyChart() {
@@ -12,7 +17,7 @@ export default function OccupancyChart() {
   useEffect(() => {
     const fetchUnits = async () => {
       try {
-        const res = await axios.get("http://localhost:5050/api/units");
+        const res = await axios.get(`${BASE_URL}/units`);
         const allUnits = res.data.data || [];
         const occupied = allUnits.filter((unit) => unit.status === "Occupied").length;
         const available = allUnits.filter((unit) => unit.status === "Available").length;

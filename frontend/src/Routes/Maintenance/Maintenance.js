@@ -5,6 +5,11 @@ import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
 import MaintenanceTable from "../../components/MaintenanceTable";
 
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5050/api"
+    : "https://rangeles.online/api";
+
 function Maintenance() {
   const [maintenances, setMaintenances] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +27,7 @@ function Maintenance() {
   const fetchMaintenances = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5050/api/maintenances");
+      const res = await axios.get(`${BASE_URL}/maintenances`);
       setMaintenances(res.data.data || []);
     } catch (err) {
       console.error("Failed to fetch maintenances:", err);
@@ -53,7 +58,7 @@ function Maintenance() {
   const updateStatus = async (maintenance, newStatus) => {
     try {
       await axios.put(
-        `http://localhost:5050/api/maintenances/${maintenance._id}`,
+        `${BASE_URL}/maintenances/${maintenance._id}`,
         { status: newStatus }
       );
 
@@ -64,7 +69,7 @@ function Maintenance() {
         }
 
         await axios.put(
-          `http://localhost:5050/api/units/${maintenance.unit._id}`,
+          `${BASE_URL}/units/${maintenance.unit._id}`,
           { status: unitStatus }
         );
       }
@@ -83,14 +88,14 @@ function Maintenance() {
   const cancelMaintenance = async (maintenance) => {
     try {
       await axios.put(
-        `http://localhost:5050/api/maintenances/${maintenance._id}`,
+        `${BASE_URL}/maintenances/${maintenance._id}`,
         { status: "Cancelled" }
       );
 
       if (maintenance.unit?._id) {
         const unitStatus = maintenance.tenant ? "Occupied" : "Available";
         await axios.put(
-          `http://localhost:5050/api/units/${maintenance.unit._id}`,
+          `${BASE_URL}/units/${maintenance.unit._id}`,
           { status: unitStatus }
         );
       }
@@ -109,7 +114,7 @@ function Maintenance() {
   const deleteMaintenance = async (maintenance) => {
     try {
       await axios.delete(
-        `http://localhost:5050/api/maintenances/${maintenance._id}`
+        `${BASE_URL}/maintenances/${maintenance._id}`
       );
       fetchMaintenances();
       setNotification({
