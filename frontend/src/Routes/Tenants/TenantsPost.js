@@ -87,7 +87,7 @@ export default function TenantsPost() {
     if (receipt) formData.append("receipt", receipt); // 👈 attach file
   
     try {
-      const response = await fetch(`${BASE_URL}${BASE_URL}/tenants/create`, {
+      const response = await fetch(`${BASE_URL}/tenants/create`, {
         method: "POST",
         body: formData, // 👈 FormData instead of JSON
       });
@@ -123,13 +123,13 @@ export default function TenantsPost() {
   const handleLocationSelect = (loc) => {
     setLocation(loc);
     setLocationLabel(loc);
-    setUnitId(""); // reset unit if location changes
+    setUnitId("");
     setUnitLabel("Select Unit");
   };
 
   const handleUnitSelect = (unit) => {
-    setUnitId(unit._id); // store actual unitId
-    setUnitLabel(`Unit ${unit.unitNo}`); // show friendly label
+    setUnitId(unit._id); 
+    setUnitLabel(`Unit ${unit.unitNo} (₱${unit.rentAmount.toLocaleString()})`);
   };
 
   const handleFrequencySelect = (freq) => {
@@ -216,7 +216,7 @@ export default function TenantsPost() {
                     availableUnits.map((unit) => (
                       <li key={unit._id}>
                         <button type="button" className="dropdown-item" onClick={() => handleUnitSelect(unit)}>
-                          {`Unit ${unit.unitNo}`}
+                          {`Unit ${unit.unitNo} (₱${unit.rentAmount.toLocaleString()})`}
                         </button>
                       </li>
                     ))

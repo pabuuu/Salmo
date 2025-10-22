@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Card from "../../components/Card";
-import { useNavigate, useNavigation, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import Dropdown from "../../components/Dropdown.js";
 import axios from "axios";
 import LoadingScreen from "../../views/Loading";
@@ -11,19 +11,80 @@ const BASE_URL =
     ? "http://localhost:5050/api"
     : "https://rangeles.online/api";
 
-export default function TenantsProfile(){
-    //useState  & decaltation
+export default function TenantsProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [tenant, setTenant] = useState(null);
   const [notification, setNotification] = useState({ message: "", type: "info" });
+  const [availableLocations, setAvailableLocations] = useState([]);
+  const [availableUnits, setAvailableUnits] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [frequencyLabel, setFrequencyLabel] = useState("Select Frequency");
 
-  //useEffect
+  // Fetch available locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/units`);
+        const allUnits = res.data.data;
+        const uniqueLocations = [...new Set(allUnits.map((u) => u.location))];
+        setAvailableLocations(uniqueLocations);
+      } catch (err) {
+        console.error("Error fetching locations:", err);
+        setAvailableLocations([]);
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  const fetchUnitsByLocation = async (location) => {
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/units/getAvailableByLocation?location=${encodeURIComponent(location)}`
+      );
+      setAvailableUnits(res.data.data || []);
+    } catch (err) {
+      console.error("Error fetching units:", err);
+      setAvailableUnits([]);
+    }
+  };
+  
+  const handleAssignUnit = async () => {
+    if (!selectedUnit) return;
+
+    try {
+      await axios.put(`${BASE_URL}/tenants/${tenant._id}/assign-unit`, {
+        unitId: selectedUnit._id,
+      });
+
+      setNotification({
+        message: `Unit ${selectedUnit.unitNo} assigned successfully!`,
+        type: "success",
+      });
+
+      // Refresh tenant info
+      const res = await axios.get(`${BASE_URL}/tenants/${tenant._id}`);
+      setTenant(res.data.data);
+
+      // Reset
+      setSelectedLocation("");
+      setSelectedUnit(null);
+    } catch (err) {
+      console.error("Error assigning unit:", err);
+      setNotification({
+        message: "Failed to assign unit.",
+        type: "error",
+      });
+    }
+  };
+
+  // Fetch tenant info
   useEffect(() => {
     const fetchTenant = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/tenants/${id}`);
-        setTenant(res.data.data[0]);
+        setTenant(res.data.data);
       } catch (err) {
         console.error("Error fetching tenant:", err);
       }
@@ -31,6 +92,7 @@ export default function TenantsProfile(){
     fetchTenant();
   }, [id]);
 
+  // Update tenant profile
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
@@ -49,146 +111,155 @@ export default function TenantsProfile(){
     }
   };
 
-  const [frequencyLabel, setFrequecyLabel] = useState("Select Frequency");
-
-    return (
-      <div className="d-flex h-100 w-100">
+  // ✅ Component UI
+  return (
+    <div className="d-flex h-100 w-100">
       <Card width={"100%"} height={"100%"}>
         <div className="mx-5 p-2">
-        {!tenant ? (
-            <LoadingScreen/>
-          ):(
+          {!tenant ? (
+            <LoadingScreen />
+          ) : (
             <div>
               <h1 className="text-dark">{tenant.firstName}'s Profile</h1>
               <span className="text-muted">Update your tenant's profile here</span>
-                <form onSubmit={handleUpdate}>
-                <div className="d-flex gap-2 mt-5">
-              <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">First Name</label>
-                <input
-                  placeholder="Enter first name"
-                  className="custom-input form-control"
-                  value={tenant.firstName}
-                  onChange={(e) =>
-                    setTenant(prev => ({ ...prev, firstName: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="flex-grow-1 ">
-                <label className="form-label p-0 m-0">Last Name</label>
-                <input
-                  placeholder="Enter last name"
-                  className="custom-input form-control"
-                  value={tenant.lastName}
-                  onChange={(e) =>
-                    setTenant(prev => ({ ...prev, lastName: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">Email</label>
-                <input
-                  type="email"
-                  placeholder="Enter email"
-                  className="custom-input form-control"
-                  value={tenant.email}
-                  onChange={(e) =>
-                    setTenant(prev => ({ ...prev, email: e.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="d-flex mt-3 align-items-center gap-2">
-              <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">Mobile Number</label>
-                <input
-                  type="tel"
-                  placeholder="Enter mobile number"
-                  className="custom-input form-control"
-                  value={tenant.contactNumber}
-                  maxLength={11}
-                  pattern="[0-9]{11}"
-                  required
-                  onChange={(e) =>{
-                    const value = e.target.value.replace(/\D/g, ""); 
-                      if (value.length <= 11) {
-                        setTenant(prev => ({ ...prev, contactNumber: e.target.value }))
-                      }
-                    } 
-                  }
-                />
-              </div>
-              <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">Unit</label>
-                <Dropdown
-                  label={tenant.unitId ? `Unit ${tenant.unitId.unitNo}` : "No unit"}
-                  width={"100%"}
-                  height={"42px"}
-                  disabled={true}
-                />
-              </div>
-              <div className="flex-grow-1">
-                <label className="form-label p-0 m-0">Location</label>
-                <Dropdown
-                  label={tenant.unitId ? tenant.unitId.location : "No location"}
-                  width={"100%"}
-                  height={"42px"}
-                  disabled={true}
-                />
 
-              </div>
-            </div>
-            {/* <div className="d-flex gap-2 mt-3 align-items-start">
-              <div style={{ width: "25%" }}>
-                <label className="form-label p-0 m-0">Amount to Pay</label>
-                <input
-                  type="text"
-                  placeholder="0"
-                  className="custom-input form-control"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={tenant.rentalAmount}
-                  onChange={(e) =>
-                    setTenant(prev => ({ ...prev, rentalAmount: e.target.value }))
-                  }
-                />
-              </div>
-              <div style={{ width: "25%" }}>
-                <label className="form-label p-0 m-0">Payment Frequency</label>
-                <Dropdown label={frequencyLabel} width={"100%"} height={"42px"} disabled={false}>
-                  <li><button type="button" className="dropdown-item" 
-                    onClick={() => {
-                      setTenant(prev => ({ ...prev, paymentFrequency: "Monthly" }))
-                      setFrequecyLabel('Monthly')
-                    }}
-                  >Monthly</button></li>
-                  <li><button type="button" className="dropdown-item"
-                    onClick={() => {
-                      setTenant(prev => ({ ...prev, paymentFrequency: "Quarterly" }))
-                      setFrequecyLabel('Quarterly')
-                    }}
-                  >Quarterly</button></li>
-                  <li><button type="button" className="dropdown-item" 
-                    onClick={() => {
-                      setTenant(prev => ({ ...prev, paymentFrequency: "Yearly" }))
-                      setFrequecyLabel('Yearly')
-                    }}
-                  > Yearly</button></li>
-                </Dropdown>
-              </div>
-            </div> */}
-            <div className="d-flex gap-2">
-              <button className="custom-button fw-normal px-4 bg-light border text-muted" type="button"  onClick={()=>{{
-                // to previous page
-                navigate(-1)
-              }}}>Cancel</button>
-              <button className="custom-button fw-normal px-4 bg-warning" type="submit">Update</button>
-            </div>
-                </form>
+              <form onSubmit={handleUpdate}>
+                {/* Basic Info */}
+                <div className="d-flex gap-2 mt-5">
+                  <div className="flex-grow-1">
+                    <label className="form-label p-0 m-0">First Name</label>
+                    <input
+                      placeholder="Enter first name"
+                      className="custom-input form-control"
+                      value={tenant.firstName || ""}
+                      onChange={(e) =>
+                        setTenant((prev) => ({ ...prev, firstName: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="flex-grow-1">
+                    <label className="form-label p-0 m-0">Last Name</label>
+                    <input
+                      placeholder="Enter last name"
+                      className="custom-input form-control"
+                      value={tenant.lastName || ""}
+                      onChange={(e) =>
+                        setTenant((prev) => ({ ...prev, lastName: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="flex-grow-1">
+                    <label className="form-label p-0 m-0">Email</label>
+                    <input
+                      type="email"
+                      placeholder="Enter email"
+                      className="custom-input form-control"
+                      value={tenant.email || ""}
+                      onChange={(e) =>
+                        setTenant((prev) => ({ ...prev, email: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Location & Unit */}
+                <div className="d-flex mt-3 align-items-center gap-2">
+                  <div className="flex-grow-1">
+                    <label className="form-label p-0 m-0">Location</label>
+                    <Dropdown
+                      label={
+                        tenant.unitId
+                          ? tenant.unitId.location
+                          : selectedLocation || "Select location"
+                      }
+                      width={"100%"}
+                      height={"42px"}
+                      disabled={!!tenant.unitId}
+                    >
+                      {!tenant.unitId &&
+                        (availableLocations || []).map((loc, index) => (
+                          <li key={index}>
+                            <button
+                              type="button"
+                              className="dropdown-item"
+                              onClick={() => {
+                                setSelectedLocation(loc);
+                                fetchUnitsByLocation(loc);
+                              }}
+                            >
+                              {loc}
+                            </button>
+                          </li>
+                        ))}
+                    </Dropdown>
+                  </div>
+
+                  <div className="flex-grow-1">
+                    <label className="form-label p-0 m-0">Unit</label>
+                    <Dropdown
+                      label={
+                        tenant.unitId
+                          ? `Unit ${tenant.unitId.unitNo}`
+                          : selectedUnit
+                          ? `Unit ${selectedUnit.unitNo} (₱${selectedUnit.rentAmount?.toLocaleString?.() || 0})`
+                          : "Select unit"
+                      }
+                      width={"100%"}
+                      height={"42px"}
+                      disabled={!!tenant.unitId || !selectedLocation}
+                    >
+                      {!tenant.unitId &&
+                        (availableUnits || []).map((u) => (
+                          <li key={u._id}>
+                            <button
+                              type="button"
+                              className="dropdown-item"
+                              onClick={() => setSelectedUnit(u)}
+                            >
+                              Unit {u.unitNo} (₱{u.rentAmount?.toLocaleString?.() || 0})
+                            </button>
+                          </li>
+                        ))}
+                    </Dropdown>
+                  </div>
+                </div>
+
+                {/* Assign Button */}
+                {!tenant.unitId && (
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      className="custom-button fw-normal px-4 bg-primary text-white"
+                      onClick={handleAssignUnit}
+                      disabled={!selectedUnit}
+                    >
+                      Assign Unit
+                    </button>
+                  </div>
+                )}
+
+                {/* Buttons */}
+                <div className="d-flex gap-2 mt-4">
+                  <button
+                    className="custom-button fw-normal px-4 bg-light border text-muted"
+                    type="button"
+                    onClick={() => navigate(-1)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="custom-button fw-normal px-4 bg-warning"
+                    type="submit"
+                  >
+                    Update
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </div>
       </Card>
+
       {notification.message && (
         <Notification
           type={notification.type}
@@ -197,5 +268,5 @@ export default function TenantsProfile(){
         />
       )}
     </div>
-    );
+  );
 }
