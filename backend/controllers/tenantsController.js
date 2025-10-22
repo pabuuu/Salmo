@@ -231,19 +231,23 @@ export const archiveTenant = async (req, res) => {
     // Disable validation so it won’t require all fields again
     await tenant.save({ validateBeforeSave: false });
 
-    // Free unit only if archiving
+    // ✅ Only free the unit when archiving
     if (newStatus && tenant.unitId) {
       await Units.findOneAndUpdate(
         { _id: tenant.unitId, tenant: tenant._id },
         { status: "Available", tenant: null }
       );
+
+      // remove unit reference from tenant (so admin can manually assign later)
+      tenant.unitId = null;
+      await tenant.save({ validateBeforeSave: false });
     }
 
     res.json({
       success: true,
       message: newStatus
-        ? "Tenant archived successfully."
-        : "Tenant unarchived successfully.",
+        ? "Tenant archived successfully. Unit freed."
+        : "Tenant unarchived successfully. Please reassign a unit manually.",
       archived: newStatus,
     });
   } catch (err) {
@@ -251,6 +255,7 @@ export const archiveTenant = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 export const getTenants = async (req, res) => {
   try {
@@ -324,5 +329,41 @@ export const deleteTenant = async (req, res) => {
   } catch (err) {
     console.error("Error deleting tenant:", err);
     res.status(500).json({ success: false, message: "Failed to delete tenant" });
+  }
+};
+
+export const assignUnit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { unitId } = req.body;
+
+    const tenant = await Tenants.findById(id);
+    if (!tenant)
+      return res.status(404).json({ success: false, message: "Tenant not found" });
+
+    const unit = await Units.findById(unitId);
+    if (!unit)
+      return res.status(404).json({ success: false, message: "Unit not found" });
+
+    if (unit.status !== "Available")
+      return res.status(400).json({ success: false, message: "Unit is not available" });
+
+    // ✅ Assign both unit and location
+    tenant.unitId = unit._id;
+    tenant.location = unit.location; // <-- this line adds the location
+    await tenant.save({ validateBeforeSave: false });
+
+    // Update the unit
+    unit.tenant = tenant._id;
+    unit.status = "Occupied";
+    await unit.save();
+
+    res.json({
+      success: true,
+      message: `Tenant assigned to Unit ${unit.unitNo} (${unit.location}) successfully.`,
+    });
+  } catch (err) {
+    console.error("Error assigning unit:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

@@ -7,17 +7,14 @@ import {
   update,
   getOne,
   assignTenant,
-  removeTenant
+  removeTenant,
+  getAvailableLocations,
 } from "../controllers/unitsController.js";
 
 const unitRouter = express.Router();
 
-// Always put more specific routes BEFORE "/:id"
-unitRouter.get("/", load);
+unitRouter.get("/locations", getAvailableLocations);
 unitRouter.get("/getAvailableByLocation", getAvailableByLocation);
-unitRouter.post("/create", create);
-
-// Debug route must be ABOVE "/:id"
 unitRouter.get("/debug/all", async (req, res) => {
   try {
     const units = await import("../models/Units.js").then(m => m.default.find());
@@ -27,6 +24,8 @@ unitRouter.get("/debug/all", async (req, res) => {
   }
 });
 
+unitRouter.get("/", load);
+unitRouter.post("/create", create);
 unitRouter.get("/:id", getOne);
 unitRouter.put("/:id", update);
 unitRouter.delete("/:id", remove);

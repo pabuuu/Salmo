@@ -188,3 +188,42 @@ export const removeTenant = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const getAvailableLocations = async (req, res) => {
+  try {
+    const locations = await Units.distinct("location", { status: "Available" });
+    res.json({ success: true, locations });
+  } catch (err) {
+    console.error("Error fetching locations:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const assignUnitToTenant = async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const { unitId } = req.body;
+
+    const tenant = await Tenants.findById(tenantId);
+    if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
+
+    const unit = await Units.findById(unitId);
+    if (!unit || unit.status !== "Available")
+      return res.status(400).json({ success: false, message: "Unit not available" });
+
+    // Update tenant
+    tenant.unitId = unit._id;
+    await tenant.save({ validateBeforeSave: false });
+
+    // Update unit
+    unit.tenant = tenant._id;
+    unit.status = "Occupied";
+    await unit.save();
+
+    res.json({ success: true, message: "Unit successfully assigned" });
+  } catch (err) {
+    console.error("Error assigning unit:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+

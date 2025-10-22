@@ -6,7 +6,8 @@ import {
   update, 
   archiveTenant,
   deleteTenant,      // <- import deleteTenant
-  getTenant
+  getTenant,
+  assignUnit
 } from "../controllers/tenantsController.js";
 import multer from "multer";
 
@@ -20,5 +21,6 @@ tenantRouter.get("/:id", getTenant);
 tenantRouter.put("/:id", update);
 tenantRouter.put("/:id/archive", archiveTenant);
 tenantRouter.delete("/:id", deleteTenant);  
+tenantRouter.put("/:id/assign-unit", assignUnit);
 
 export default tenantRouter;
