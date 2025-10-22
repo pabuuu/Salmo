@@ -15,7 +15,6 @@ export default function MaintenancePost() {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("tenant");
-
   const [tenants, setTenants] = useState([]);
   const [selectedTenant, setSelectedTenant] = useState(null);
 
@@ -23,16 +22,18 @@ export default function MaintenancePost() {
   const [selectedAvailableUnit, setSelectedAvailableUnit] = useState(null);
 
   const [task, setTask] = useState("");
+  const [customTask, setCustomTask] = useState(""); // ✅ user input for “Others”
   const [description, setDescription] = useState("");
   const [schedule, setSchedule] = useState("");
   const [status, setStatus] = useState("Pending");
+  const [priority, setPriority] = useState("Medium");
 
   const [unit, setUnit] = useState({ unitNo: "", location: "" });
 
   const [notification, setNotification] = useState({ type: "", message: "" });
   const showNotification = (type, message) => setNotification({ type, message });
 
-  // Fetch tenants and units
+  // Fetch tenants & units
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -44,7 +45,9 @@ export default function MaintenancePost() {
         if (tenantsRes.data.success) setTenants(tenantsRes.data.data);
 
         if (unitsRes.data.success) {
-          const availableOnly = unitsRes.data.data.filter((u) => u.status === "Available");
+          const availableOnly = unitsRes.data.data.filter(
+            (u) => u.status === "Available"
+          );
           setAvailableUnits(availableOnly);
         }
       } catch (err) {
@@ -55,7 +58,7 @@ export default function MaintenancePost() {
     fetchData();
   }, []);
 
-  // Update unit when tenant is selected
+  // Update unit info when tenant is selected
   useEffect(() => {
     if (!selectedTenant) return;
 
@@ -70,12 +73,15 @@ export default function MaintenancePost() {
 
         const res = await axios.get(`${BASE_URL}/units/${unitId}`);
         if (res.data.success) {
-          setUnit({ unitNo: res.data.data.unitNo, location: res.data.data.location });
+          setUnit({
+            unitNo: res.data.data.unitNo,
+            location: res.data.data.location,
+          });
         }
       } catch (err) {
         console.error(err);
         setUnit({ unitNo: "", location: "" });
-        showNotification("error", "Failed to fetch the assigned unit.");
+        showNotification("error", "Failed to fetch assigned unit.");
       }
     };
 
@@ -88,37 +94,40 @@ export default function MaintenancePost() {
     let unitId, tenantId;
 
     if (activeTab === "tenant") {
-      if (!selectedTenant) return showNotification("error", "Please select a tenant.");
+      if (!selectedTenant)
+        return showNotification("error", "Please select a tenant.");
       unitId = selectedTenant.unitId?._id || selectedTenant.unitId;
       tenantId = selectedTenant._id;
-      if (!unitId) return showNotification("error", "Selected tenant has no assigned unit.");
+      if (!unitId)
+        return showNotification("error", "Selected tenant has no assigned unit.");
     } else {
-      if (!selectedAvailableUnit) return showNotification("error", "Please select a unit.");
+      if (!selectedAvailableUnit)
+        return showNotification("error", "Please select a unit.");
       unitId = selectedAvailableUnit._id;
-      tenantId = undefined; // optional tenant
+      tenantId = undefined;
     }
 
-    if (!task.trim()) return showNotification("error", "Please enter a task.");
-    if (!schedule) return showNotification("error", "Please select a schedule date.");
+    const finalTask = task === "Others" ? customTask.trim() : task.trim();
+    if (!finalTask)
+      return showNotification("error", "Please enter a valid task name.");
+    if (!schedule)
+      return showNotification("error", "Please select a schedule date.");
 
     try {
       const payload = {
         unit: unitId,
-        task,
-        description, // new description field
+        task: finalTask,
+        description,
         schedule: new Date(schedule),
         status,
+        priority,
       };
 
       if (tenantId) payload.tenant = tenantId;
 
-      const response = await axios.post(
-      `${BASE_URL}/maintenances`,
-      payload
-    );
+      const response = await axios.post(`${BASE_URL}/maintenances`, payload);
 
       if (response.data.success) {
-        // Update unit status accordingly
         let newUnitStatus;
         if (status === "Completed") {
           newUnitStatus = activeTab === "available" ? "Available" : "Occupied";
@@ -142,13 +151,17 @@ export default function MaintenancePost() {
         showNotification("success", "Maintenance created successfully!");
         setTimeout(() => navigate("/maintenance"), 1200);
       } else {
-        showNotification("error", response.data.message || "Failed to create maintenance.");
+        showNotification(
+          "error",
+          response.data.message || "Failed to create maintenance."
+        );
       }
     } catch (err) {
       console.error("Create Maintenance Error:", err.response || err);
       showNotification(
         "error",
-        err.response?.data?.message || "An error occurred while creating maintenance."
+        err.response?.data?.message ||
+          "An error occurred while creating maintenance."
       );
     }
   };
@@ -162,13 +175,17 @@ export default function MaintenancePost() {
           {/* Tabs */}
           <div className="d-flex gap-3 mt-3">
             <button
-              className={`btn ${activeTab === "tenant" ? "btn-dark" : "btn-outline-dark"}`}
+              className={`btn ${
+                activeTab === "tenant" ? "btn-dark" : "btn-outline-dark"
+              }`}
               onClick={() => setActiveTab("tenant")}
             >
               By Tenant
             </button>
             <button
-              className={`btn ${activeTab === "available" ? "btn-dark" : "btn-outline-dark"}`}
+              className={`btn ${
+                activeTab === "available" ? "btn-dark" : "btn-outline-dark"
+              }`}
               onClick={() => setActiveTab("available")}
             >
               Available Units
@@ -176,6 +193,7 @@ export default function MaintenancePost() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-4">
+            {/* Tenant Tab */}
             {activeTab === "tenant" && (
               <div className="d-flex mt-4 gap-3 align-items-center">
                 <div className="flex-grow-1">
@@ -215,6 +233,7 @@ export default function MaintenancePost() {
               </div>
             )}
 
+            {/* Available Units Tab */}
             {activeTab === "available" && (
               <div className="d-flex mt-4 gap-3 align-items-center">
                 <div className="flex-grow-1">
@@ -244,18 +263,55 @@ export default function MaintenancePost() {
               </div>
             )}
 
-            {/* Task */}
+            {/* Task & Schedule */}
             <div className="d-flex mt-4 gap-3 align-items-center">
+              {/* Task Dropdown */}
               <div className="flex-grow-1">
                 <label className="form-label">Task</label>
-                <input
-                  placeholder="Enter maintenance task"
-                  className="custom-input form-control"
-                  value={task}
-                  onChange={(e) => setTask(e.target.value)}
-                  required
-                />
+                <Dropdown
+                  label={task ? task : "Select Task"}
+                  width="100%"
+                  height="42px"
+                >
+                  {[
+                    "Plumbing Repair",
+                    "Electrical Repair",
+                    "Aircon Maintenance",
+                    "Pest Control",
+                    "Cleaning Service",
+                    "Painting / Repainting",
+                    "Appliance Repair",
+                    "Others",
+                  ].map((option) => (
+                    <li key={option}>
+                      <button
+                        type="button"
+                        className="dropdown-item"
+                        onClick={() => {
+                          setTask(option);
+                          if (option !== "Others") setCustomTask("");
+                        }}
+                      >
+                        {option}
+                      </button>
+                    </li>
+                  ))}
+                </Dropdown>
+
+                {/* Show input box only when Others is selected */}
+                {task === "Others" && (
+                  <input
+                    type="text"
+                    placeholder="Specify other task"
+                    className="custom-input form-control mt-2"
+                    value={customTask}
+                    onChange={(e) => setCustomTask(e.target.value)}
+                    required
+                  />
+                )}
               </div>
+
+              {/* Schedule */}
               <div className="flex-grow-1">
                 <label className="form-label">Schedule</label>
                 <input
@@ -280,44 +336,52 @@ export default function MaintenancePost() {
               />
             </div>
 
-            {/* Status */}
+            {/* Status & Priority */}
             <div className="d-flex mt-4 gap-3 align-items-center">
+              {/* Status */}
               <div className="flex-grow-1">
                 <label className="form-label">Status</label>
-                <Dropdown label={status || "Select Status"} width="100%" height="42px">
-                  <li>
-                    <button
-                      type="button"
-                      className="dropdown-item"
-                      onClick={() => setStatus("Pending")}
-                    >
-                      Pending
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      className="dropdown-item"
-                      onClick={() => setStatus("In Process")}
-                    >
-                      In Process
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      className="dropdown-item"
-                      onClick={() => setStatus("Completed")}
-                    >
-                      Completed
-                    </button>
-                  </li>
+                <Dropdown label={status} width="100%" height="42px">
+                  {["Pending", "In Process", "Completed"].map((opt) => (
+                    <li key={opt}>
+                      <button
+                        type="button"
+                        className="dropdown-item"
+                        onClick={() => setStatus(opt)}
+                      >
+                        {opt}
+                      </button>
+                    </li>
+                  ))}
+                </Dropdown>
+              </div>
+
+              {/* Priority */}
+              <div className="flex-grow-1">
+                <label className="form-label">Priority</label>
+                <Dropdown label={priority} width="100%" height="42px">
+                  {["Low", "Medium", "High"].map((opt) => (
+                    <li key={opt}>
+                      <button
+                        type="button"
+                        className="dropdown-item"
+                        onClick={() => setPriority(opt)}
+                      >
+                        {opt}
+                      </button>
+                    </li>
+                  ))}
                 </Dropdown>
               </div>
             </div>
 
+            {/* Buttons */}
             <div className="d-flex gap-3 mt-4">
-              <CustomButton label="Cancel" variant="secondary" onClick={() => navigate(-1)} />
+              <CustomButton
+                label="Cancel"
+                variant="secondary"
+                onClick={() => navigate(-1)}
+              />
               <CustomButton label="Create" type="submit" variant="primary" />
             </div>
           </form>

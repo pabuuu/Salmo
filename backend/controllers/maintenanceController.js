@@ -44,7 +44,7 @@ export const getMaintenances = async (req, res) => {
 // Create a maintenance record
 export const createMaintenance = async (req, res) => {
   try {
-    const { tenant, unit, task, description, schedule, status } = req.body;
+    const { tenant, unit, task, description, schedule, status, priority } = req.body;
 
     if (!unit || !task || !schedule) {
       return res.status(400).json({
@@ -60,6 +60,7 @@ export const createMaintenance = async (req, res) => {
       description: description || "",
       schedule,
       status,
+      priority: priority || "Medium", // ✅ include default priority
     });
 
     await maintenance.save();
