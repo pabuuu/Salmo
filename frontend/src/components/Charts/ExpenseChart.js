@@ -52,10 +52,8 @@ export default function ExpenseOutput() {
   const fetchExpenses = async (selectedFilter) => {
     try {
       const res = await axios.get(`${BASE_URL}/expenses`);
-      const expenses = res.data.expenses || [];
-
-      // only include Paid expenses
-      expenses = expenses.filter(exp => exp.status === "Paid");
+      const allExpenses = res.data.expenses || [];
+      const expenses = allExpenses.filter(exp => exp.status === "Paid");
 
       const expenseByPeriod = {};
 
