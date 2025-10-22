@@ -349,7 +349,7 @@ function Maintenance() {
         ))}
 
         {/* Priority Dropdown (styled like Units filter) */}
-        ````<div className="ms-auto d-flex align-items-center">
+          <div className="ms-auto d-flex align-items-center">
           <label htmlFor="priorityFilter" className="me-2 fw-semibold text-dark">
             Priority:
           </label>
