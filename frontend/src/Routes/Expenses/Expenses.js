@@ -6,6 +6,7 @@ import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
 import ReceiptModal from "../../components/ReceiptModal";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 const BASE_URL =
   window.location.hostname === "localhost"
@@ -116,38 +117,26 @@ function Expenses() {
     }
   };
 
-  // CSV helper functions
-  const escapeCSV = (value) => {
-    if (value === null || value === undefined) return "";
-    const str = String(value);
-    if (/[",\n\r]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
-    return str;
-  };
-
-  const downloadCSV = () => {
+  // XLSX export (replaces CSV)
+  // XLSX export (replaces CSV)
+const downloadXLSX = () => {
   if (!expenses || expenses.length === 0) {
     alert("No expenses to export.");
     return;
   }
 
-  const headers = ["Title", "Amount", "Status", "Unit", "Location", "Date Created", "Expense ID"];
-  let csvContent = "";
+  const workbook = XLSX.utils.book_new();
 
-  let grandTotal = 0;
-
-  // Group expenses by category
   const grouped = categories.filter((c) => c !== "All").map((cat) => ({
     category: cat,
     items: expenses.filter((e) => e.category === cat),
   }));
 
-  grouped.forEach((group) => {
-    csvContent += `\r\nCategory: ${group.category}\r\n`;
-    csvContent += headers.join(",") + "\r\n";
+  let grandTotal = 0;
+  const allExpensesRows = [];
 
-    let categoryTotal = 0;
-
-    group.items.forEach((e) => {
+  const generateSheetData = (items, includeInAll = false) => {
+    const rows = items.map((e) => {
       let unitNo = "";
       let location = "";
       if (e.unitId) {
@@ -158,45 +147,85 @@ function Expenses() {
         location = e.maintenanceId.unit.location || "";
       }
 
-      const createdAt = e.createdAt ? new Date(e.createdAt).toISOString() : "";
       const amount = Number(e.amount) || 0;
-      categoryTotal += amount;
       grandTotal += amount;
 
-      csvContent += [
-        escapeCSV(e.title),
-        escapeCSV(`₱${amount.toLocaleString()}`),
-        escapeCSV(e.status),
-        escapeCSV(unitNo),
-        escapeCSV(location),
-        escapeCSV(createdAt),
-        escapeCSV(e._id),
-      ].join(",") + "\r\n";
+      const rowData = {
+        Title: e.title || "",
+        Category: e.category || "",
+        Amount: `₱${amount.toLocaleString()}`,
+        Status: e.status || "",
+        Unit: unitNo || "",
+        Location: location || "",
+        "Date Created": e.createdAt
+          ? new Date(e.createdAt).toLocaleDateString()
+          : "",
+        "Expense ID": e._id || "",
+      };
+
+      if (includeInAll) allExpensesRows.push(rowData);
+      return rowData;
     });
 
-    // Add category subtotal in Title and Amount columns, bolded
-    csvContent += `"Subtotal","₱${categoryTotal.toLocaleString()}",,,,,\r\n`;
+    const total = items.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    rows.push({});
+    rows.push({
+      Title: "Subtotal",
+      Amount: `₱${total.toLocaleString()}`,
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    const colWidths = Object.keys(rows[0]).map((key) => ({
+      wch: Math.max(
+        key.length + 3,
+        ...rows.map((r) => String(r[key] || "").length + 2)
+      ),
+    }));
+    worksheet["!cols"] = colWidths;
+
+    return worksheet;
+  };
+
+  // Generate category sheets
+  grouped.forEach((group) => {
+    const sheet = generateSheetData(group.items, true);
+    XLSX.utils.book_append_sheet(
+      workbook,
+      sheet,
+      group.category.substring(0, 31)
+    );
   });
 
-  // Add grand total at the very end, bolded
-  csvContent += `\r\n"Grand Total","₱${grandTotal.toLocaleString()}",,,,,\r\n`;
+  // Create "All Expenses" sheet
+  if (allExpensesRows.length > 0) {
+    allExpensesRows.push({});
+    allExpensesRows.push({
+      Title: "Grand Total",
+      Amount: `₱${grandTotal.toLocaleString()}`,
+    });
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+    const allSheet = XLSX.utils.json_to_sheet(allExpensesRows);
+    const colWidths = Object.keys(allExpensesRows[0]).map((key) => ({
+      wch: Math.max(
+        key.length + 3,
+        ...allExpensesRows.map((r) => String(r[key] || "").length + 2)
+      ),
+    }));
+    allSheet["!cols"] = colWidths;
+
+    XLSX.utils.book_append_sheet(workbook, allSheet, "All Expenses");
+  }
 
   const now = new Date();
   const pad = (n) => String(n).padStart(2, "0");
-  const filename = `EXPENSES_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
-    now.getDate()
-  )}_${pad(now.getHours())}${pad(now.getMinutes())}.csv`;
+  const filename = `EXPENSES_${now.getFullYear()}-${pad(
+    now.getMonth() + 1
+  )}-${pad(now.getDate())}_${pad(now.getHours())}${pad(
+    now.getMinutes()
+  )}.xlsx`;
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  XLSX.writeFile(workbook, filename);
 };
 
   const columns = [
@@ -212,7 +241,8 @@ function Expenses() {
       key: "unit",
       label: "Unit",
       render: (row) => {
-        if (row.unitId) return `${row.unitId.unitNo || "Unknown"} (${row.unitId.location || "Unknown"})`;
+        if (row.unitId)
+          return `${row.unitId.unitNo || "Unknown"} (${row.unitId.location || "Unknown"})`;
         if (row.maintenanceId && row.maintenanceId.unit)
           return `${row.maintenanceId.unit.unitNo || "Unknown"} (${row.maintenanceId.unit.location || "Unknown"})`;
         return "—";
@@ -221,7 +251,8 @@ function Expenses() {
     {
       key: "createdAt",
       label: "Date Created",
-      render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "Not Available"),
+      render: (row) =>
+        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "Not Available",
     },
     {
       key: "actions",
@@ -339,10 +370,10 @@ function Expenses() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
 
-            <button className="px-4 py-2 rounded btn bg-white border" onClick={downloadCSV}>
+            <button className="px-4 py-2 rounded btn bg-white border" onClick={downloadXLSX}>
               <div className="d-flex gap-2 align-items-center">
                 <i className="fa fa-solid fa-download text-success fw-bold"></i>
-                <span className="text-success fw-bold">CSV</span>
+                <span className="text-success fw-bold">XLSX</span>
               </div>
             </button>
           </div>

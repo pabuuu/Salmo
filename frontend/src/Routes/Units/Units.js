@@ -17,6 +17,7 @@ function Units() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
   const [categories, setCategories] = useState(["All"]);
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [deletingUnitId, setDeletingUnitId] = useState(null);
@@ -106,7 +107,7 @@ function Units() {
     }
   };
 
-    const columns = [
+  const columns = [
     { key: "unitNo", label: "Unit No." },
     { key: "location", label: "Location" },
     {
@@ -132,24 +133,19 @@ function Units() {
     {
       key: "createdAt",
       label: "Date Created",
-      render: (val) => (val ? new Date(val).toLocaleDateString() : "Not Available"),
+      render: (val) =>
+        val ? new Date(val).toLocaleDateString() : "Not Available",
     },
     {
       key: "actions",
       label: "Actions",
       render: (_, row) => (
         <div className="d-flex gap-2">
-          {/* Edit Button */}
           <Link to={`/units/${row._id}`}>
-            <button
-              className="btn btn-primary btn-sm"
-              type="button"
-            >
+            <button className="btn btn-primary btn-sm" type="button">
               Edit
             </button>
           </Link>
-
-          {/* Delete Button */}
           <button
             type="button"
             className="btn btn-danger btn-sm"
@@ -166,9 +162,14 @@ function Units() {
     },
   ];
 
-  const filteredUnits = units.filter((u) =>
-    `${u.unitNo} ${u.location}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // ✅ Apply both search + status filtering
+  const filteredUnits = units
+    .filter((u) =>
+      `${u.unitNo} ${u.location}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+    .filter((u) => selectedStatus === "All" || u.status === selectedStatus);
 
   const handleSort = (type) => {
     const sorted = [...units];
@@ -229,34 +230,27 @@ function Units() {
           </Link>
 
           <div className="d-flex flex-wrap gap-2 align-items-center">
-            <Dropdown label="Filter by" className="bg-dark">
+            {/* ✅ Filter by Status Dropdown */}
+            <Dropdown label={`Status: ${selectedStatus}`}>
+              {["All", "Available", "Occupied", "Maintenance"].map((status) => (
+                <li key={status}>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => setSelectedStatus(status)}
+                  >
+                    {status}
+                  </button>
+                </li>
+              ))}
+            </Dropdown>
+
+            {/* Sort Dropdown */}
+            <Dropdown label="Sort by">
               {["newest", "oldest", "az", "za"].map((sortKey) => (
                 <li key={sortKey}>
                   <button
                     className="dropdown-item"
-                    style={{
-                      background: "transparent",
-                      color: "#1e293b",
-                      border: "none",
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseOver={(e) =>
-                      (e.target.style.backgroundColor = "#f1f5f9")
-                    }
-                    onMouseOut={(e) =>
-                      (e.target.style.backgroundColor = "transparent")
-                    }
-                    onClick={() =>
-                      handleSort(
-                        sortKey === "az"
-                          ? "az"
-                          : sortKey === "za"
-                          ? "za"
-                          : sortKey
-                      )
-                    }
+                    onClick={() => handleSort(sortKey)}
                   >
                     {sortKey === "az"
                       ? "Alphabetical ↑"
@@ -279,41 +273,33 @@ function Units() {
         </div>
 
         {/* Category Buttons */}
-      <div className="d-flex flex-wrap gap-2 mb-3">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            style={{
-              backgroundColor:
-                selectedCategory === cat ? "#1e293b" : "transparent",
-              color: selectedCategory === cat ? "#ffffff" : "#1e293b",
-              border: "1px solid #1e293b",
-              padding: "0.375rem 0.75rem",
-              borderRadius: "0.375rem",
-              cursor: "pointer",
-              fontWeight: 500,
-              transition: "all 0.2s",
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor =
-                selectedCategory === cat ? "#273449" : "#f1f5f9";
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor =
-                selectedCategory === cat ? "#1e293b" : "transparent";
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+        <div className="d-flex flex-wrap gap-2 mb-3 mt-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              style={{
+                backgroundColor:
+                  selectedCategory === cat ? "#1e293b" : "transparent",
+                color: selectedCategory === cat ? "#ffffff" : "#1e293b",
+                border: "1px solid #1e293b",
+                padding: "0.375rem 0.75rem",
+                borderRadius: "0.375rem",
+                cursor: "pointer",
+                fontWeight: 500,
+                transition: "all 0.2s",
+              }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
 
         {filteredUnits.length > 0 ? (
           <UcTable columns={columns} data={filteredUnits} />
         ) : (
           <div className="text-center py-4 text-muted">
-            No units found matching your search/filter.
+            No units found matching your filters.
           </div>
         )}
       </div>
