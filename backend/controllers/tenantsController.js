@@ -228,20 +228,28 @@ export const archiveTenant = async (req, res) => {
     const newStatus = !tenant.isArchived;
     tenant.isArchived = newStatus;
 
-    // Disable validation so it won’t require all fields again
-    await tenant.save({ validateBeforeSave: false });
-
     // ✅ Only free the unit when archiving
     if (newStatus && tenant.unitId) {
+      const unit = await Units.findById(tenant.unitId);
+
+      // ✅ Preserve last known info before freeing unit
+      tenant.lastUnitNo = unit?.unitNo || tenant.lastUnitNo || "N/A";
+      tenant.lastRentAmount = unit?.rentAmount || tenant.lastRentAmount || 0;
+      tenant.lastNextDueDate = tenant.nextDueDate || tenant.lastNextDueDate || null;
+
+      // Free the unit
       await Units.findOneAndUpdate(
         { _id: tenant.unitId, tenant: tenant._id },
         { status: "Available", tenant: null }
       );
 
-      // remove unit reference from tenant (so admin can manually assign later)
+      // Remove reference
       tenant.unitId = null;
       await tenant.save({ validateBeforeSave: false });
     }
+
+    // Disable validation so it won’t require all fields again
+    await tenant.save({ validateBeforeSave: false });
 
     res.json({
       success: true,
@@ -334,8 +342,8 @@ export const deleteTenant = async (req, res) => {
 
 export const assignUnit = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { unitId } = req.body;
+    const { id } = req.params; // tenant id
+    const { unitId } = req.body; // new unit id
 
     const tenant = await Tenants.findById(id);
     if (!tenant)
@@ -348,19 +356,48 @@ export const assignUnit = async (req, res) => {
     if (unit.status !== "Available")
       return res.status(400).json({ success: false, message: "Unit is not available" });
 
-    // ✅ Assign both unit and location
+    // 1️⃣ Free old unit (if any)
+    if (tenant.unitId) {
+      await Units.findOneAndUpdate(
+        { _id: tenant.unitId, tenant: tenant._id },
+        { status: "Available", tenant: null }
+      );
+    }
+
+    // 2️⃣ Archive previous payments (fresh start)
+    await Payments.deleteMany({ tenantId: tenant._id });
+
+    // 3️⃣ Assign tenant to new unit
     tenant.unitId = unit._id;
-    tenant.location = unit.location; // <-- this line adds the location
+    tenant.location = unit.location || tenant.location;
+
+    // Clear previous due and balance info
+    tenant.balance = unit.rentAmount;
+    tenant.status = "Pending";
+    tenant.lastDueDate = null;
+    tenant.lastNextDueDate = null;
+    tenant.nextDueDate = getNextDueDate(new Date(), tenant.paymentFrequency || "Monthly");
+
+    tenant.isArchived = false;
+
     await tenant.save({ validateBeforeSave: false });
 
-    // Update the unit
+    // 4️⃣ Mark new unit occupied
     unit.tenant = tenant._id;
     unit.status = "Occupied";
     await unit.save();
 
+    // 5️⃣ Recalculate (will now see zero payments)
+    await recalcTenantBalance(tenant._id);
+
+    // 6️⃣ Return updated tenant info
+    const updatedTenant = await Tenants.findById(tenant._id)
+      .populate("unitId", "unitNo rentAmount location status");
+
     res.json({
       success: true,
-      message: `Tenant assigned to Unit ${unit.unitNo} (${unit.location}) successfully.`,
+      message: `Tenant assigned to Unit ${unit.unitNo} (${unit.location}) successfully. Fresh start applied.`,
+      tenant: updatedTenant,
     });
   } catch (err) {
     console.error("Error assigning unit:", err);
