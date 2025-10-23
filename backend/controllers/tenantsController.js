@@ -12,7 +12,7 @@ import multer from 'multer';
 export const load = async (req, res) => {
   try {
     const tenants = await Tenants.find()
-      .populate("unitId", "unitNo location rentAmount status") // only include what frontend needs
+      .populate("unitId", "unitNo location rentAmount status") 
       .exec();
 
     res.json({ success: true, data: tenants, message: "Tenants loading successful" });
@@ -220,21 +220,16 @@ export const update = async (req, res) => {
 export const archiveTenant = async (req, res) => {
   try {
     const { id } = req.params;
-
     const tenant = await Tenants.findById(id);
-    if (!tenant) {
-      return res.status(404).json({ success: false, message: "Tenant not found" });
-    }
+    if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
 
-    // Toggle archive status
     const newStatus = !tenant.isArchived;
     tenant.isArchived = newStatus;
 
-    // ✅ Only free the unit when archiving
     if (newStatus && tenant.unitId) {
       const unit = await Units.findById(tenant.unitId);
 
-      // ✅ Preserve last known info before freeing unit
+      // Preserve last known info before freeing unit
       tenant.lastUnitNo = unit?.unitNo || tenant.lastUnitNo || "N/A";
       tenant.lastRentAmount = unit?.rentAmount || tenant.lastRentAmount || 0;
       tenant.lastNextDueDate = tenant.nextDueDate || tenant.lastNextDueDate || null;
@@ -247,10 +242,8 @@ export const archiveTenant = async (req, res) => {
 
       // Remove reference
       tenant.unitId = null;
-      await tenant.save({ validateBeforeSave: false });
     }
 
-    // Disable validation so it won’t require all fields again
     await tenant.save({ validateBeforeSave: false });
 
     res.json({
@@ -265,7 +258,6 @@ export const archiveTenant = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
 
 export const getTenants = async (req, res) => {
   try {
@@ -348,17 +340,14 @@ export const assignUnit = async (req, res) => {
     const { unitId } = req.body; // new unit id
 
     const tenant = await Tenants.findById(id);
-    if (!tenant)
-      return res.status(404).json({ success: false, message: "Tenant not found" });
+    if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
 
     const unit = await Units.findById(unitId);
-    if (!unit)
-      return res.status(404).json({ success: false, message: "Unit not found" });
-
+    if (!unit) return res.status(404).json({ success: false, message: "Unit not found" });
     if (unit.status !== "Available")
       return res.status(400).json({ success: false, message: "Unit is not available" });
 
-    // 1️⃣ Free old unit (if any)
+    // 1️⃣ Free old unit if tenant had one
     if (tenant.unitId) {
       await Units.findOneAndUpdate(
         { _id: tenant.unitId, tenant: tenant._id },
@@ -366,33 +355,31 @@ export const assignUnit = async (req, res) => {
       );
     }
 
-    // 2️⃣ Archive previous payments (fresh start)
+    // 2️⃣ Delete previous payments for fresh start
     await Payments.deleteMany({ tenantId: tenant._id });
 
-    // 3️⃣ Assign tenant to new unit
+    // 3️⃣ Assign new unit
     tenant.unitId = unit._id;
     tenant.location = unit.location || tenant.location;
 
-    // Clear previous due and balance info
+    // 4️⃣ Reset balance and status based on new unit
     tenant.balance = unit.rentAmount;
     tenant.status = "Pending";
     tenant.lastDueDate = null;
     tenant.lastNextDueDate = null;
     tenant.nextDueDate = getNextDueDate(new Date(), tenant.paymentFrequency || "Monthly");
-
     tenant.isArchived = false;
 
     await tenant.save({ validateBeforeSave: false });
 
-    // 4️⃣ Mark new unit occupied
+    // 5️⃣ Mark new unit as occupied
     unit.tenant = tenant._id;
     unit.status = "Occupied";
     await unit.save();
 
-    // 5️⃣ Recalculate (will now see zero payments)
-    await recalcTenantBalance(tenant._id);
+    // 6️⃣ Recalculate balance using the new unit's data
+    await recalcTenantBalance(tenant._id, new Date());
 
-    // 6️⃣ Return updated tenant info
     const updatedTenant = await Tenants.findById(tenant._id)
       .populate("unitId", "unitNo rentAmount location status");
 
