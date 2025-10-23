@@ -16,6 +16,7 @@ function Maintenance() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("Pending");
   const [priorityFilter, setPriorityFilter] = useState("All");
+  const [sortOption, setSortOption] = useState("Newest"); // Sorting state
   const [notification, setNotification] = useState({
     type: "",
     message: "",
@@ -130,11 +131,18 @@ function Maintenance() {
   };
 
   // Filter logic
-  const filteredMaintenances = maintenances.filter((m) => {
+  let filteredMaintenances = maintenances.filter((m) => {
     const statusMatch = m.status === statusFilter;
     const priorityMatch =
       priorityFilter === "All" || m.priority === priorityFilter;
     return statusMatch && priorityMatch;
+  });
+
+  // Sort by scheduled date
+  filteredMaintenances.sort((a, b) => {
+    const dateA = new Date(a.schedule);
+    const dateB = new Date(b.schedule);
+    return sortOption === "Newest" ? dateA - dateB : dateB - dateA;
   });
 
   if (loading)
@@ -144,7 +152,6 @@ function Maintenance() {
       </div>
     );
 
-  // Priority color styling
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "High":
@@ -163,11 +170,9 @@ function Maintenance() {
       key: "tenant",
       label: "Tenant",
       render: (val) =>
-        val ? (
-          `${val.firstName || ""} ${val.lastName || ""}`
-        ) : (
-          <span className="text-muted fst-italic">No Tenant</span>
-        ),
+        val
+          ? `${val.firstName || ""} ${val.lastName || ""}`
+          : <span className="text-muted fst-italic">No Tenant</span>,
     },
     {
       key: "unit",
@@ -177,7 +182,16 @@ function Maintenance() {
           ? `${row.unit.location || ""} - ${row.unit.unitNo || ""}`
           : "—",
     },
-    { key: "task", label: "Task" },
+    {
+      key: "task",
+      label: "Task",
+      render: (tasks) => {
+        const taskArray = Array.isArray(tasks) ? tasks : [tasks].filter(Boolean);
+        return taskArray.length > 0
+          ? taskArray.join(", ")
+          : <span className="text-muted fst-italic">No Task</span>;
+      },
+    },
     {
       key: "priority",
       label: "Priority",
@@ -224,7 +238,6 @@ function Maintenance() {
               </button>
             </>
           )}
-
           {row.status === "In Process" && (
             <>
               <button
@@ -251,7 +264,6 @@ function Maintenance() {
               </button>
             </>
           )}
-
           {row.status === "Completed" && (
             <>
               <button
@@ -278,7 +290,6 @@ function Maintenance() {
               </button>
             </>
           )}
-
           {row.status === "Cancelled" && (
             <button
               className="btn btn-danger btn-sm"
@@ -290,7 +301,7 @@ function Maintenance() {
               }}
             >
               Delete
-            </button>
+              </button>
           )}
         </div>
       ),
@@ -317,28 +328,9 @@ function Maintenance() {
           : "Maintenances Found"}
       </div>
 
-      <div className="mb-3">
-        <Link
-          to="/maintenance/create"
-          style={{
-            backgroundColor: "#198754",
-            color: "white",
-            padding: "6px 16px",
-            borderRadius: "6px",
-            fontWeight: 500,
-            textDecoration: "none",
-            transition: "all 0.2s ease",
-            display: "inline-block",
-          }}
-          onMouseOver={(e) => (e.target.style.backgroundColor = "#146c43")}
-          onMouseOut={(e) => (e.target.style.backgroundColor = "#198754")}
-        >
-          + Add Maintenance
-        </Link>
-      </div>
-
       {/* Filters Section */}
-      <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+        {/* Status Filter Buttons */}
         <div className="d-flex flex-wrap gap-2">
           {["Pending", "In Process", "Completed", "Cancelled"].map((status) => (
             <button
@@ -360,19 +352,54 @@ function Maintenance() {
           ))}
         </div>
 
-        {/* Priority Dropdown */}
-        <Dropdown label={`Priority: ${priorityFilter}`}>
-          {["All", "High", "Medium", "Low"].map((priority) => (
-            <li key={priority}>
-              <button
-                className="dropdown-item"
-                onClick={() => setPriorityFilter(priority)}
-              >
-                {priority}
-              </button>
-            </li>
-          ))}
-        </Dropdown>
+        {/* Priority and Sort By Dropdowns beside each other */}
+        <div className="d-flex gap-2 ms-auto">
+          <Dropdown label={`Priority: ${priorityFilter}`}>
+            {["All", "High", "Medium", "Low"].map((priority) => (
+              <li key={priority}>
+                <button
+                  className="dropdown-item"
+                  onClick={() => setPriorityFilter(priority)}
+                >
+                  {priority}
+                </button>
+              </li>
+            ))}
+          </Dropdown>
+
+          <Dropdown label={`Sort By: ${sortOption}`}>
+            {["Newest", "Oldest"].map((option) => (
+              <li key={option}>
+                <button
+                  className="dropdown-item"
+                  onClick={() => setSortOption(option)}
+                >
+                  {option}
+                </button>
+              </li>
+            ))}
+          </Dropdown>
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <Link
+          to="/maintenance/create"
+          style={{
+            backgroundColor: "#198754",
+            color: "white",
+            padding: "6px 16px",
+            borderRadius: "6px",
+            fontWeight: 500,
+            textDecoration: "none",
+            transition: "all 0.2s ease",
+            display: "inline-block",
+          }}
+          onMouseOver={(e) => (e.target.style.backgroundColor = "#146c43")}
+          onMouseOut={(e) => (e.target.style.backgroundColor = "#198754")}
+        >
+          + Add Maintenance
+        </Link>
       </div>
 
       {filteredMaintenances.length === 0 ? (

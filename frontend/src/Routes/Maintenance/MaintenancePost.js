@@ -21,8 +21,8 @@ export default function MaintenancePost() {
   const [availableUnits, setAvailableUnits] = useState([]);
   const [selectedAvailableUnit, setSelectedAvailableUnit] = useState(null);
 
-  const [task, setTask] = useState("");
-  const [customTask, setCustomTask] = useState(""); // ✅ user input for “Others”
+  const [tasks, setTasks] = useState([]); // ✅ multi-select tasks
+  const [customTask, setCustomTask] = useState(""); // input for "Others"
   const [description, setDescription] = useState("");
   const [schedule, setSchedule] = useState("");
   const [status, setStatus] = useState("Pending");
@@ -107,16 +107,20 @@ export default function MaintenancePost() {
       tenantId = undefined;
     }
 
-    const finalTask = task === "Others" ? customTask.trim() : task.trim();
-    if (!finalTask)
-      return showNotification("error", "Please enter a valid task name.");
+    // Combine selected tasks + custom "Others"
+    const finalTasks = tasks
+      .map((t) => (t === "Others" ? customTask.trim() : t))
+      .filter((t) => t); // remove empty strings
+
+    if (!finalTasks.length)
+      return showNotification("error", "Please select at least one task.");
     if (!schedule)
       return showNotification("error", "Please select a schedule date.");
 
     try {
       const payload = {
         unit: unitId,
-        task: finalTask,
+        task: finalTasks, // ✅ send as array
         description,
         schedule: new Date(schedule),
         status,
@@ -269,7 +273,7 @@ export default function MaintenancePost() {
               <div className="flex-grow-1">
                 <label className="form-label">Task</label>
                 <Dropdown
-                  label={task ? task : "Select Task"}
+                  label={tasks.length ? tasks.join(", ") : "Select Task"}
                   width="100%"
                   height="42px"
                 >
@@ -286,20 +290,33 @@ export default function MaintenancePost() {
                     <li key={option}>
                       <button
                         type="button"
-                        className="dropdown-item"
+                        className={`dropdown-item ${
+                          tasks.includes(option) ? "active" : ""
+                        }`}
                         onClick={() => {
-                          setTask(option);
-                          if (option !== "Others") setCustomTask("");
+                          if (option === "Others") {
+                            if (!tasks.includes("Others"))
+                              setTasks([...tasks, "Others"]);
+                          } else {
+                            if (tasks.includes(option)) {
+                              setTasks(tasks.filter((t) => t !== option));
+                            } else {
+                              setTasks([...tasks, option]);
+                            }
+                            if (tasks.includes("Others") && option !== "Others") {
+                              setCustomTask("");
+                            }
+                          }
                         }}
                       >
-                        {option}
+                        {option} {tasks.includes(option) && "✓"}
                       </button>
                     </li>
                   ))}
                 </Dropdown>
 
                 {/* Show input box only when Others is selected */}
-                {task === "Others" && (
+                {tasks.includes("Others") && (
                   <input
                     type="text"
                     placeholder="Specify other task"
