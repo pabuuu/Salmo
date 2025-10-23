@@ -57,7 +57,8 @@ const TenantsSchema = new mongoose.Schema(
       type: String,
       default: "no receipt",
     },
-    
+    lastDueDate: { type: Date },
+
   },
   { timestamps: true }
 );

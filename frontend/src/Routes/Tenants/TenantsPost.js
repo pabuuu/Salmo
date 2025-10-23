@@ -65,14 +65,14 @@ export default function TenantsPost() {
     const selectedUnit = availableUnits.find((u) => u._id === unitId);
     const rentAmount = selectedUnit?.rentAmount || 0;
   
-    if (Number(initialPayment) > rentAmount) {
-      setToast({
-        show: true,
-        type: "warning",
-        message: `⚠️ Initial payment cannot exceed rent amount (₱${rentAmount.toLocaleString()}).`,
-      });
-      return;
-    }
+    // if (Number(initialPayment) > rentAmount) {
+    //   setToast({
+    //     show: true,
+    //     type: "warning",
+    //     message: `⚠️ Initial payment cannot exceed rent amount (₱${rentAmount.toLocaleString()}).`,
+    //   });
+    //   return;
+    // }
   
     const formData = new FormData();
     formData.append("firstName", firstName);
@@ -89,7 +89,7 @@ export default function TenantsPost() {
     try {
       const response = await fetch(`${BASE_URL}/tenants/create`, {
         method: "POST",
-        body: formData, // 👈 FormData instead of JSON
+        body: formData, 
       });
   
       const data = await response.json();
@@ -235,6 +235,7 @@ export default function TenantsPost() {
                   className="custom-input form-control"
                   value={initialPayment}
                   onChange={(e) => setInitial(e.target.value)}
+                  min={0}
                   required
                 />
                 {error && <span className="text-danger">{error}</span>}
@@ -253,7 +254,7 @@ export default function TenantsPost() {
                 </Dropdown>
               </div>
 
-              {/* 👇 Upload Receipt beside Frequency */}
+              {/* Upload Receipt beside Frequency */}
               <div style={{ width: "25%" }}>
                 <label className="form-label">Upload Receipt (optional)</label>
                 <input

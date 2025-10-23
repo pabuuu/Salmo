@@ -27,51 +27,82 @@ const uploadToSupabase = async (file) => {
   return urlData.publicUrl;
 };
 
+// helper: advance date by N months
+const addMonths = (date, months) => {
+  const d = new Date(date);
+  const targetMonth = d.getMonth() + months;
+  const year = d.getFullYear() + Math.floor(targetMonth / 12);
+  const month = targetMonth % 12;
+  const day = Math.min(d.getDate(), new Date(year, month + 1, 0).getDate());
+  return new Date(year, month, day);
+};
+
 export const recalcTenantBalance = async (tenantId) => {
+  // Load tenant with unit details
   const tenant = await Tenants.findById(tenantId)
     .populate("unitId", "rentAmount paymentFrequency");
   if (!tenant) return;
 
+  const rentAmount = tenant.unitId?.rentAmount || 0;
+  if (!rentAmount || rentAmount <= 0) return;
+
+  // Determine frequency
+  const frequency = tenant.paymentFrequency || tenant.unitId?.paymentFrequency || "Monthly";
+
+  // Multiplier for periods
+  const multiplier =
+    frequency === "Monthly" ? 1 :
+    frequency === "Quarterly" ? 3 :
+    frequency === "Yearly" ? 12 : 1;
+
+  const periodRent = rentAmount * multiplier;
+
+  // Get all payments
   const payments = await PaymentsSchema.find({ tenantId });
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
 
-  const rentAmount = tenant.unitId?.rentAmount || 0;
-  const frequency = tenant.paymentFrequency || tenant.unitId?.paymentFrequency || "Monthly";
-  if (!rentAmount || rentAmount <= 0) return;
+  // Determine base date (lastDueDate is mandatory)
+  const baseDate = tenant.lastDueDate || new Date();
 
-  // 🧮 Calculate how many full rent periods have been paid
-  const fullPeriodsPaid = Math.floor(totalPaid / rentAmount);
+  // Number of full periods covered by payments
+  const fullPeriodsPaid = Math.floor(totalPaid / periodRent);
 
-  // 🗓 Determine base date for next due
-  const today = new Date();
-  const lastDueDate = tenant.lastDueDate || today; // ✅ store last due date
-  let nextDueDate = tenant.nextDueDate || today;
-
-  // Advance due date for each full period paid
+  // Advance nextDueDate by number of full periods
+  let nextDueDate = new Date(baseDate);
   for (let i = 0; i < fullPeriodsPaid; i++) {
-    nextDueDate = getNextDueDate(nextDueDate, frequency);
+    nextDueDate = addMonths(nextDueDate, multiplier);
   }
 
-  // ✅ Handle remaining balance cleanly
-  const remainder = totalPaid % rentAmount;
-  const remainingBalance = remainder === 0 ? 0 : rentAmount - remainder;
+  // Calculate remaining balance for current period
+  const remainder = totalPaid % periodRent;
+  const remainingBalance = remainder === 0 ? 0 : periodRent - remainder;
 
-  // ✅ Determine payment status
+  // Determine status
   let status = "Pending";
-  if (remainingBalance === 0 && totalPaid > 0) {
-    status = "Paid";
-  } else if (remainingBalance < rentAmount && remainingBalance > 0) {
-    status = "Partial";
-  } else if (totalPaid === 0 && nextDueDate < today) {
-    status = "Overdue";
-  }
+  const today = new Date();
 
-  // 🧾 Save everything
+  if (remainingBalance === 0 && totalPaid > 0) status = "Paid";
+  else if (remainingBalance > 0 && remainingBalance < periodRent) status = "Partial";
+  else if (totalPaid === 0 && nextDueDate < today) status = "Overdue";
+
+  // Save updates
   tenant.balance = remainingBalance;
   tenant.status = status;
-  tenant.lastDueDate = tenant.nextDueDate || today; // ✅ keep record of previous due
+
+  // Update lastDueDate to last period fully covered
+  tenant.lastDueDate = baseDate;
+
+  // Set next due date for the current period
   tenant.nextDueDate = nextDueDate;
+
   await tenant.save();
+
+  return {
+    tenantId: tenant._id,
+    status,
+    balance: remainingBalance,
+    nextDueDate,
+  };
 };
 
 export const createPayment = async (req, res) => {
