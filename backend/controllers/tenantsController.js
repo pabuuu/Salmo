@@ -45,6 +45,7 @@ const uploadToSupabase = async (file) => {
 
 
 // Create Tenant
+
 export const createTenant = async (req, res) => {
   try {
     const {
@@ -65,32 +66,32 @@ export const createTenant = async (req, res) => {
     if (!paymentFrequency)
       return res.status(400).json({ success: false, message: "Payment frequency is required" });
 
+    // Validate unit
     const unit = await Units.findById(unitId);
-    if (!unit)
-      return res.status(404).json({ success: false, message: "Unit not found" });
+    if (!unit) return res.status(404).json({ success: false, message: "Unit not found" });
     if (unit.status === "Occupied")
       return res.status(400).json({ success: false, message: "Unit already occupied" });
 
     const rentAmount = unit.rentAmount;
     if (!rentAmount || rentAmount <= 0)
       return res.status(400).json({ success: false, message: "Invalid rent amount" });
-    if (initialPayment > rentAmount)
-      return res.status(400).json({ success: false, message: "Initial payment exceeds rent" });
 
-    // ✅ Upload receipt (optional)
+    // Upload receipt if file provided
     let receiptUrl = null;
-    if (req.file) {
-      receiptUrl = await uploadToSupabase(req.file);
-    }
+    if (req.file) receiptUrl = await uploadToSupabase(req.file);
 
-    // Compute balance/status
+    // Compute initial balance and status
     const balance = Math.max(rentAmount - initialPayment, 0);
-    const status =
-      balance === 0 ? "Paid" : initialPayment > 0 ? "Partial" : "Pending";
-    const nextDueDate =
-      balance === 0 ? getNextDueDate(new Date(), paymentFrequency) : new Date();
+    const status = balance === 0 ? "Paid" : initialPayment > 0 ? "Partial" : "Pending";
 
-    // 🏠 Create tenant
+    // Determine nextDueDate and lastDueDate
+    const today = new Date();
+    const lastDueDate = initialPayment > 0 ? today : null;
+    const nextDueDate = balance === 0
+      ? getNextDueDate(today, paymentFrequency)
+      : today;
+
+    // Create tenant
     const tenant = await Tenants.create({
       firstName,
       lastName,
@@ -102,28 +103,29 @@ export const createTenant = async (req, res) => {
       balance,
       status,
       nextDueDate,
+      lastDueDate,
       receiptUrl,
     });
 
-    // 🏢 Mark unit as occupied
+    // Mark unit as occupied
     await Units.findByIdAndUpdate(unitId, {
       status: "Occupied",
       tenant: tenant._id,
     });
 
-    // 💰 Record payment if any
+    // Record initial payment if any
     if (initialPayment > 0) {
       await Payments.create({
         tenantId: tenant._id,
         unitId,
         amount: initialPayment,
-        paymentDate: new Date(),
+        paymentDate: today,
         paymentMethod: "Initial Payment",
         notes: "Recorded during tenant creation",
-        status,
         receiptUrl,
       });
 
+      // Recalculate tenant balance to handle overpayments
       await recalcTenantBalance(tenant._id);
     }
 
