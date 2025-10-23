@@ -25,6 +25,13 @@ function Payments() {
 
   const navigate = useNavigate();
 
+  const frequencyMultiplier = {
+    Monthly: 1,
+    Quarterly: 3,
+    Yearly: 12,
+  };
+  
+
   const fetchTenants = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/tenants`);
@@ -113,10 +120,12 @@ function Payments() {
       }));
 
       const totalBalance = tenants.reduce((sum, t) => sum + (t.balance || 0), 0);
-      const totalRent = tenants.reduce(
-        (sum, t) => sum + (t.unitId?.rentAmount || 0),
-        0
-      );
+
+      const totalRent = tenants.reduce((sum, t) => {
+        const multiplier = frequencyMultiplier[t.paymentFrequency] || 1;
+        return sum + ((t.unitId?.rentAmount || 0) * multiplier);
+      }, 0);
+
       rows.push({});
       rows.push({
         "First Name": "",
@@ -176,12 +185,16 @@ function Payments() {
     {
       key: "rentAmount",
       label: "Rent Amount",
-      render: (_, row) =>
-        new Intl.NumberFormat("en-PH", {
+      render: (_, row) => {
+        const multiplier = frequencyMultiplier[row.paymentFrequency] || 1;
+        const totalRent = (row.unitId?.rentAmount || 0) * multiplier;
+        return new Intl.NumberFormat("en-PH", {
           style: "currency",
           currency: "PHP",
-        }).format(row.unitId?.rentAmount ?? 0),
+        }).format(totalRent);
+      },
     },
+    
     {
       key: "balance",
       label: "Balance",
