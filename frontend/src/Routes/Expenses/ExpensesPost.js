@@ -52,37 +52,37 @@ export default function ExpensesPost() {
     fetchUnits();
   }, []);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // Ensure Maintenance category always has Pending status
-  const payload = {
-    ...form,
-    amount: Number(form.amount),
-    unitId: form.unitId || null,
-    status: form.category === "Maintenance" ? "Pending" : form.status,
-  };
+    // Ensure Maintenance category always has Pending status
+    const payload = {
+      ...form,
+      amount: Number(form.amount),
+      unitId: form.unitId || null,
+      status: form.category === "Maintenance" ? "Pending" : form.status,
+    };
 
-  try {
-    const res = await fetch(`${BASE_URL}/expenses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch(`${BASE_URL}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok && data.success) {
-      setNotification({ type: "success", message: "Expense added successfully!" });
-      setTimeout(() => navigate("/expenses"), 1200);
-    } else {
-      setNotification({ type: "error", message: data.message || "Failed to add expense." });
+      if (res.ok && data.success) {
+        setNotification({ type: "success", message: "Expense added successfully!" });
+        setTimeout(() => navigate("/expenses"), 1200);
+      } else {
+        setNotification({ type: "error", message: data.message || "Failed to add expense." });
+      }
+    } catch (err) {
+      console.error("Request failed:", err);
+      setNotification({ type: "error", message: "Request failed." });
     }
-  } catch (err) {
-    console.error("Request failed:", err);
-    setNotification({ type: "error", message: "Request failed." });
-  }
-};
+  };
 
   return (
     <div className="d-flex h-100 w-100">
@@ -133,11 +133,21 @@ const handleSubmit = async (e) => {
                 >
                   <option value="">Select a maintenance task</option>
                   {maintenanceList.length > 0 ? (
-                    maintenanceList.map((m) => (
-                      <option key={m._id} value={m._id}>
-                        {m.task} — {m.unit?.unitNo || "Unknown Unit"} ({m.unit?.location || "Unknown Location"})
-                      </option>
-                    ))
+                    maintenanceList.map((m) => {
+                      const hasUnit = m.unit?.unitNo;
+                      const hasLocation = m.unit?.location;
+
+                      const label =
+                        !hasUnit && !hasLocation
+                          ? `${m.task} — No Unit/Location`
+                          : `${m.task} — ${hasUnit || "No Tenant"} (${hasLocation || "No Location"})`;
+
+                      return (
+                        <option key={m._id} value={m._id}>
+                          {label}
+                        </option>
+                      );
+                    })
                   ) : (
                     <option disabled>No In-Process Maintenance</option>
                   )}
@@ -158,7 +168,9 @@ const handleSubmit = async (e) => {
                   {unitList.length > 0 &&
                     unitList.map((u) => (
                       <option key={u._id} value={u._id}>
-                        {u.unitNo} ({u.location})
+                        {u.unitNo && u.location
+                          ? `${u.unitNo} (${u.location})`
+                          : "No Unit/Location"}
                       </option>
                     ))}
                 </select>
