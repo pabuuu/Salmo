@@ -20,6 +20,7 @@ function Expenses() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
   const [categories, setCategories] = useState(["All"]);
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [deletingExpenseId, setDeletingExpenseId] = useState(null);
@@ -40,7 +41,9 @@ function Expenses() {
       const data = res.data.expenses || [];
       setExpenses(data);
 
-      let uniqueCategories = Array.from(new Set(data.map((e) => e.category).filter(Boolean)));
+      let uniqueCategories = Array.from(
+        new Set(data.map((e) => e.category).filter(Boolean))
+      );
       uniqueCategories = uniqueCategories.filter((cat) => cat !== "Other");
       uniqueCategories.push("Other");
       setCategories(["All", ...uniqueCategories]);
@@ -62,7 +65,11 @@ function Expenses() {
       message: `Are you sure you want to delete expense "${title}"?`,
       actions: [
         { label: "Yes", type: "primary", onClick: () => handleDelete(id) },
-        { label: "Cancel", type: "secondary", onClick: () => setNotification({ type: "", message: "" }) },
+        {
+          label: "Cancel",
+          type: "secondary",
+          onClick: () => setNotification({ type: "", message: "" }),
+        },
       ],
     });
   };
@@ -72,10 +79,16 @@ function Expenses() {
     try {
       const res = await axios.delete(`${BASE_URL}/expenses/${id}`);
       if (res.data.success) {
-        setNotification({ type: "success", message: "Expense deleted successfully!" });
+        setNotification({
+          type: "success",
+          message: "Expense deleted successfully!",
+        });
         fetchExpenses();
       } else {
-        setNotification({ type: "error", message: res.data.message || "Failed to delete expense" });
+        setNotification({
+          type: "error",
+          message: res.data.message || "Failed to delete expense",
+        });
       }
     } catch (err) {
       console.error(err);
@@ -88,8 +101,13 @@ function Expenses() {
   const handleMoveTo = async (expense) => {
     if (expense.status === "Pending") {
       try {
-        await axios.put(`${BASE_URL}/expenses/${expense._id}`, { status: "Approved" });
-        setNotification({ type: "success", message: `"${expense.title}" moved to Approved.` });
+        await axios.put(`${BASE_URL}/expenses/${expense._id}`, {
+          status: "Approved",
+        });
+        setNotification({
+          type: "success",
+          message: `"${expense.title}" moved to Approved.`,
+        });
         fetchExpenses();
       } catch (err) {
         console.error(err);
@@ -104,8 +122,13 @@ function Expenses() {
       }
 
       try {
-        await axios.put(`${BASE_URL}/expenses/${expense._id}`, { status: "Paid" });
-        setNotification({ type: "success", message: `"${expense.title}" moved to Paid.` });
+        await axios.put(`${BASE_URL}/expenses/${expense._id}`, {
+          status: "Paid",
+        });
+        setNotification({
+          type: "success",
+          message: `"${expense.title}" moved to Paid.`,
+        });
         fetchExpenses();
       } catch (err) {
         console.error(err);
@@ -117,116 +140,112 @@ function Expenses() {
     }
   };
 
-  // XLSX export (replaces CSV)
-  // XLSX export (replaces CSV)
-const downloadXLSX = () => {
-  if (!expenses || expenses.length === 0) {
-    alert("No expenses to export.");
-    return;
-  }
+  const downloadXLSX = () => {
+    if (!expenses || expenses.length === 0) {
+      alert("No expenses to export.");
+      return;
+    }
 
-  const workbook = XLSX.utils.book_new();
+    const workbook = XLSX.utils.book_new();
+    const grouped = categories
+      .filter((c) => c !== "All")
+      .map((cat) => ({
+        category: cat,
+        items: expenses.filter((e) => e.category === cat),
+      }));
 
-  const grouped = categories.filter((c) => c !== "All").map((cat) => ({
-    category: cat,
-    items: expenses.filter((e) => e.category === cat),
-  }));
+    let grandTotal = 0;
+    const allExpensesRows = [];
 
-  let grandTotal = 0;
-  const allExpensesRows = [];
+    const generateSheetData = (items, includeInAll = false) => {
+      const rows = items.map((e) => {
+        let unitNo = "";
+        let location = "";
+        if (e.unitId) {
+          unitNo = e.unitId.unitNo || "";
+          location = e.unitId.location || "";
+        } else if (e.maintenanceId?.unit) {
+          unitNo = e.maintenanceId.unit.unitNo || "";
+          location = e.maintenanceId.unit.location || "";
+        }
 
-  const generateSheetData = (items, includeInAll = false) => {
-    const rows = items.map((e) => {
-      let unitNo = "";
-      let location = "";
-      if (e.unitId) {
-        unitNo = e.unitId.unitNo || "";
-        location = e.unitId.location || "";
-      } else if (e.maintenanceId?.unit) {
-        unitNo = e.maintenanceId.unit.unitNo || "";
-        location = e.maintenanceId.unit.location || "";
-      }
+        const amount = Number(e.amount) || 0;
+        if (e.status === "Paid") grandTotal += amount;
 
-      const amount = Number(e.amount) || 0;
-      grandTotal += amount;
+        const rowData = {
+          Title: e.title || "",
+          Category: e.category || "",
+          Amount: `₱${amount.toLocaleString()}`,
+          Status: e.status || "",
+          Unit: unitNo || "",
+          Location: location || "",
+          "Date Created": e.createdAt
+            ? new Date(e.createdAt).toLocaleDateString()
+            : "",
+          "Expense ID": e._id || "",
+        };
 
-      const rowData = {
-        Title: e.title || "",
-        Category: e.category || "",
-        Amount: `₱${amount.toLocaleString()}`,
-        Status: e.status || "",
-        Unit: unitNo || "",
-        Location: location || "",
-        "Date Created": e.createdAt
-          ? new Date(e.createdAt).toLocaleDateString()
-          : "",
-        "Expense ID": e._id || "",
-      };
+        if (includeInAll) allExpensesRows.push(rowData);
+        return rowData;
+      });
 
-      if (includeInAll) allExpensesRows.push(rowData);
-      return rowData;
+      const totalPaid = items
+        .filter((e) => e.status === "Paid")
+        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+      rows.push({});
+      rows.push({
+        Title: "Subtotal (Paid only)",
+        Amount: `₱${totalPaid.toLocaleString()}`,
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const colWidths = Object.keys(rows[0]).map((key) => ({
+        wch: Math.max(
+          key.length + 3,
+          ...rows.map((r) => String(r[key] || "").length + 2)
+        ),
+      }));
+      worksheet["!cols"] = colWidths;
+      return worksheet;
+    };
+
+    grouped.forEach((group) => {
+      const sheet = generateSheetData(group.items, true);
+      XLSX.utils.book_append_sheet(
+        workbook,
+        sheet,
+        group.category.substring(0, 31)
+      );
     });
 
-    const total = items.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-    rows.push({});
-    rows.push({
-      Title: "Subtotal",
-      Amount: `₱${total.toLocaleString()}`,
-    });
+    if (allExpensesRows.length > 0) {
+      allExpensesRows.push({});
+      allExpensesRows.push({
+        Title: "Grand Total (Paid only)",
+        Amount: `₱${grandTotal.toLocaleString()}`,
+      });
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+      const allSheet = XLSX.utils.json_to_sheet(allExpensesRows);
+      const colWidths = Object.keys(allExpensesRows[0]).map((key) => ({
+        wch: Math.max(
+          key.length + 3,
+          ...allExpensesRows.map((r) => String(r[key] || "").length + 2)
+        ),
+      }));
+      allSheet["!cols"] = colWidths;
+      XLSX.utils.book_append_sheet(workbook, allSheet, "All Expenses");
+    }
 
-    const colWidths = Object.keys(rows[0]).map((key) => ({
-      wch: Math.max(
-        key.length + 3,
-        ...rows.map((r) => String(r[key] || "").length + 2)
-      ),
-    }));
-    worksheet["!cols"] = colWidths;
-
-    return worksheet;
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const filename = `EXPENSES_${now.getFullYear()}-${pad(
+      now.getMonth() + 1
+    )}-${pad(now.getDate())}_${pad(now.getHours())}${pad(
+      now.getMinutes()
+    )}.xlsx`;
+    XLSX.writeFile(workbook, filename);
   };
-
-  // Generate category sheets
-  grouped.forEach((group) => {
-    const sheet = generateSheetData(group.items, true);
-    XLSX.utils.book_append_sheet(
-      workbook,
-      sheet,
-      group.category.substring(0, 31)
-    );
-  });
-
-  // Create "All Expenses" sheet
-  if (allExpensesRows.length > 0) {
-    allExpensesRows.push({});
-    allExpensesRows.push({
-      Title: "Grand Total",
-      Amount: `₱${grandTotal.toLocaleString()}`,
-    });
-
-    const allSheet = XLSX.utils.json_to_sheet(allExpensesRows);
-    const colWidths = Object.keys(allExpensesRows[0]).map((key) => ({
-      wch: Math.max(
-        key.length + 3,
-        ...allExpensesRows.map((r) => String(r[key] || "").length + 2)
-      ),
-    }));
-    allSheet["!cols"] = colWidths;
-
-    XLSX.utils.book_append_sheet(workbook, allSheet, "All Expenses");
-  }
-
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  const filename = `EXPENSES_${now.getFullYear()}-${pad(
-    now.getMonth() + 1
-  )}-${pad(now.getDate())}_${pad(now.getHours())}${pad(
-    now.getMinutes()
-  )}.xlsx`;
-
-  XLSX.writeFile(workbook, filename);
-};
 
   const columns = [
     { key: "title", label: "Title" },
@@ -234,7 +253,8 @@ const downloadXLSX = () => {
     {
       key: "amount",
       label: "Amount (₱)",
-      render: (row) => (row.amount ? `₱${Number(row.amount).toLocaleString()}` : "—"),
+      render: (row) =>
+        row.amount ? `₱${Number(row.amount).toLocaleString()}` : "—",
     },
     { key: "status", label: "Status" },
     {
@@ -242,9 +262,13 @@ const downloadXLSX = () => {
       label: "Unit",
       render: (row) => {
         if (row.unitId)
-          return `${row.unitId.unitNo || "Unknown"} (${row.unitId.location || "Unknown"})`;
+          return `${row.unitId.unitNo || "Unknown"} (${
+            row.unitId.location || "Unknown"
+          })`;
         if (row.maintenanceId && row.maintenanceId.unit)
-          return `${row.maintenanceId.unit.unitNo || "Unknown"} (${row.maintenanceId.unit.location || "Unknown"})`;
+          return `${row.maintenanceId.unit.unitNo || "Unknown"} (${
+            row.maintenanceId.unit.location || "Unknown"
+          })`;
         return "—";
       },
     },
@@ -252,7 +276,9 @@ const downloadXLSX = () => {
       key: "createdAt",
       label: "Date Created",
       render: (row) =>
-        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "Not Available",
+        row.createdAt
+          ? new Date(row.createdAt).toLocaleDateString()
+          : "Not Available",
     },
     {
       key: "actions",
@@ -260,7 +286,9 @@ const downloadXLSX = () => {
       render: (row) => (
         <div className="d-flex gap-2">
           <button
-            className={`btn btn-sm ${row.status === "Paid" ? "btn-info" : "btn-success"}`}
+            className={`btn btn-sm ${
+              row.status === "Paid" ? "btn-info" : "btn-success"
+            }`}
             onClick={(e) => {
               e.stopPropagation();
               handleMoveTo(row);
@@ -290,13 +318,20 @@ const downloadXLSX = () => {
   ];
 
   const filteredExpenses = expenses
-    .filter((e) => `${e.title} ${e.category}`.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter((e) => selectedCategory === "All" || e.category === selectedCategory);
+    .filter((e) =>
+      `${e.title} ${e.category}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    )
+    .filter((e) => selectedCategory === "All" || e.category === selectedCategory)
+    .filter((e) => selectedStatus === "All" || e.status === selectedStatus);
 
   const handleSort = (type) => {
     const sorted = [...expenses];
-    if (type === "newest") sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    if (type === "oldest") sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    if (type === "newest")
+      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (type === "oldest")
+      sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     if (type === "az") sorted.sort((a, b) => a.title.localeCompare(b.title));
     if (type === "za") sorted.sort((a, b) => b.title.localeCompare(a.title));
     setExpenses(sorted);
@@ -329,8 +364,9 @@ const downloadXLSX = () => {
         <span>{filteredExpenses.length} Expenses found</span>
       </div>
 
+      {/* ✅ Consistent button section spacing like Units.js */}
       <div className="w-100">
-        <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
           <Link
             to="/expenses/create"
             style={{
@@ -341,6 +377,7 @@ const downloadXLSX = () => {
               fontWeight: 500,
               textDecoration: "none",
               transition: "all 0.2s ease",
+              display: "inline-block",
             }}
             onMouseOver={(e) => (e.target.style.backgroundColor = "#146c43")}
             onMouseOut={(e) => (e.target.style.backgroundColor = "#198754")}
@@ -349,10 +386,28 @@ const downloadXLSX = () => {
           </Link>
 
           <div className="d-flex flex-wrap gap-2 align-items-center">
-            <Dropdown label="Sort by" className="bg-dark">
+            {/* ✅ Filter by Status Dropdown */}
+            <Dropdown label={`Status: ${selectedStatus}`}>
+              {["All", "Pending", "Approved", "Paid"].map((status) => (
+                <li key={status}>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => setSelectedStatus(status)}
+                  >
+                    {status}
+                  </button>
+                </li>
+              ))}
+            </Dropdown>
+
+            {/* Sort Dropdown */}
+            <Dropdown label="Sort by">
               {["newest", "oldest", "az", "za"].map((sortKey) => (
                 <li key={sortKey}>
-                  <button className="dropdown-item" onClick={() => handleSort(sortKey)}>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => handleSort(sortKey)}
+                  >
                     {sortKey === "az"
                       ? "Alphabetical ↑"
                       : sortKey === "za"
@@ -370,7 +425,10 @@ const downloadXLSX = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
 
-            <button className="px-4 py-2 rounded btn bg-white border" onClick={downloadXLSX}>
+            <button
+              className="px-4 py-2 rounded btn bg-white border"
+              onClick={downloadXLSX}
+            >
               <div className="d-flex gap-2 align-items-center">
                 <i className="fa fa-solid fa-download text-success fw-bold"></i>
                 <span className="text-success fw-bold">XLSX</span>
@@ -379,13 +437,15 @@ const downloadXLSX = () => {
           </div>
         </div>
 
-        <div className="d-flex flex-wrap gap-2 mb-3">
+        {/* ✅ Category Buttons */}
+        <div className="d-flex flex-wrap gap-2 mb-3 mt-2">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               style={{
-                backgroundColor: selectedCategory === cat ? "#1e293b" : "transparent",
+                backgroundColor:
+                  selectedCategory === cat ? "#1e293b" : "transparent",
                 color: selectedCategory === cat ? "#ffffff" : "#1e293b",
                 border: "1px solid #1e293b",
                 padding: "0.375rem 0.75rem",

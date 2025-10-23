@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import LoadingScreen from "../../views/Loading";
 import Notification from "../../components/Notification";
 import MaintenanceTable from "../../components/MaintenanceTable";
+import Dropdown from "../../components/Dropdown";
 
 const BASE_URL =
   window.location.hostname === "localhost"
@@ -104,7 +105,10 @@ function Maintenance() {
       });
     } catch (err) {
       console.error(err);
-      setNotification({ type: "error", message: "Failed to cancel maintenance" });
+      setNotification({
+        type: "error",
+        message: "Failed to cancel maintenance",
+      });
     }
   };
 
@@ -118,11 +122,14 @@ function Maintenance() {
       });
     } catch (err) {
       console.error(err);
-      setNotification({ type: "error", message: "Failed to delete maintenance" });
+      setNotification({
+        type: "error",
+        message: "Failed to delete maintenance",
+      });
     }
   };
 
-  // Filter logic (by status and priority)
+  // Filter logic
   const filteredMaintenances = maintenances.filter((m) => {
     const statusMatch = m.status === statusFilter;
     const priorityMatch =
@@ -137,7 +144,7 @@ function Maintenance() {
       </div>
     );
 
-  // Function for coloring priorities
+  // Priority color styling
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "High":
@@ -166,7 +173,9 @@ function Maintenance() {
       key: "unit",
       label: "Unit",
       render: (_, row) =>
-        row.unit ? `${row.unit.location || ""} - ${row.unit.unitNo || ""}` : "—",
+        row.unit
+          ? `${row.unit.location || ""} - ${row.unit.unitNo || ""}`
+          : "—",
     },
     { key: "task", label: "Task" },
     {
@@ -328,62 +337,42 @@ function Maintenance() {
         </Link>
       </div>
 
-      {/* Status filter buttons */}
-      <div className="d-flex gap-2 mb-3 flex-wrap align-items-center">
-        {["Pending", "In Process", "Completed", "Cancelled"].map((status) => (
-          <button
-            key={status}
-            className="btn"
-            style={{
-              backgroundColor: statusFilter === status ? "#000" : "transparent",
-              color: statusFilter === status ? "#fff" : "#1e293b",
-              border: "1px solid #000",
-              padding: "0.375rem 0.75rem",
-              borderRadius: "0.375rem",
-              fontWeight: 500,
-            }}
-            onClick={() => setStatusFilter(status)}
-          >
-            {status}
-          </button>
-        ))}
-
-        {/* Priority Dropdown (styled like Units filter) */}
-          <div className="ms-auto d-flex align-items-center">
-          <label htmlFor="priorityFilter" className="me-2 fw-semibold text-dark">
-            Priority:
-          </label>
-          <select
-            id="priorityFilter"
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="form-select"
-            style={{
-              width: "180px",
-              border: "1px solid #000",
-              borderRadius: "6px",
-              padding: "6px 10px",
-              fontSize: "0.95rem",
-              color: "#1e293b",
-              backgroundColor: "#fff",
-              fontWeight: 500,
-              transition: "all 0.2s ease",
-              appearance: "none",
-              backgroundImage:
-                "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='5'%3E%3Cpath fill='black' d='M0 0l5 5 5-5z'/%3E%3C/svg%3E\")",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "right 10px center",
-              backgroundSize: "10px 5px",
-            }}
-            onMouseOver={(e) => (e.target.style.borderColor = "#333")}
-            onMouseOut={(e) => (e.target.style.borderColor = "#000")}
-          >
-            <option value="All">All</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
+      {/* Filters Section */}
+      <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+        <div className="d-flex flex-wrap gap-2">
+          {["Pending", "In Process", "Completed", "Cancelled"].map((status) => (
+            <button
+              key={status}
+              className="btn"
+              style={{
+                backgroundColor:
+                  statusFilter === status ? "#000" : "transparent",
+                color: statusFilter === status ? "#fff" : "#1e293b",
+                border: "1px solid #000",
+                padding: "0.375rem 0.75rem",
+                borderRadius: "0.375rem",
+                fontWeight: 500,
+              }}
+              onClick={() => setStatusFilter(status)}
+            >
+              {status}
+            </button>
+          ))}
         </div>
+
+        {/* Priority Dropdown */}
+        <Dropdown label={`Priority: ${priorityFilter}`}>
+          {["All", "High", "Medium", "Low"].map((priority) => (
+            <li key={priority}>
+              <button
+                className="dropdown-item"
+                onClick={() => setPriorityFilter(priority)}
+              >
+                {priority}
+              </button>
+            </li>
+          ))}
+        </Dropdown>
       </div>
 
       {filteredMaintenances.length === 0 ? (
