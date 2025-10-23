@@ -13,10 +13,12 @@ const TenantsSchema = new mongoose.Schema(
     email: {
       type: String,
       default: "",
+      required:true,
     },
     contactNumber: {
       type: String,
       default: "",
+      required:true,
     },
     // Unit reference
     unitId: {
@@ -48,7 +50,7 @@ const TenantsSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Paid", "Partial", "Overdue","Unpaid"],
+      enum: ["Paid", "Partial", "Overdue","Unpaid","Pending"],
       default: "Unpaid",
     },
     receiptUrl: {

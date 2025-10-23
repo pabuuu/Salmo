@@ -37,25 +37,48 @@ function UsersPayments() {
     <div className="container-fluid">
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2>
-            {tenant.firstName} {tenant.lastName}
-          </h2>
-          <p className="text-muted mb-0">
-            Unit: {tenant.unitId ? tenant.unitId.unitNo : "N/A"} | Rent:{" "}
-            {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(tenant.unitId.rentAmount)}{" "}
-            ({tenant.paymentFrequency}) | Status:{" "}
-            <span className={tenant.status === "Overdue" ? "text-danger" : "text-success"}>
-              {tenant.status}
-            </span>
-          </p>
-          <p className="text-muted">
-            Next Due Date: {new Date(tenant.nextDueDate).toLocaleDateString()}
-          </p>
-          <p className="text-muted">
-            Remaining Balance: {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(tenant.balance || 0)}
-          </p>
-        </div>
+      <div>
+        <h2>
+          {tenant.firstName} {tenant.lastName}
+        </h2>
+
+        <p className="text-muted mb-0">
+          Unit:{" "}
+          {tenant.unitId
+            ? tenant.unitId.unitNo
+            : tenant.lastUnitNo
+              ? tenant.lastUnitNo
+              : "N/A"}{" "}
+          | Rent:{" "}
+          {tenant.unitId
+            ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(tenant.unitId.rentAmount)
+            : tenant.lastRentAmount
+              ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(tenant.lastRentAmount)
+              : "N/A"}{" "}
+          ({tenant.paymentFrequency || "N/A"}) | Status:{" "}
+          <span className={tenant.status === "Overdue" ? "text-danger" : "text-success"}>
+            {tenant.status || "N/A"}
+          </span>
+        </p>
+
+        <p className="text-muted">
+          Next Due Date:{" "}
+          {tenant.nextDueDate
+            ? new Date(tenant.nextDueDate).toLocaleDateString()
+            : tenant.lastNextDueDate
+              ? new Date(tenant.lastNextDueDate).toLocaleDateString()
+              : "N/A"}
+        </p>
+
+        <p className="text-muted">
+          Remaining Balance:{" "}
+          {new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+          }).format(tenant.balance || 0)}
+        </p>
+      </div>
+
         <Link to="/payments" className="btn btn-outline-secondary">
           ← Back to Payments
         </Link>

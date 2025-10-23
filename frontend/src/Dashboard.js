@@ -238,31 +238,31 @@ function Dashboard() {
                 <div className="flex-grow-1" style={{ overflowY: "auto" }}>
                   {payments.length > 0 ? (
                     <ul className="list-unstyled mb-0">
-                      {payments
-                        .slice(0, 8)
-                        .map((payment) => (
-                          <li
-                            key={payment._id}
-                            className="mb-2 hide-scrollbar"
-                            style={{ overflowY: "scroll" }}
-                          >
-                            <div className="w-100">
-                              <span>
-                                {payment.tenantId
-                                  ? `${payment.tenantId.firstName} ${payment.tenantId.lastName}`
-                                  : "Unknown Tenant"}
-                              </span>
-                              <br />
-                              <div className="d-flex flex-row justify-content-between">
-                                <span>₱{payment.amount.toLocaleString()}</span>
-                                <em>{payment.paymentMethod}</em>
-                              </div>
-                              <span className="text-muted">
-                                {new Date(payment.paymentDate).toLocaleDateString()}
-                              </span>
+                      {payments.slice(0, 8).map((payment) => (
+                        <li
+                          key={payment._id}
+                          className="mb-2 hide-scrollbar"
+                          style={{ overflowY: "scroll" }}
+                        >
+                          <div className="w-100">
+                          <span>
+                          {payment.tenantId
+                              ? `${payment.tenantId.firstName} ${payment.tenantId.lastName}`
+                              : "Deleted Tenant"}
+                          </span>
+                            <br />
+                            <div className="d-flex flex-row justify-content-between">
+                              <span>₱{payment.amount.toLocaleString()}</span>
+                              <em>{payment.paymentMethod || "N/A"}</em>
                             </div>
-                          </li>
-                        ))}
+                            <span className="text-muted">
+                              {payment.paymentDate
+                                ? new Date(payment.paymentDate).toLocaleDateString()
+                                : "No Date"}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
                     </ul>
                   ) : (
                     <p className="text-muted">No recent payments</p>
