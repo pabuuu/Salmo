@@ -196,7 +196,8 @@ function Payments() {
         if (row.status === "Paid") bgColor = "bg-success text-white";
         else if (row.status === "Partial") bgColor = "bg-warning text-dark";
         else if (row.status === "Overdue") bgColor = "bg-danger text-white";
-
+        else if (row.status === "Pending") bgColor = "bg-secondary text-white";
+        
         return <span className={`px-2 py-1 rounded ${bgColor}`}>{row.status || "Active"}</span>;
       },
     },
