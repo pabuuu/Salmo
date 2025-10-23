@@ -37,44 +37,39 @@ export const recalcTenantBalance = async (tenantId) => {
 
   const rentAmount = tenant.unitId?.rentAmount || 0;
   const frequency = tenant.paymentFrequency || tenant.unitId?.paymentFrequency || "Monthly";
-
   if (!rentAmount || rentAmount <= 0) return;
 
-  // 🧮 How many months worth of rent total have been paid
+  // 🧮 Calculate how many full rent periods have been paid
   const fullPeriodsPaid = Math.floor(totalPaid / rentAmount);
 
-  // 🗓 Determine how many months have already been advanced
+  // 🗓 Determine base date for next due
   const today = new Date();
-  const originalNextDue = tenant.nextDueDate || today;
+  const lastDueDate = tenant.lastDueDate || today; // ✅ store last due date
+  let nextDueDate = tenant.nextDueDate || today;
 
-  // how many months ahead of today the nextDueDate already is
-  const monthsAhead = Math.max(
-    0,
-    (originalNextDue.getFullYear() - today.getFullYear()) * 12 +
-      (originalNextDue.getMonth() - today.getMonth())
-  );
-
-  // Only advance for *newly covered* months
-  const newPeriodsToAdvance = Math.max(0, fullPeriodsPaid - monthsAhead);
-
-  let nextDueDate = originalNextDue;
-  for (let i = 0; i < newPeriodsToAdvance; i++) {
+  // Advance due date for each full period paid
+  for (let i = 0; i < fullPeriodsPaid; i++) {
     nextDueDate = getNextDueDate(nextDueDate, frequency);
   }
 
-  const remainingBalance = rentAmount - (totalPaid % rentAmount);
+  // ✅ Handle remaining balance cleanly
+  const remainder = totalPaid % rentAmount;
+  const remainingBalance = remainder === 0 ? 0 : rentAmount - remainder;
 
+  // ✅ Determine payment status
   let status = "Pending";
-  if (remainingBalance === rentAmount && fullPeriodsPaid > 0) {
+  if (remainingBalance === 0 && totalPaid > 0) {
     status = "Paid";
   } else if (remainingBalance < rentAmount && remainingBalance > 0) {
     status = "Partial";
-  } else if (totalPaid === 0 && new Date(tenant.nextDueDate) < today) {
+  } else if (totalPaid === 0 && nextDueDate < today) {
     status = "Overdue";
   }
 
+  // 🧾 Save everything
   tenant.balance = remainingBalance;
   tenant.status = status;
+  tenant.lastDueDate = tenant.nextDueDate || today; // ✅ keep record of previous due
   tenant.nextDueDate = nextDueDate;
   await tenant.save();
 };
@@ -195,16 +190,18 @@ export const getTenantPayments = async (req, res) => {
 
 export const getAllPayments = async (req, res) => {
   try {
-    const payments = await PaymentsSchema
-      .find()
-      .populate("tenantId", "firstName lastName")
+    const payments = await PaymentsSchema.find()
+      .populate("tenantId", "firstName lastName isArchived") 
       .populate("unitId", "unitNo")
       .sort({ paymentDate: -1 })
       .lean();
 
-    res.status(200).json({ success: true, data: payments });
+    const validPayments = payments.filter(p => p.tenantId !== null);
+
+    res.status(200).json({ success: true, data: validPayments });
   } catch (err) {
     console.error("Error fetching all payments:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
+

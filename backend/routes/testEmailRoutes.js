@@ -18,8 +18,8 @@ const router = express.Router();
 router.get("/send-test", async (req, res) => {
   try {
     const fakeTenant = {
-      firstName: "Regular",
-      lastName: "Man",
+      firstName: "John",
+      lastName: "Doe",
       email: "toms212003@gmail.com",
     };
 
