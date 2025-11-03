@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
 
 // 🔐 Auth & Dashboard
 import Login from "./views/login";
+import CustomerLogin from "./views/CustomerLogin";
 import Dashboard from "./Dashboard";
 
-// 🧩 Tenants
+// 🧍 Tenants
 import Tenants from "./Routes/Tenants/Tenants.js";
 import TenantsPost from "./Routes/Tenants/TenantsPost.js";
 import TenantsProfile from "./Routes/Tenants/TenantsProfile.js";
@@ -33,55 +34,105 @@ import MaintenanceProfile from "./Routes/Maintenance/MaintenanceProfile.js";
 // 🧭 Layout
 import SidebarLayout from "./components/SidebarLayout";
 
+// 👤 Customer Pages
+import Customer from "./Routes/Customer/Customer.js";
+import CustomerProfile from "./Routes/Customer/CustomerProfile.js"; // ✅ fixed casing here
+
 function App() {
   const [loggedIn, setLoggedIn] = useState(!!sessionStorage.getItem("token"));
   const role = sessionStorage.getItem("role");
 
   return (
     <Router>
-      {loggedIn ? (
-        <SidebarLayout role={role} setLoggedIn={setLoggedIn}>
-          <Routes>
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/dashboard" />} />
+      <Routes>
+        {/* 🔐 Admin Login */}
+        <Route path="/" element={<Login setLoggedIn={setLoggedIn} />} />
 
-            {/* Dashboard */}
-            <Route path="/dashboard" element={<Dashboard />} />
+        {/* 👥 Customer Login */}
+        <Route path="/customer-login" element={<CustomerLogin />} />
 
-            {/* 🧍 Tenants */}
-            <Route path="/tenants" element={<Tenants />} />
-            <Route path="/tenants/create" element={<TenantsPost />} />
-            <Route path="/tenants/profile/:id" element={<TenantsProfile />} />
+        {/* 👤 Customer Dashboard */}
+        <Route
+          path="/customer"
+          element={
+            role === "customer" && loggedIn ? (
+              <Customer />
+            ) : (
+              <Navigate to="/customer-login" />
+            )
+          }
+        />
 
-            {/* 🏢 Units */}
-            <Route path="/units" element={<Units />} />
-            <Route path="/units/create" element={<UnitsPost />} />
-            <Route path="/units/profile/:id" element={<UnitsProfile />} />
+        {/* 👤 Customer Profile */}
+        <Route
+          path="/customer-profile"
+          element={
+            role === "customer" && loggedIn ? (
+              <CustomerProfile />
+            ) : (
+              <Navigate to="/customer-login" />
+            )
+          }
+        />
 
-            {/* 🧰 Maintenance */}
-            <Route path="/maintenance" element={<Maintenance />} />
-            <Route path="/maintenance/create" element={<MaintenancePost />} />
-            <Route path="/maintenance/:id" element={<MaintenanceProfile />} />
+        {/* 🧭 Admin Area */}
+        {loggedIn && role !== "customer" ? (
+          <Route
+            path="/*"
+            element={
+              <SidebarLayout role={role} setLoggedIn={setLoggedIn}>
+                <Routes>
+                  <Route path="/dashboard" element={<Dashboard />} />
 
-            {/* 💳 Payments */}
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/tenants/:id/payments" element={<UsersPayments />} />
+                  {/* 🧍 Tenants */}
+                  <Route path="/tenants" element={<Tenants />} />
+                  <Route path="/tenants/create" element={<TenantsPost />} />
+                  <Route
+                    path="/tenants/profile/:id"
+                    element={<TenantsProfile />}
+                  />
 
-            {/* 🧾 Expenses */}
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/expenses/create" element={<ExpensesPost />} />
-            <Route path="/expenses/:id" element={<ExpensesProfile />} />
+                  {/* 🏢 Units */}
+                  <Route path="/units" element={<Units />} />
+                  <Route path="/units/create" element={<UnitsPost />} />
+                  <Route path="/units/profile/:id" element={<UnitsProfile />} />
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/dashboard" />} />
-          </Routes>
-        </SidebarLayout>
-      ) : (
-        <Routes>
-          <Route path="/" element={<Login setLoggedIn={setLoggedIn} />} />
+                  {/* 🧰 Maintenance */}
+                  <Route path="/maintenance" element={<Maintenance />} />
+                  <Route
+                    path="/maintenance/create"
+                    element={<MaintenancePost />}
+                  />
+                  <Route
+                    path="/maintenance/:id"
+                    element={<MaintenanceProfile />}
+                  />
+
+                  {/* 💳 Payments */}
+                  <Route path="/payments" element={<Payments />} />
+                  <Route
+                    path="/tenants/:id/payments"
+                    element={<UsersPayments />}
+                  />
+
+                  {/* 🧾 Expenses */}
+                  <Route path="/expenses" element={<Expenses />} />
+                  <Route path="/expenses/create" element={<ExpensesPost />} />
+                  <Route
+                    path="/expenses/:id"
+                    element={<ExpensesProfile />}
+                  />
+
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/dashboard" />} />
+                </Routes>
+              </SidebarLayout>
+            }
+          />
+        ) : (
           <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      )}
+        )}
+      </Routes>
     </Router>
   );
 }
