@@ -3,9 +3,13 @@ import axios from "axios";
 import LoadingScreen from "../../views/Loading";
 import CustomerSidebarLayout from "../../components/CustomerSidebarLayout";
 
+const USE_NGROK = true;
+
 const BASE_URL =
   window.location.hostname === "localhost"
-    ? "http://localhost:5050/api"
+    ? USE_NGROK
+      ? "https://multicarinated-ellison-subfrontally.ngrok-free.dev/api" 
+      : "http://localhost:5050/api" 
     : "https://rangeles.online/api";
 
 export default function Customer() {

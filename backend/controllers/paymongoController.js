@@ -49,19 +49,26 @@ export const createPayMongoIntent = async (req, res) => {
 // PayMongo Webhook to update payment status
 export const handlePayMongoWebhook = async (req, res) => {
   try {
+    console.log("📩 PayMongo Webhook received:", req.body); // ✅ Add this
     const event = req.body;
 
-    if (event.type === "payment_intent.succeeded") {
-      const intent = event.data.object;
+    console.log("Received PayMongo event:", eventType);
 
-      // Find pending payment
-      const payment = await Payment.findOne({ "notes": new RegExp(intent.id) });
+    if (eventType === "payment.paid") {
+      const paymentData = event.attributes;
+
+      // You can store the PayMongo payment ID in your Payment model when creating the payment
+      const paymongoId = paymentData.id || paymentData.reference_number;
+
+      // Find payment using the PayMongo ID you stored earlier
+      const payment = await Payment.findOne({ paymongoId });
+
       if (payment) {
-        payment.status = "Paid";  // enum safe
-        payment.receiptUrl = intent.attributes?.statement_descriptor || null;
+        payment.status = "Paid";
+        payment.receiptUrl = paymentData.receipt?.url || null;
         await payment.save();
 
-        // Update tenant balance
+        // Optional: update tenant balance
         const tenant = await Tenant.findById(payment.tenantId);
         if (tenant) {
           tenant.balance -= payment.amount;
@@ -70,9 +77,21 @@ export const handlePayMongoWebhook = async (req, res) => {
       }
     }
 
+    // Optional: handle failed payments
+    else if (eventType === "payment.failed") {
+      const paymentData = event.attributes;
+      const paymongoId = paymentData.id || paymentData.reference_number;
+
+      const payment = await Payment.findOne({ paymongoId });
+      if (payment) {
+        payment.status = "Failed";
+        await payment.save();
+      }
+    }
+
     res.status(200).json({ received: true });
   } catch (err) {
-    console.error("Webhook error:", err.message);
-    res.status(500).json({ success: false });
+    console.error("Webhook error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

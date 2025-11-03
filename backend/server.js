@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import tenantRouter from "./routes/tenantRoute.js";
 import unitRouter from "./routes/unitRoute.js";
-import maintenanceRouter from "./routes/maintenanceRoute.js"; 
+import maintenanceRouter from "./routes/maintenanceRoute.js";
 import paymentRoute from "./routes/paymentRoute.js";
 import expenseRoute from "./routes/expenseRoute.js";
 import testEmailRoutes from "./routes/testEmailRoutes.js";
@@ -28,6 +28,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ✅ Middleware
 app.use(cors());
+
+// ⚠️ Must come BEFORE express.json()
+// This ensures PayMongo webhook receives the raw body (not parsed JSON)
+app.use("/api/payments/paymongo/webhook", express.raw({ type: "application/json" }));
+
 app.use(express.json());
 
 // ✅ MongoDB connection
@@ -42,7 +47,7 @@ initScheduler();
 app.use("/api/auth", authRoutes);          // Admin + Customer login routes
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
-app.use("/api/maintenances", maintenanceRouter); 
+app.use("/api/maintenances", maintenanceRouter);
 app.use("/api/expenses", expenseRoute);
 app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);

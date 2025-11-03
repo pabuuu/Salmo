@@ -5,24 +5,30 @@ import {
   getTenantPayments,
   getAllPayments
 } from "../controllers/paymentsController.js";
-import { createPayMongoIntent } from "../controllers/paymongoController.js";
+import {
+  createPayMongoIntent,
+  handlePayMongoWebhook
+} from "../controllers/paymongoController.js";
 
 const paymentRoute = express.Router();
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// 🔹 Existing route: create payment with receipt
+// 🔹 Create payment with receipt
 paymentRoute.post("/create", upload.single("receipt"), createPayment);
 
 // 🔹 Get tenant payments
-paymentRoute.get("/:id/payments", getTenantPayments);  
-paymentRoute.get("/tenant/:tenantId", getTenantPayments);  // e.g., /api/payments/tenant/123
+paymentRoute.get("/:id/payments", getTenantPayments);
+paymentRoute.get("/tenant/:tenantId", getTenantPayments);
 
 // 🔹 Get all payments
 paymentRoute.get("/all", getAllPayments);
 
-// 🔹 New route: create PayMongo payment intent
+// 🔹 Create PayMongo payment intent
 paymentRoute.post("/paymongo/create-intent", createPayMongoIntent);
+
+// 🔹 PayMongo webhook listener
+paymentRoute.post("/paymongo/webhook", express.raw({ type: "application/json" }), handlePayMongoWebhook);
 
 export default paymentRoute;
