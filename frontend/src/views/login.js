@@ -14,7 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isChoosing, setIsChoosing] = useState(true); // 👈 login type selection
+  const [isChoosing, setIsChoosing] = useState(true);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -59,17 +59,16 @@ export default function Login() {
 
   return (
     <div className="d-flex vh-100">
-      <div className="row w-100 m-3">
+      <div className="row w-100 vh-100 m-0">
         {/* Left Image */}
-        <div className="col-12 col-md-8">
+        <div className="col-12 col-md-8 p-0">
           <img
             src={login_image}
             className="h-100 w-100 img-fluid img"
             style={{ display: "flex", objectFit: "contain" }}
           />
         </div>
-
-        {/* Right Form Section */}
+        
         <div className="col-12 col-md-4 border d-flex flex-column h-100 justify-content-center bg-white border rounded px-4 shadow">
           <div className="header mb-4 text-center">
             <img src={Logo} alt="Logo" width="210" className="img-fluid mb-2" />
@@ -80,29 +79,25 @@ export default function Login() {
                 : "Log in to your account."}
             </span>
           </div>
-
-          {/* Step 1: Ask login type */}
           {isChoosing ? (
             <div className="text-center">
-              <p className="mb-3 fw-semibold">Are you a paying customer?</p>
-              <div className="d-flex justify-content-center gap-3">
+              <div className="d-flex flex-column justify-content-center gap-3">
                 <button
-                  className="btn btn-dark"
+                  className="btn btn-dark py-2"
                   onClick={() => navigate("/customer-login")}
                 >
-                  Yes
+                  Customer
                 </button>
                 <button
-                  className="btn btn-outline-dark"
+                  className="btn btn-light py-2 border"
                   onClick={() => setIsChoosing(false)}
                 >
-                  No
+                  Offices
                 </button>
               </div>
             </div>
           ) : (
             <>
-              {/* Step 2: Admin login form */}
               <form onSubmit={handleLogin} className="d-flex flex-column">
                 <input
                   placeholder="Username"
@@ -145,16 +140,16 @@ export default function Login() {
 
               <p className="warning-msg text-center mt-3">{message}</p>
 
-              {/* 👇 NEW: Redirect for customers who chose "No" by mistake */}
               <div className="text-center mt-3">
-                <p className="text-muted mb-2">
+                {/* <p className="text-muted mb-2">
                   Are you actually a paying customer?
-                </p>
+                </p> */}
                 <button
-                  className="btn btn-outline-dark w-100"
-                  onClick={() => navigate("/customer-login")}
+                  className="btn flex  w-100 text-muted"
+                  onClick={() =>setIsChoosing(true)}
                 >
-                  Go to Customer Login
+                  <i class="fa me-1 fa-solid fa-arrow-left"></i>
+                  Go back
                 </button>
               </div>
             </>
