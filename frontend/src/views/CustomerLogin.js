@@ -37,9 +37,9 @@ export default function CustomerLogin() {
       body: JSON.stringify({ email, contactNumber }),
     });
 
-    console.log("📥 Raw response:", res); // ✅ Step 4
+    console.log("📥 Raw response:", res);
     const data = await res.json();
-    console.log("📦 Response JSON:", data); // ✅ Step 5
+    console.log("📦 Response JSON:", data); 
 
     if (data.success) {
       sessionStorage.setItem("token", data.token);
@@ -70,22 +70,18 @@ export default function CustomerLogin() {
 
   return (
     <div className="d-flex vh-100 align-items-center justify-content-center">
-      <div className="row w-100 m-3">
+      <div className="row w-100">
         {/* Left Image Section */}
         <div className="col-12 col-md-8 p-0">
           <img
             src={login_image}
-            alt="Login Visual"
-            className="img-fluid h-100 w-100"
-            style={{
-              objectFit: "cover",
-              borderRadius: "15px",
-            }}
+            className="h-100 w-100 img-fluid img"
+            style={{ display: "flex", objectFit: "contain" }}
           />
         </div>
 
         {/* Right Form Section */}
-        <div className="col-12 col-md-4 d-flex flex-column justify-content-center bg-white border rounded shadow p-4">
+        <div className="col-12 col-md-4 d-flex flex-column justify-content-center vh-100  bg-white border rounded shadow p-4">
           <div className="text-center mb-4">
             <img src={Logo} alt="Logo" width="210" className="img-fluid mb-3" />
             <h2 className="fw-bold primary-text mb-0">Welcome!</h2>
@@ -128,14 +124,15 @@ export default function CustomerLogin() {
           )}
 
           <div className="text-center mt-3">
-            <p className="text-muted mb-2">Are you actually an Admin?</p>
+            {/* <p className="text-muted mb-2">Are you actually an Admin?</p> */}
             <button
               type="button"
-              className="btn btn-outline-dark w-100"
+              className="btn flex w-100"
               onClick={() => navigate("/")}
               disabled={loading}
             >
-              Back to Admin Login
+              <i class="fa me-1 fa-solid fa-arrow-left"></i>
+              Go back
             </button>
           </div>
         </div>
