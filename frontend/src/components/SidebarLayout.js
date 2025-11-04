@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import Notification from '../components/Notification.js'
-import Logo from '../assets/logo.png'
+import Notification from "../components/Notification.js";
+import Logo from "../assets/logo.png";
 
-export default function SidebarLayout({ children, role,setLoggedIn }) {
+export default function SidebarLayout({ children, role, setLoggedIn }) {
   const DESKTOP_WIDTH = 240;
-  // 200 orignal
-  const MOBILE_WIDTH = 240;
-  const BUBBLE_DIAMETER = 40; // smaller bubble
-  const BUBBLE_LEFT_COLLAPSED = 4; // move a bit more to the left
+  const MOBILE_WIDTH = 220;
+  const BUBBLE_DIAMETER = 40;
+  const BUBBLE_LEFT_COLLAPSED = 4;
   const BUBBLE_RIGHT_OVERLAP = BUBBLE_DIAMETER / 2;
-  const GAP_WHEN_COLLAPSED = 16; // small right gap for main content
+  const GAP_WHEN_COLLAPSED = 16;
 
   const [collapsed, setCollapsed] = useState(false);
   const [isMedium, setIsMedium] = useState(window.innerWidth < 1024);
-  const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showReports, setShowReports] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     function handleResize() {
@@ -36,7 +37,7 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
   function handleLogout() {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("role");
-    setLoggedIn(false); 
+    setLoggedIn(false);
     navigate("/", { replace: true });
   }
 
@@ -45,7 +46,7 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
       className="d-flex flex-row"
       style={{ height: "100vh", width: "100%", background: "#f1f5f9" }}
     >
-      {/* === Overlay (mobile only) === */}
+      {/* === Overlay for mobile === */}
       <div
         onClick={() => setCollapsed(true)}
         className="position-fixed top-0 start-0 w-100 h-100"
@@ -58,7 +59,7 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
         }}
       />
 
-      {/* === sidebar mismp=== */} 
+      {/* === Sidebar === */}
       <aside
         className={`d-flex flex-column justify-content-between bg-white shadow ${
           isMedium ? "position-fixed" : "position-relative"
@@ -73,40 +74,94 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
           transition: "transform 0.35s cubic-bezier(.2,.9,.2,1)",
           zIndex: 10,
           overflowY: "auto",
+          wordBreak: "break-word",
         }}
       >
         <div className="px-2">
-          <div className="d-flex justify-content-center flex-column mb-2">
-            <img src={Logo} alt="Logo" width="200" className="img-fluid mb-2" />
-            <span className="text-uppercase fw-bold ">{currentUser ? currentUser.role : ""}</span>
+          {/* === Logo and Role === */}
+          <div className="d-flex justify-content-center flex-column mb-3 text-center">
+            <img
+              src={Logo}
+              alt="Logo"
+              width="180"
+              className="img-fluid mx-auto mb-2"
+              style={{ maxWidth: "80%" }}
+            />
+            <span
+              className="text-uppercase fw-bold text-truncate px-2"
+              style={{ fontSize: "14px" }}
+            >
+              {currentUser ? currentUser.role : ""}
+            </span>
           </div>
-          <span className="text-start text-muted fw-bold">Menu</span>
-          <SidebarLink to="/dashboard" label="Dashboard" icon="fa-chart-line" className=" py-5" />
-          <SidebarLink to="/tenants" label="Tenants" icon="fa-users" className=" py-5" />
-          <SidebarLink to="/units" label="Units" icon="fa-building-user" className=" py-5" />
-          <SidebarLink
-            to="/maintenance"
-            label="Maintenance"
-            icon="fa-screwdriver-wrench"
-            className=" py-5"
-          />
 
-          {role === "admin" && (
-            <>
-              <SidebarLink to="/payments" label="Payments" icon="fa-coins" className=" py-5"/>
-              <SidebarLink to="/expenses" label="Expenses" icon="fa-money-bill-wave" className=" py-5" />
-            </>
-          )}
+          <span className="text-start text-muted fw-bold px-3 d-block mb-2">
+            Menu
+          </span>
+
+          {/* === Main Links === */}
+          <SidebarLink to="/dashboard" label="Dashboard" icon="fa-chart-line" />
+          <SidebarLink to="/tenants" label="Tenants" icon="fa-users" />
+          <SidebarLink to="/units" label="Units" icon="fa-building-user" />
+
+          {/* === Reports Section === */}
+          <button
+            onClick={() => setShowReports((prev) => !prev)}
+            className="d-flex align-items-center justify-content-between text-decoration-none px-3 py-2 fw-semibold border-0 bg-transparent w-100"
+            style={{
+              color: "#1e293b",
+              transition: "background 0.18s ease, color 0.18s ease",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#f1f5f9";
+              e.currentTarget.style.color = "#0f172a";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "#1e293b";
+            }}
+          >
+            <span className="d-flex align-items-center gap-2">
+              <i className="fa-solid fa-file-lines"></i>
+              Reports
+            </span>
+            <i
+              className={`fa-solid fa-chevron-${showReports ? "up" : "down"}`}
+              style={{ fontSize: "12px" }}
+            ></i>
+          </button>
+
+          {/* === Dropdown (animated) === */}
+          <div
+            className="ms-4 overflow-hidden"
+            style={{
+              maxHeight: showReports ? "200px" : "0px",
+              opacity: showReports ? 1 : 0,
+              transition: "all 0.3s ease",
+            }}
+          >
+            <SidebarLink
+              to="/maintenance"
+              label="Maintenance"
+              icon="fa-screwdriver-wrench"
+            />
+            <SidebarLink to="/expenses" label="Expenses" icon="fa-money-bill-wave" />
+            <SidebarLink to="/payments" label="Payments" icon="fa-coins" />
+          </div>
         </div>
 
+        {/* === Logout === */}
         <button
-          onClick={()=> setShowConfirm(true)}
+          onClick={() => setShowConfirm(true)}
           className="border-0 bg-transparent text-start w-100 px-3 py-2 fw-semibold d-flex align-items-center mb-3"
           style={{ color: "#1e293b", gap: "10px" }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "#f1f5f9";
             e.currentTarget.style.color = "#0f172a";
-          }}    
+          }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
             e.currentTarget.style.color = "#1e293b";
@@ -115,30 +170,28 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
           <i className="fa-solid fa-right-from-bracket"></i>
           Logout
         </button>
+
         {showConfirm && (
-        <Notification
-          type="warning"
-          message="Are you sure you want to log out?"
-          actions={[
-            {
-              label: "Yes",
-              onClick: () => {
-                handleLogout();
-                setShowConfirm(false);
+          <Notification
+            type="warning"
+            message="Are you sure you want to log out?"
+            actions={[
+              {
+                label: "Yes",
+                onClick: () => {
+                  handleLogout();
+                  setShowConfirm(false);
+                },
               },
-            },
-            {
-              label: "Cancel",
-              onClick: () => setShowConfirm(false),
-            },
-          ]}
-          onClose={() => setShowConfirm(false)}
-          icon="⚠️"
-        />
-      )}
+              { label: "Cancel", onClick: () => setShowConfirm(false) },
+            ]}
+            onClose={() => setShowConfirm(false)}
+            icon="⚠️"
+          />
+        )}
       </aside>
 
-      {/* === Bubble Toggle (mobile) === */}
+      {/* === Bubble Toggle (Mobile) === */}
       {isMedium && (
         <button
           onClick={() => setCollapsed((s) => !s)}
@@ -147,12 +200,9 @@ export default function SidebarLayout({ children, role,setLoggedIn }) {
           style={{
             top: collapsed ? "16px" : "48px",
             left: `${bubbleLeft}px`,
-            transform: collapsed ? "none" : "translateY(0)",
             width: `${BUBBLE_DIAMETER}px`,
             height: `${BUBBLE_DIAMETER}px`,
             zIndex: 11,
-            transition:
-              "left 0.35s cubic-bezier(.2,.9,.2,1), top 0.35s cubic-bezier(.2,.9,.2,1)",
           }}
         >
           <div
@@ -206,8 +256,11 @@ function SidebarLink({ to, label, icon }) {
       style={{
         color: "#1e293b",
         whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
         transition: "background 0.18s ease, color 0.18s ease",
         gap: "10px",
+        fontSize: "14px",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "#f1f5f9";
@@ -219,7 +272,7 @@ function SidebarLink({ to, label, icon }) {
       }}
     >
       <i className={`fa-solid ${icon}`}></i>
-      {label}
+      <span className="flex-grow-1 text-truncate">{label}</span>
     </Link>
   );
 }
