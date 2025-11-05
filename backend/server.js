@@ -14,6 +14,7 @@ import paymentRoute from "./routes/paymentRoute.js";
 import expenseRoute from "./routes/expenseRoute.js";
 import testEmailRoutes from "./routes/testEmailRoutes.js";
 import customerRoute from "./routes/customerRoute.js";
+import userRoutes from "./routes/userRoutes.js"; // 👈 keep this
 
 // Utils
 import { initScheduler } from "./utils/mailScheduler.js";
@@ -36,14 +37,16 @@ app.use("/api/payments/paymongo/webhook", express.raw({ type: "application/json"
 app.use(express.json());
 
 // ✅ MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
+// ✅ Initialize scheduled jobs (like email reminders)
 initScheduler();
 
 // ✅ API Routes
-app.use("/api/auth", authRoutes);        
+app.use("/api/auth", authRoutes);          // Admin + Customer login routes
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
 app.use("/api/maintenances", maintenanceRouter);
@@ -51,6 +54,7 @@ app.use("/api/expenses", expenseRoute);
 app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
 app.use("/api/customers", customerRoute);
+app.use("/api/users", userRoutes);         // 👈 keep this
 
 // ✅ Health check route
 app.get("/", (req, res) => {
