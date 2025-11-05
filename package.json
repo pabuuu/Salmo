@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@supabase/supabase-js": "^2.79.0",
     "axios": "^1.12.2",
     "bootstrap": "^5.3.8",
     "dayjs": "^1.11.18",

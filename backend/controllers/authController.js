@@ -51,6 +51,15 @@ export const customerLogin = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Invalid email or password" });
 
+    if (tenant.lockUntil && tenant.lockUntil > Date.now()) {
+      const remainingMs = tenant.lockUntil - Date.now();
+      const remainingMinutes = Math.ceil(remainingMs / 60000);
+      return res.status(403).json({
+        success: false,
+        message: `Too many failed attempts. Try again in ${remainingMinutes} minute(s).`,
+      });
+    }
+
     if (!tenant.password)
       return res.status(403).json({
         success: false,
@@ -58,10 +67,23 @@ export const customerLogin = async (req, res) => {
       });
 
     const isMatch = await bcrypt.compare(password, tenant.password);
-    if (!isMatch)
+    if (!isMatch) {
+      tenant.loginAttempts += 1;
+
+      if (tenant.loginAttempts >= 3) {
+        tenant.lockUntil = new Date(Date.now() + 5 * 60 * 1000);
+        tenant.loginAttempts = 0;
+      }
+
+      await tenant.save();
       return res
         .status(401)
         .json({ success: false, message: "Invalid email or password" });
+    }
+
+    tenant.loginAttempts = 0;
+    tenant.lockUntil = null;
+    await tenant.save();
 
     const token = jwt.sign(
       { id: tenant._id, role: "customer" },

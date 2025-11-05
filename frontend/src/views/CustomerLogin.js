@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Logo from "../assets/logo.png";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import login_image from "../assets/backgrounds/login_img.png";
 
 const BASE_URL =
@@ -201,7 +201,6 @@ export default function CustomerLogin() {
               </button>
             </form>
           ) : (
-            // 🧾 Normal login form
             <form onSubmit={handleLogin} className="d-flex flex-column">
               <input
                 type="email"
@@ -223,11 +222,15 @@ export default function CustomerLogin() {
 
               <button
                 type="submit"
-                className="custom-button mt-2"
+                className="custom-button mt-3 m-0"
                 disabled={loading}
               >
                 {loading ? "Verifying..." : "Login"}
               </button>
+              <Link className="text-decoration-none ms-auto" to='/forgot-password'> 
+                {/* forgot password page */}
+                <span className="m-0 p-0 text-muted">Forgot password?</span>
+              </Link>
             </form>
           )}
 

@@ -57,6 +57,10 @@ export const createTenant = async (req, res) => {
       paymentFrequency,
       initialPayment = 0,
       password,
+      loginAttempts,
+      lockUntil,
+      resetToken,
+      resetTokenExpires,
     } = req.body;
 
     // Basic validation
@@ -107,6 +111,10 @@ export const createTenant = async (req, res) => {
       lastDueDate,
       receiptUrl,
       password,
+      loginAttempts,
+      lockUntil,
+      resetToken,
+      resetTokenExpires,
     });
 
     // Mark unit as occupied

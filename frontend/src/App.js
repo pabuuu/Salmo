@@ -6,12 +6,11 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Login from "./views/login";
 import CustomerLogin from "./views/CustomerLogin";
 import Dashboard from "./Dashboard";
-
 // 🧍 Tenants
 import Tenants from "./Routes/Tenants/Tenants.js";
 import TenantsPost from "./Routes/Tenants/TenantsPost.js";
 import TenantsProfile from "./Routes/Tenants/TenantsProfile.js";
-
+import TenantResetPass from "./views/TenantResetPass.js";
 // 🏢 Units
 import Units from "./Routes/Units/Units.js";
 import UnitsPost from "./Routes/Units/UnitsPost.js";
@@ -49,6 +48,7 @@ import CustomerProfile from "./Routes/Customer/CustomerProfile.js";
 
 // 🔑 Password Reset
 import ResetPassword from "./Routes/ResetPassword.js";
+import TenantNewPass from "./views/TenantNewPass.js";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(!!sessionStorage.getItem("token"));
@@ -63,7 +63,9 @@ function App() {
 
         {/* 👥 Customer Login */}
         <Route path="/customer-login" element={<CustomerLogin />} />
-
+        
+        <Route path="/forgot-password" element={<TenantResetPass />} />
+        <Route path="/reset-password-tenant" element={<TenantNewPass />} />
         {/* 🔑 Password Reset (Public Route) */}
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
