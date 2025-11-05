@@ -20,7 +20,6 @@ const TenantsSchema = new mongoose.Schema(
       required: true,
       default: "",
     },
-    // Unit reference
     unitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Units",
@@ -35,7 +34,6 @@ const TenantsSchema = new mongoose.Schema(
       enum: ["Monthly", "Quarterly", "Yearly"],
       required: true,
     },
-    // Track unpaid balance
     balance: {
       type: Number,
       default: 0,
@@ -59,6 +57,12 @@ const TenantsSchema = new mongoose.Schema(
     lastDueDate: {
       type: Date,
     },
+    lastDueDate: { type: Date },
+    password:{
+      type:String,
+      require:false,
+      default:null
+    }
   },
   { timestamps: true }
 );

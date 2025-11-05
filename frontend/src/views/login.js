@@ -86,7 +86,7 @@ export default function Login() {
                   className="btn btn-dark py-2"
                   onClick={() => navigate("/customer-login")}
                 >
-                  Customer
+                  Tenant
                 </button>
                 <button
                   className="btn btn-light py-2 border"

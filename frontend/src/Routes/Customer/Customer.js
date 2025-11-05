@@ -3,8 +3,7 @@ import axios from "axios";
 import LoadingScreen from "../../views/Loading";
 import CustomerSidebarLayout from "../../components/CustomerSidebarLayout";
 
-// ✅ Toggle between ngrok and localhost for testing
-const USE_NGROK = true;
+const USE_NGROK = false;
 
 const BASE_URL =
   window.location.hostname === "localhost"
