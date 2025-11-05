@@ -1,45 +1,51 @@
-//THIS IS FOR TESTING ONLYYY BRO
+// THIS IS FOR TESTING ONLY
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
-import User from "../models/User.js";
+import User from "../models/User.js"; // adjust if your model filename differs
 
-dotenv.config();
+// Load .env from parent folder
+dotenv.config({ path: "../.env" });
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error(err));
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-const createAdmin = async () => {
+const createSuperAdmin = async () => {
   try {
-    const username = "admin";
-    const password = "admin123"; 
-    const role = "Admin";
+    const username = "superadmin";
+    const password = "superadmin123";
+    const role = "superadmin";
 
-    //check if exists
+    // Check if already exists
     const existing = await User.findOne({ username });
     if (existing) {
-      console.log("Admin already exists");
+      console.log("⚠️ Super Admin already exists");
       process.exit(0);
     }
 
-    // hash
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    //create
-    const admin = new User({
+    // Create new Super Admin
+    const superAdmin = new User({
       username,
       password: hashedPassword,
       role,
     });
 
-    await admin.save();
-    console.log("Admin account created successfully");
+    await superAdmin.save();
+    console.log("✅ Super Admin account created successfully");
+    console.log(`Username: ${username}`);
+    console.log(`Password: ${password}`);
+    console.log(`Role: ${role}`);
+
     process.exit(0);
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error creating Super Admin:", err);
     process.exit(1);
   }
 };
 
-createAdmin();
+createSuperAdmin();
