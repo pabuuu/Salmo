@@ -256,7 +256,7 @@ export default function TenantsPost() {
 
               {/* Upload Receipt beside Frequency */}
               <div style={{ width: "25%" }}>
-                <label className="form-label">Upload Receipt (optional)</label>
+                <label className="form-label">Upload Receipt</label>
                 <input
                   type="file"
                   accept="image/*,application/pdf"

@@ -12,22 +12,22 @@ const TenantsSchema = new mongoose.Schema(
     },
     email: {
       type: String,
+      required: true,
       default: "",
-      required:true,
     },
     contactNumber: {
       type: String,
+      required: true,
       default: "",
-      required:true,
     },
     unitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Units",
       required: true,
     },
-    initialPayment:{
-      type:Number,
-      required:true,
+    initialPayment: {
+      type: Number,
+      required: true,
     },
     paymentFrequency: {
       type: String,
@@ -44,16 +44,18 @@ const TenantsSchema = new mongoose.Schema(
     },
     nextDueDate: {
       type: Date,
-      required: false,
     },
     status: {
       type: String,
-      enum: ["Paid", "Partial", "Overdue","Unpaid","Pending"],
+      enum: ["Paid", "Partial", "Overdue", "Unpaid", "Pending"],
       default: "Unpaid",
     },
     receiptUrl: {
       type: String,
-      default: "no receipt",
+      required: true, // ✅ Receipt is now mandatory
+    },
+    lastDueDate: {
+      type: Date,
     },
     lastDueDate: { type: Date },
     password:{

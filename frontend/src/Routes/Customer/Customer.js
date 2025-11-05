@@ -8,8 +8,8 @@ const USE_NGROK = false;
 const BASE_URL =
   window.location.hostname === "localhost"
     ? USE_NGROK
-      ? "https://multicarinated-ellison-subfrontally.ngrok-free.dev/api" 
-      : "http://localhost:5050/api" 
+      ? "https://multicarinated-ellison-subfrontally.ngrok-free.dev/api"
+      : "http://localhost:5050/api"
     : "https://rangeles.online/api";
 
 export default function Customer() {
@@ -29,16 +29,27 @@ export default function Customer() {
         setLoading(false);
         return;
       }
+
       try {
         const res = await axios.get(`${BASE_URL}/payments/tenant/${tenantId}`);
-        setTenant(res.data.data.tenant);
-        setPayments(res.data.data.payments || []);
+
+        console.log("Tenant payments response:", res.data);
+
+        // ✅ Handles both response formats safely
+        const tenantData =
+          res.data?.data?.tenant || res.data?.tenant || null;
+        const paymentsData =
+          res.data?.data?.payments || res.data?.payments || [];
+
+        setTenant(tenantData);
+        setPayments(paymentsData);
       } catch (err) {
         console.error("Error fetching tenant payments:", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchTenantPayments();
   }, [tenantId]);
 
@@ -52,32 +63,48 @@ export default function Customer() {
       setIsPaying(true);
       const amountInCentavos = Math.round(paymentAmount * 100);
 
-      const res = await axios.post(`${BASE_URL}/payments/paymongo/create-intent`, {
-        amount: amountInCentavos,
-        currency: "PHP",
-        tenantId,
-        notes,
-      });
+      const res = await axios.post(
+        `${BASE_URL}/payments/paymongo/create-intent`,
+        {
+          amount: amountInCentavos,
+          currency: "PHP",
+          tenantId,
+          notes,
+        }
+      );
 
-      const checkoutUrl = res.data.data.checkoutUrl;
-      if (!checkoutUrl) throw new Error("No checkout URL returned from backend");
+      console.log("Create intent response:", res.data);
+
+      const checkoutUrl =
+        res.data?.data?.checkoutUrl || res.data?.checkoutUrl;
+      if (!checkoutUrl)
+        throw new Error("No checkout URL returned from backend");
 
       window.location.href = checkoutUrl;
     } catch (err) {
-      console.error("Error creating payment intent:", err.response?.data || err.message);
+      console.error(
+        "Error creating payment intent:",
+        err.response?.data || err.message
+      );
       alert("Failed to create payment intent. Check console.");
     } finally {
       setIsPaying(false);
     }
   };
 
-  if (loading) return (
-    <CustomerSidebarLayout><LoadingScreen /></CustomerSidebarLayout>
-  );
+  if (loading)
+    return (
+      <CustomerSidebarLayout>
+        <LoadingScreen />
+      </CustomerSidebarLayout>
+    );
 
-  if (!tenant) return (
-    <CustomerSidebarLayout><p className="text-danger text-center mt-4">Tenant not found.</p></CustomerSidebarLayout>
-  );
+  if (!tenant)
+    return (
+      <CustomerSidebarLayout>
+        <p className="text-danger text-center mt-4">Tenant not found.</p>
+      </CustomerSidebarLayout>
+    );
 
   return (
     <CustomerSidebarLayout>
@@ -88,10 +115,17 @@ export default function Customer() {
 
         <div className="card shadow-sm p-4 mb-4">
           <h5 className="fw-semibold mb-2">
-            Unit: {tenant.unitId ? tenant.unitId.unitNo : tenant.lastUnitNo || "N/A"}
+            Unit:{" "}
+            {tenant.unitId
+              ? tenant.unitId.unitNo
+              : tenant.lastUnitNo || "N/A"}
           </h5>
           <p className="mb-1">
-            Remaining Balance: {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(tenant.balance || 0)}
+            Remaining Balance:{" "}
+            {new Intl.NumberFormat("en-PH", {
+              style: "currency",
+              currency: "PHP",
+            }).format(tenant.balance || 0)}
           </p>
 
           <div className="mt-3">
@@ -126,9 +160,14 @@ export default function Customer() {
           <div className="card-header bg-light">
             <h5 className="mb-0 fw-semibold">Payment History</h5>
           </div>
-          <div className="card-body" style={{ padding: 0, overflowX: "auto", height: "100%" }}>
+          <div
+            className="card-body"
+            style={{ padding: 0, overflowX: "auto", height: "100%" }}
+          >
             {payments.length === 0 ? (
-              <div className="p-4 text-center text-muted">No payment records yet.</div>
+              <div className="p-4 text-center text-muted">
+                No payment records yet.
+              </div>
             ) : (
               <table className="table table-striped table-bordered mb-0 w-100">
                 <thead className="table-light text-center align-middle">
@@ -143,14 +182,30 @@ export default function Customer() {
                 <tbody className="text-center align-middle">
                   {payments.map((p) => (
                     <tr key={p._id}>
-                      <td>{new Date(p.paymentDate).toLocaleDateString()}</td>
-                      <td>{new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(p.amount)}</td>
+                      <td>
+                        {new Date(p.paymentDate).toLocaleDateString()}
+                      </td>
+                      <td>
+                        {new Intl.NumberFormat("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        }).format(p.amount)}
+                      </td>
                       <td>{p.paymentMethod}</td>
                       <td>{p.notes || "-"}</td>
                       <td>
                         {p.receiptUrl ? (
-                          <a href={p.receiptUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary">View</a>
-                        ) : (<span className="text-muted">No Receipt</span>)}
+                          <a
+                            href={p.receiptUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-primary"
+                          >
+                            View
+                          </a>
+                        ) : (
+                          <span className="text-muted">No Receipt</span>
+                        )}
                       </td>
                     </tr>
                   ))}
