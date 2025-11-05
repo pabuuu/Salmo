@@ -52,7 +52,7 @@ const TenantsSchema = new mongoose.Schema(
     },
     receiptUrl: {
       type: String,
-      required: true, // ✅ Receipt is now mandatory
+      required: false, 
     },
     lastDueDate: {
       type: Date,
@@ -62,7 +62,17 @@ const TenantsSchema = new mongoose.Schema(
       type:String,
       require:false,
       default:null
-    }
+    },
+    loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
+    resetToken: { type: String },
+    resetTokenExpires: { type: Date },
   },
   { timestamps: true }
 );

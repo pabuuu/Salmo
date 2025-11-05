@@ -14,8 +14,8 @@ import paymentRoute from "./routes/paymentRoute.js";
 import expenseRoute from "./routes/expenseRoute.js";
 import testEmailRoutes from "./routes/testEmailRoutes.js";
 import customerRoute from "./routes/customerRoute.js";
-import userRoutes from "./routes/userRoutes.js"; // 👈 NEW (for Admin & Staff accounts)
-
+import userRoutes from "./routes/userRoutes.js";
+import resetRoutes from './routes/resetRoutes.js'
 // Utils
 import { initScheduler } from "./utils/mailScheduler.js";
 
@@ -30,8 +30,6 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // ✅ Middleware
 app.use(cors());
 
-// ⚠️ Must come BEFORE express.json()
-// This ensures PayMongo webhook receives the raw body (not parsed JSON)
 app.use("/api/payments/paymongo/webhook", express.raw({ type: "application/json" }));
 
 app.use(express.json());
@@ -46,7 +44,7 @@ mongoose
 initScheduler();
 
 // ✅ API Routes
-app.use("/api/auth", authRoutes);          // Admin + Customer login routes
+app.use("/api/auth", authRoutes);          
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
 app.use("/api/maintenances", maintenanceRouter);
@@ -55,7 +53,7 @@ app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
 app.use("/api/customers", customerRoute);
 app.use("/api/users", userRoutes);         // 👈 NEW route for Admin/Staff accounts
-
+app.use("/api/auth", resetRoutes);
 // ✅ Health check route
 app.get("/", (req, res) => {
   res.send("Server is working!");
