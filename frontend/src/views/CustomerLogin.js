@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Logo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import login_image from "../assets/backgrounds/login_img.png";
@@ -10,128 +10,235 @@ const BASE_URL =
 
 export default function CustomerLogin() {
   const [email, setEmail] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [tenantId, setTenantId] = useState(null);
+  const [hasPassword, setHasPassword] = useState(true);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-  e.preventDefault();
-  console.log("🟢 Login button clicked"); // ✅ Step 1
-
-  if (!email.trim()) return setMessage("Email is required");
-  if (!contactNumber.trim()) return setMessage("Contact number is required");
-  if (!/^\d{11}$/.test(contactNumber))
-    return setMessage("Contact number must be 11 digits (e.g., 09123456789)");
-
-  setMessage("");
-  setLoading(true);
-
-  try {
-    console.log("📡 Sending request to:", `${BASE_URL}/auth/customer-login`); // ✅ Step 2
-    console.log("📨 Payload:", { email, contactNumber }); // ✅ Step 3
-
-    const res = await fetch(`${BASE_URL}/auth/customer-login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, contactNumber }),
-    });
-
-    console.log("📥 Raw response:", res);
-    const data = await res.json();
-    console.log("📦 Response JSON:", data); 
-
-    if (data.success) {
-      sessionStorage.setItem("token", data.token);
-      sessionStorage.setItem("role", "customer");
-      sessionStorage.setItem("tenantId", data.tenant.id);
-      sessionStorage.setItem("tenantEmail", data.tenant.email);
-      sessionStorage.setItem("tenantContact", data.tenant.contactNumber);
-      sessionStorage.setItem(
-        "tenantName",
-        `${data.tenant.firstName} ${data.tenant.lastName}`
-      );
-      sessionStorage.setItem("unitId", data.tenant.unitId);
-
-      console.log("✅ Login success, redirecting to /customer");
-      navigate("/customer");
-    } else {
-      console.warn("⚠️ Login failed:", data.message);
-      setMessage(data.message || "Login failed");
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    const role = sessionStorage.getItem("role");
+    if (token && role === "customer") {
+      navigate("/customer"); 
     }
-  } catch (err) {
-    console.error("❌ Login error:", err);
-    setMessage("Error connecting to server");
-  } finally {
-    setLoading(false);
-  }
-};
+  }, [navigate]);
 
+  useEffect(() => {
+    const checkPasswordField = async () => {
+      if (!email.trim()) return;
+      setMessage("Checking account...");
+
+      try {
+        const res = await fetch(`${BASE_URL}/auth/check-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setTenantId(data.tenantId);
+          setHasPassword(!data.isNullPassword);
+          if (data.isNullPassword)
+            setMessage("Your account has no password. Please set one.");
+          else setMessage("");
+        } else {
+          setMessage("Account not found.");
+        }
+      } catch (err) {
+        console.error("Error checking password:", err);
+        setMessage("Error connecting to server.");
+      }
+    };
+
+    const delay = setTimeout(checkPasswordField, 600);
+    return () => clearTimeout(delay);
+  }, [email]);
+
+  const handleSetPassword = async (e) => {
+    e.preventDefault();
+
+    if (!newPassword.trim() || !confirmPassword.trim())
+      return setMessage("Please fill in all password fields.");
+
+    // at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+    const passwordRegex =
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+
+    if (!passwordRegex.test(newPassword)) {
+      return setMessage(
+        "Password must be at least 8 characters long, include 1 uppercase letter, 1 number, and 1 special character."
+      );
+    }
+
+    if (newPassword !== confirmPassword)
+      return setMessage("Passwords do not match.");
+
+    try {
+      setLoading(true);
+      const res = await fetch(`${BASE_URL}/auth/set-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId, newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMessage("Password created successfully! You can now log in.");
+        setHasPassword(true);
+      } else {
+        setMessage(data.message || "Failed to set password.");
+      }
+    } catch (err) {
+      console.error("Set password error:", err);
+      setMessage("Error connecting to server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  // ✅ Handle normal login
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    if (!email.trim()) return setMessage("Email is required");
+    if (!password.trim()) return setMessage("Password is required");
+
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${BASE_URL}/auth/customer-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        sessionStorage.setItem("token", data.token);
+        sessionStorage.setItem("role", "customer");
+        sessionStorage.setItem("tenantId", data.tenant.id);
+        sessionStorage.setItem("tenantEmail", data.tenant.email);
+        sessionStorage.setItem(
+          "tenantName",
+          `${data.tenant.firstName} ${data.tenant.lastName}`
+        );
+        sessionStorage.setItem("unitId", data.tenant.unitId);
+
+        navigate("/customer");
+      } else {
+        setMessage(data.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setMessage("Error connecting to server");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="d-flex vh-100 align-items-center justify-content-center">
       <div className="row w-100">
-        {/* Left Image Section */}
         <div className="col-12 col-md-8 p-0">
           <img
             src={login_image}
-            className="h-100 w-100 img-fluid img"
-            style={{ display: "flex", objectFit: "contain" }}
+            className="h-100 w-100 img-fluid"
+            style={{ objectFit: "contain" }}
+            alt="Login background"
           />
         </div>
 
-        {/* Right Form Section */}
-        <div className="col-12 col-md-4 d-flex flex-column justify-content-center vh-100  bg-white border rounded shadow p-4">
+        <div className="col-12 col-md-4 d-flex flex-column justify-content-center vh-100 bg-white border rounded shadow p-4">
           <div className="text-center mb-4">
             <img src={Logo} alt="Logo" width="210" className="img-fluid mb-3" />
-            <h2 className="fw-bold primary-text mb-0">Welcome!</h2>
-            <span className="fs-6 text-muted">Customer Login</span>
+            <h2 className="fw-bold primary-text mb-0">
+              {hasPassword ? "Welcome!" : "Set Your Password"}
+            </h2>
+            <span className="fs-6 text-muted">
+              {hasPassword ? "Tenant Login" : "Complete your account setup"}
+            </span>
           </div>
-
-          <form onSubmit={handleLogin} className="d-flex flex-column">
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="custom-input my-1"
-              disabled={loading}
-            />
-
-            <input
-              type="text"
-              placeholder="Contact Number"
-              value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
-              className="custom-input my-1"
-              maxLength={11}
-              disabled={loading}
-            />
-
-            <button
-              type="submit"
-              className="custom-button mt-2"
-              disabled={loading}
-            >
-              {loading ? "Verifying..." : "Login"}
-            </button>
-          </form>
-
           {message && (
-            <p className="text-center text-danger mt-2 fw-semibold">
+            <p className="text-center text-danger mt-3 fw-semibold">
               {message}
             </p>
           )}
+          {!hasPassword ? (
+            <form onSubmit={handleSetPassword} className="d-flex flex-column">
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="custom-input my-1"
+                disabled={loading}
+              />
+
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="custom-input my-1"
+                disabled={loading}
+              />
+
+              <button
+                type="submit"
+                className="custom-button mt-2"
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Set Password"}
+              </button>
+            </form>
+          ) : (
+            // 🧾 Normal login form
+            <form onSubmit={handleLogin} className="d-flex flex-column">
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="custom-input my-1"
+                disabled={loading}
+              />
+
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="custom-input my-1"
+                disabled={loading}
+              />
+
+              <button
+                type="submit"
+                className="custom-button mt-2"
+                disabled={loading}
+              >
+                {loading ? "Verifying..." : "Login"}
+              </button>
+            </form>
+          )}
 
           <div className="text-center mt-3">
-            {/* <p className="text-muted mb-2">Are you actually an Admin?</p> */}
             <button
               type="button"
               className="btn flex w-100"
               onClick={() => navigate("/")}
               disabled={loading}
             >
-              <i class="fa me-1 fa-solid fa-arrow-left"></i>
+              <i className="fa me-1 fa-solid fa-arrow-left"></i>
               Go back
             </button>
           </div>

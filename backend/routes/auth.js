@@ -1,12 +1,12 @@
 import express from "express";
-import { login, customerLogin } from "../controllers/authController.js";
+import { login, customerLogin, checkCustomerPassword, createPass } from "../controllers/authController.js";
 
 const router = express.Router();
 
-// Admin login
+// admin login
 router.post("/login", login);
-
-// ✅ Customer login
+//tenants   
 router.post("/customer-login", customerLogin);
-
+router.post("/check-password",checkCustomerPassword);
+router.post("/set-password",createPass);
 export default router;

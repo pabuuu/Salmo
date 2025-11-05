@@ -40,11 +40,10 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
 
-// ✅ Initialize scheduled jobs (like email reminders)
 initScheduler();
 
 // ✅ API Routes
-app.use("/api/auth", authRoutes);          // Admin + Customer login routes
+app.use("/api/auth", authRoutes);        
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
 app.use("/api/maintenances", maintenanceRouter);

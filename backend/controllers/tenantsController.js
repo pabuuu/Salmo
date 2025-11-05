@@ -56,6 +56,7 @@ export const createTenant = async (req, res) => {
       unitId,
       paymentFrequency,
       initialPayment = 0,
+      password,
     } = req.body;
 
     // Basic validation
@@ -105,6 +106,7 @@ export const createTenant = async (req, res) => {
       nextDueDate,
       lastDueDate,
       receiptUrl,
+      password,
     });
 
     // Mark unit as occupied

@@ -1,10 +1,8 @@
-// backend/controllers/authController.js
 import User from "../models/User.js";
 import Tenant from "../models/Tenants.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// 🔐 ADMIN LOGIN
 export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -38,22 +36,32 @@ export const login = async (req, res) => {
   }
 };
 
-// 👥 CUSTOMER LOGIN
 export const customerLogin = async (req, res) => {
   try {
-    const { email, contactNumber } = req.body;
+    const { email, password } = req.body;
 
-    if (!email || !contactNumber)
+    if (!email || !password)
       return res
         .status(400)
-        .json({ success: false, message: "Email and contact number are required" });
+        .json({ success: false, message: "Email and password are required" });
 
-    const tenant = await Tenant.findOne({ email, contactNumber });
-
+    const tenant = await Tenant.findOne({ email });
     if (!tenant)
       return res
         .status(401)
-        .json({ success: false, message: "Invalid email or contact number" });
+        .json({ success: false, message: "Invalid email or password" });
+
+    if (!tenant.password)
+      return res.status(403).json({
+        success: false,
+        message: "You have not set a password yet. Please set one first.",
+      });
+
+    const isMatch = await bcrypt.compare(password, tenant.password);
+    if (!isMatch)
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
 
     const token = jwt.sign(
       { id: tenant._id, role: "customer" },
@@ -69,12 +77,68 @@ export const customerLogin = async (req, res) => {
         firstName: tenant.firstName,
         lastName: tenant.lastName,
         email: tenant.email,
-        contactNumber: tenant.contactNumber,
         unitId: tenant.unitId,
       },
     });
   } catch (err) {
     console.error("Customer login error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const checkCustomerPassword = async (req, res) => {
+  const { email, contactNumber } = req.body;
+
+  try {
+    const tenant = await Tenant.findOne({
+      $or: [{ email }, { contactNumber }],
+    });
+
+    if (!tenant) {
+      return res.json({ success: false, message: "Tenant not found" });
+    }
+
+    const isNullPassword = tenant.password === null;
+
+    return res.json({
+      success: true,
+      isNullPassword,
+      tenantId: tenant._id,
+    });
+  } catch (error) {
+    console.error("Error checking password:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+export const createPass = async (req, res) => {
+  const { tenantId, newPassword } = req.body;
+
+  try {
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      return res.json({ success: false, message: "Tenant not found." });
+    }
+
+    const passwordRegex =
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.json({
+        success: false,
+        message:
+          "Password must be at least 8 characters long, include 1 uppercase letter, 1 number, and 1 special character.",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    tenant.password = hashedPassword;
+    await tenant.save();
+
+    res.json({ success: true, message: "Password successfully set." });
+  } catch (error) {
+    console.error("Error setting password:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
