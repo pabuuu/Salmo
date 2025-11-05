@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import Notification from "../components/Notification.js";
 import Logo from "../assets/logo.png";
 
@@ -15,8 +14,8 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
   const [collapsed, setCollapsed] = useState(false);
   const [isMedium, setIsMedium] = useState(window.innerWidth < 1024);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
   const [showReports, setShowReports] = useState(false);
+  const [showAccounts, setShowAccounts] = useState(false);
 
   const navigate = useNavigate();
 
@@ -51,7 +50,8 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
         onClick={() => setCollapsed(true)}
         className="position-fixed top-0 start-0 w-100 h-100"
         style={{
-          background: isMedium && !collapsed ? "rgba(0,0,0,0.45)" : "transparent",
+          background:
+            isMedium && !collapsed ? "rgba(0,0,0,0.45)" : "transparent",
           opacity: isMedium && !collapsed ? 1 : 0,
           transition: "opacity 0.35s ease",
           pointerEvents: isMedium && !collapsed ? "auto" : "none",
@@ -91,7 +91,7 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
               className="text-uppercase fw-bold text-truncate px-2"
               style={{ fontSize: "14px" }}
             >
-              {currentUser ? currentUser.role : ""}
+              {role || ""}
             </span>
           </div>
 
@@ -103,6 +103,63 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
           <SidebarLink to="/dashboard" label="Dashboard" icon="fa-chart-line" />
           <SidebarLink to="/tenants" label="Tenants" icon="fa-users" />
           <SidebarLink to="/units" label="Units" icon="fa-building-user" />
+
+          {/* === Accounts (Super Admin only) === */}
+          {role === "superadmin" && (
+            <>
+              <button
+                onClick={() => setShowAccounts((prev) => !prev)}
+                className="d-flex align-items-center justify-content-between text-decoration-none px-3 py-2 fw-semibold border-0 bg-transparent w-100"
+                style={{
+                  color: "#1e293b",
+                  transition: "background 0.18s ease, color 0.18s ease",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#1e293b";
+                }}
+              >
+                <span className="d-flex align-items-center gap-2 text-truncate">
+                  <i className="fa-solid fa-user-shield"></i>
+                  Accounts
+                </span>
+                <i
+                  className={`fa-solid fa-chevron-${
+                    showAccounts ? "up" : "down"
+                  }`}
+                  style={{ fontSize: "12px" }}
+                ></i>
+              </button>
+
+              {/* === Accounts Dropdown === */}
+              <div
+                className="ms-4 overflow-hidden"
+                style={{
+                  maxHeight: showAccounts ? "200px" : "0px",
+                  opacity: showAccounts ? 1 : 0,
+                  transition: "all 0.3s ease",
+                }}
+              >
+                <SidebarLink
+                  to="/accounts/admins"
+                  label="Admins"
+                  icon="fa-user-tie"
+                />
+                <SidebarLink
+                  to="/accounts/staff"
+                  label="Staff"
+                  icon="fa-user"
+                />
+              </div>
+            </>
+          )}
 
           {/* === Reports Section === */}
           <button
@@ -124,17 +181,19 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
               e.currentTarget.style.color = "#1e293b";
             }}
           >
-            <span className="d-flex align-items-center gap-2">
+            <span className="d-flex align-items-center gap-2 text-truncate">
               <i className="fa-solid fa-file-lines"></i>
               Reports
             </span>
             <i
-              className={`fa-solid fa-chevron-${showReports ? "up" : "down"}`}
+              className={`fa-solid fa-chevron-${
+                showReports ? "up" : "down"
+              }`}
               style={{ fontSize: "12px" }}
             ></i>
           </button>
 
-          {/* === Dropdown (animated) === */}
+          {/* === Reports Dropdown === */}
           <div
             className="ms-4 overflow-hidden"
             style={{
@@ -148,8 +207,22 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
               label="Maintenance"
               icon="fa-screwdriver-wrench"
             />
-            <SidebarLink to="/expenses" label="Expenses" icon="fa-money-bill-wave" />
-            <SidebarLink to="/payments" label="Payments" icon="fa-coins" />
+
+            {/* Hide Payments & Expenses for Staff */}
+            {role !== "staff" && (
+              <>
+                <SidebarLink
+                  to="/expenses"
+                  label="Expenses"
+                  icon="fa-money-bill-wave"
+                />
+                <SidebarLink
+                  to="/payments"
+                  label="Payments"
+                  icon="fa-coins"
+                />
+              </>
+            )}
           </div>
         </div>
 
@@ -248,6 +321,7 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
   );
 }
 
+/* --- Reusable Link Component --- */
 function SidebarLink({ to, label, icon }) {
   return (
     <Link

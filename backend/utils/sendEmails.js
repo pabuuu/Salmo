@@ -1,27 +1,55 @@
+// backend/utils/sendEmails.js
+import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
+dotenv.config(); // ✅ Load .env from backend folder
+
+// =========================
+// Setup reusable transporter
+// =========================
+const { EMAIL_USER, EMAIL_PASS } = process.env;
+
+console.log("📧 Initializing email transporter...");
+console.log("EMAIL_USER:", EMAIL_USER || "❌ Missing");
+console.log("EMAIL_PASS:", EMAIL_PASS ? "✅ Loaded" : "❌ Missing");
+
+if (!EMAIL_USER || !EMAIL_PASS) {
+  console.error("❌ Missing EMAIL_USER or EMAIL_PASS in environment variables!");
+}
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASS, // use Gmail App Password
+  },
+});
+
+// ✅ Verify connection once
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Transporter verification failed:", error);
+  } else {
+    console.log("✅ Transporter verified and ready to send emails!");
+  }
+});
+
+// =========================
+// General tenant email
+// =========================
 export const sendEmail = async (tenant, subject, message) => {
   try {
-    // mail transport
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    console.log(`📤 Sending general email to ${tenant.email}...`);
 
-    // format balance if available
     const formattedBalance =
       tenant.balance !== undefined && tenant.balance !== null
         ? `₱${Number(tenant.balance).toLocaleString()}`
         : "Not specified";
 
-    // email 
     const mailOptions = {
-      from: `"R Angeles Property Leasing" <${process.env.EMAIL_USER}>`,
+      from: `"R Angeles Property Leasing" <${EMAIL_USER}>`,
       to: tenant.email,
-      subject: subject,
+      subject,
       html: `
         <div style="font-family: system-ui, sans-serif; font-size: 14px; color: #2c3e50;">
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 10px;">
@@ -57,7 +85,7 @@ export const sendEmail = async (tenant, subject, message) => {
               Please contact us if you’ve already made your payment.
             </p>
             <div style="margin-top: 10px;">
-              <a href="mailto:${process.env.EMAIL_USER}" style="color: #1e40af; text-decoration: none;">
+              <a href="mailto:${EMAIL_USER}" style="color: #1e40af; text-decoration: none;">
                 📧 Reply to this email
               </a>
             </div>
@@ -70,10 +98,47 @@ export const sendEmail = async (tenant, subject, message) => {
       `,
     };
 
-    // send
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent to ${tenant.email}: ${info.response}`);
+    console.log(`✅ Email sent to ${tenant.email}`);
+    console.log("📨 Message ID:", info.messageId);
+    console.log("📬 Response:", info.response);
   } catch (error) {
-    console.error("Failed to send email:", error);
+    console.error("❌ Failed to send email:", error);
+  }
+};
+
+// =========================
+// Welcome / Password Setup Email
+// =========================
+export const sendPasswordResetEmail = async (email, resetLink, fullName) => {
+  try {
+    console.log(`📤 Sending password setup email to ${email}...`);
+
+    const mailOptions = {
+      from: `"R Angeles Property Leasing" <${EMAIL_USER}>`,
+      to: email,
+      subject: "Welcome! Set Your Password",
+      html: `
+        <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
+          <h2 style="color: #1e40af;">Welcome, ${fullName}!</h2>
+          <p>You have been registered as an admin. Please click the button below to set your password:</p>
+          <a href="${resetLink}" 
+            style="display: inline-block; background-color: #1e40af; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; margin-top: 10px;">
+            Set My Password
+          </a>
+          <p style="margin-top: 15px;">This link will expire in <strong>15 minutes</strong>.</p>
+          <p>If you didn’t expect this email, you can safely ignore it.</p>
+          <br/>
+          <p style="font-size: 12px; color: #888;">Sent by R Angeles Property Leasing</p>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Password setup email sent to ${email}`);
+    console.log("📨 Message ID:", info.messageId);
+    console.log("📬 Response:", info.response);
+  } catch (error) {
+    console.error("❌ Error sending password setup email:", error);
   }
 };
