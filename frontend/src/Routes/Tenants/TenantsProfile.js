@@ -38,7 +38,6 @@ export default function TenantsProfile() {
     fetchLocations();
   }, []);
 
-  // Fetch units by location
   const fetchUnitsByLocation = async (location) => {
     try {
       const res = await axios.get(
@@ -51,25 +50,18 @@ export default function TenantsProfile() {
     }
   };
 
-  // Assign unit to tenant
   const handleAssignUnit = async () => {
     if (!selectedUnit) return;
-
     try {
       await axios.put(`${BASE_URL}/tenants/${tenant._id}/assign-unit`, {
         unitId: selectedUnit._id,
       });
-
       setNotification({
         message: `Unit ${selectedUnit.unitNo} assigned successfully!`,
         type: "success",
       });
-
-      // Refresh tenant info
       const res = await axios.get(`${BASE_URL}/tenants/${tenant._id}`);
       setTenant(res.data.data);
-
-      // Reset selections
       setSelectedLocation("");
       setSelectedUnit(null);
     } catch (err) {
@@ -117,7 +109,7 @@ export default function TenantsProfile() {
   if (!tenant) return <LoadingScreen />;
 
   return (
-    <div className="d-flex h-100 w-100">
+    <div className="d-flex h-auto w-100">
       <Card width={"100%"} height={"100%"}>
         <div className="mx-5 p-2">
           <h1 className="text-dark">{tenant.firstName}'s Profile</h1>
@@ -231,7 +223,7 @@ export default function TenantsProfile() {
                 label={tenant.paymentFrequency || frequencyLabel}
                 width={"100%"}
                 height={"42px"}
-                disabled={!!tenant.unitId} // optional: disable if tenant already has a unit
+                disabled={!!tenant.unitId}
               >
                 {["Monthly", "Quarterly", "Yearly"].map((freq) => (
                   <li key={freq}>
@@ -250,21 +242,75 @@ export default function TenantsProfile() {
               </Dropdown>
             </div>
 
-            {/* Assign Unit Button */}
             {!tenant.unitId && (
               <div className="mt-3">
                 <button
                   type="button"
                   className="custom-button fw-normal px-4 bg-primary text-white"
                   onClick={handleAssignUnit}
-                  disabled={!selectedUnit || !tenant.paymentFrequency} // must select frequency too
+                  disabled={!selectedUnit || !tenant.paymentFrequency}
                 >
                   Assign Unit
                 </button>
               </div>
             )}
+            <div className="mt-5">
+              <h5 className="fw-bold text-dark">Uploaded Documents</h5>
 
-            {/* Update / Cancel */}
+              <div className="d-flex mt-3 flex-wrap">
+                {tenant.contractURL ? (
+                  <div className="border rounded p-2" style={{ width: "250px" }}>
+                    <p className="fw-semibold mb-2">Contract Document</p>
+                    <iframe
+                      src={tenant.contractURL}
+                      title="Contract Document"
+                      width="100%"
+                      height="200"
+                      className="border rounded"
+                    />
+                    <div className="d-flex gap-2 flex-row align-items-center justify-content-center my-1">
+                      <p className="">
+                        {tenant.contractStart
+                          ? new Date(tenant.contractStart).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "Not set"}
+                      </p>
+                      <p>-</p>
+                      <p className="">
+                        {tenant.contractEnd
+                          ? new Date(tenant.contractEnd).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "Not set"}
+                      </p>
+                    </div>
+                    <a
+                      href={tenant.contractURL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-outline-primary w-100"
+                    >
+                      View Full PDF
+                    </a>
+                    
+                  </div>
+                ) : (
+                  <div className="text-muted">No contract uploaded.</div>
+                )}
+
+                <div
+                  className=" p-3 d-flex flex-column justify-content-center"
+                  style={{ width: "250px", height: "250px" }}
+                >
+                  
+                </div>
+              </div>
+            </div>
             <div className="d-flex gap-2 mt-4">
               <button
                 className="custom-button fw-normal px-4 bg-light border text-muted"

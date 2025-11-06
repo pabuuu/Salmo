@@ -142,7 +142,6 @@ export default function CustomerProfile() {
                     </div>
                   </div>
 
-                  {/* Unit & Payment Frequency */}
                   <div className="d-flex gap-3 flex-wrap mt-3">
                     <div className="flex-grow-1">
                       <label>Unit</label>
@@ -165,14 +164,70 @@ export default function CustomerProfile() {
                       />
                     </div>
                   </div>
+                  <div className="mt-5">
+                    <h5 className="fw-bold text-dark">Uploaded Documents</h5>
 
-                  {/* Buttons */}
+                    <div className="d-flex mt-3 flex-wrap">
+                      {tenant.contractURL ? (
+                        <div className="border rounded p-2" style={{ width: "250px" }}>
+                          <p className="fw-semibold mb-2">Contract Document</p>
+                          <iframe
+                            src={tenant.contractURL}
+                            title="Contract Document"
+                            width="100%"
+                            height="200"
+                            className="border rounded"
+                          />
+                          <div className="d-flex gap-2 flex-row align-items-center justify-content-center my-1">
+                            <p className="">
+                              {tenant.contractStart
+                                ? new Date(tenant.contractStart).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })
+                                : "Not set"}
+                            </p>
+                            <p>-</p>
+                            <p className="">
+                              {tenant.contractEnd
+                                ? new Date(tenant.contractEnd).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })
+                                : "Not set"}
+                            </p>
+                          </div>
+                          <a
+                            href={tenant.contractURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-primary w-100"
+                          >
+                            View Full PDF
+                          </a>
+                          
+                        </div>
+                      ) : (
+                        <div className="text-muted">No contract uploaded.</div>
+                      )}
+
+                      <div
+                        className=" p-3 d-flex flex-column justify-content-center"
+                        style={{ width: "250px", height: "250px" }}
+                      >
+                        
+                      </div>
+                    </div>
+                  </div>
                   <div className="d-flex gap-2 mt-4">
                     <button type="submit" className="btn btn-warning">
                       Update
                     </button>
                   </div>
                 </form>
+                
               </div>
             </Card>
           )}

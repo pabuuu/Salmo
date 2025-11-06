@@ -26,6 +26,10 @@ export default function TenantsPost() {
   const [availableUnits, setAvailableUnits] = useState([]);
   const [unitId, setUnitId] = useState("");
   const [receipt, setReceipt] = useState(null);
+  const [startContract, setStartContract] = useState(null);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
 
 
   // dropdown labels
@@ -65,15 +69,6 @@ export default function TenantsPost() {
     const selectedUnit = availableUnits.find((u) => u._id === unitId);
     const rentAmount = selectedUnit?.rentAmount || 0;
   
-    // if (Number(initialPayment) > rentAmount) {
-    //   setToast({
-    //     show: true,
-    //     type: "warning",
-    //     message: `⚠️ Initial payment cannot exceed rent amount (₱${rentAmount.toLocaleString()}).`,
-    //   });
-    //   return;
-    // }
-  
     const formData = new FormData();
     formData.append("firstName", firstName);
     formData.append("lastName", lastName);
@@ -83,13 +78,16 @@ export default function TenantsPost() {
     formData.append("paymentFrequency", paymentFrequency);
     formData.append("initialPayment", initialPayment);
     formData.append("isArchived", false);
+    formData.append("contractStart", startDate);
+    formData.append("contractEnd", endDate);
   
-    if (receipt) formData.append("receipt", receipt); // 👈 attach file
+    if (receipt) formData.append("receipt", receipt);
+    if (startContract) formData.append("contractFile", startContract); // 👈 this name matters
   
     try {
       const response = await fetch(`${BASE_URL}/tenants/create`, {
         method: "POST",
-        body: formData, 
+        body: formData,
       });
   
       const data = await response.json();
@@ -118,6 +116,7 @@ export default function TenantsPost() {
     }
   };
   
+  
 
   // handlers
   const handleLocationSelect = (loc) => {
@@ -138,14 +137,14 @@ export default function TenantsPost() {
   };
 
   return (
-    <div className="d-flex h-100 w-100">
+    <div className="d-flex h-auto w-100">
       <Card width={"100%"} height={"100%"}>
         <div className="mx-5 p-2">
           <h1 className="text-dark">Create a Tenant</h1>
           <span className="text-muted">Fill out the tenant details below.</span>
           <form onSubmit={handleSubmit}>
             {/* --- personal info --- */}
-            <div className="d-flex gap-2 mt-5">
+            <div className="d-flex gap-2 mt-5 flex-wrap ">
               <div className="flex-grow-1">
                 <label className="form-label">First Name</label>
                 <input
@@ -177,7 +176,7 @@ export default function TenantsPost() {
             </div>
 
             {/* --- contact + unit + location --- */}
-            <div className="d-flex mt-3 align-items-center gap-2">
+            <div className="d-flex mt-3 align-items-center gap-2 flex-wrap ">
               <div className="flex-grow-1">
                 <label className="form-label">Mobile Number</label>
                 <input
@@ -226,8 +225,8 @@ export default function TenantsPost() {
                 </Dropdown>
               </div>
             </div>
-            <div className="d-flex gap-2 mt-3 align-items-start">
-              <div style={{ width: "25%" }}>
+            <div className="d-flex flex-wrap gap-2 mt-3 align-items-center">
+              <div className="flex-grow-1">
                 <label className="form-label">Initial Payment</label>
                 <input
                   type="number"
@@ -240,8 +239,7 @@ export default function TenantsPost() {
                 />
                 {error && <span className="text-danger">{error}</span>}
               </div>
-
-              <div style={{ width: "25%" }}>
+              <div className="flex-grow-1">
                 <label className="form-label">Payment Frequency</label>
                 <Dropdown label={frequencyLabel} width={"100%"} height={"42px"}>
                   {["Monthly", "Quarterly", "Yearly"].map((freq) => (
@@ -253,19 +251,43 @@ export default function TenantsPost() {
                   ))}
                 </Dropdown>
               </div>
-
-              {/* Upload Receipt beside Frequency */}
-              <div style={{ width: "25%" }}>
+              <div className="w-100">
                 <label className="form-label">Upload Receipt</label>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
-                  className="form-control"
+                  className="form-control py-2 "
                   onChange={(e) => setReceipt(e.target.files[0])}
                 />
               </div>
             </div>
-
+            <div className="d-flex flex-wrap mt-3 gap-2 align-items-center">
+              <div className="flex-grow-1">
+                <label className="form-label">Upload Contract Details</label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="form-control py-2"
+                  onChange={(e) => setStartContract(e.target.files[0])}
+                />
+              </div>
+              <div className="flex-grow-1">
+                <label className="form-label">Start Date</label>
+                <input
+                  type="date"
+                  className="form-control py-2"
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="flex-grow-1">
+                <label className="form-label">End Date</label>
+                <input
+                  type="date"
+                  className="form-control py-2"
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </div>
             {toast.show && (
               <Notification
                 type={toast.type}
@@ -273,7 +295,7 @@ export default function TenantsPost() {
                 onClose={() => setToast({ show: false, type: "", message: "" })}
               />
             )}
-            <div className="d-flex gap-2 mt-3">
+            <div className="d-flex gap-2 mt-3  ">
               <button
                 className="custom-button fw-normal px-4 bg-light border text-muted"
                 type="button"

@@ -8,6 +8,10 @@ import { getNextDueDate } from '../utils/dateUtils.js';
 import { supabase } from '../supabase.js';
 import multer from 'multer';
 
+
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
+
 // Load all tenants with their unit details
 export const load = async (req, res) => {
   try {
@@ -22,13 +26,13 @@ export const load = async (req, res) => {
   }
 };
 
-const uploadToSupabase = async (file) => {
+export const uploadToSupabase = async (file, bucketName) => {
   if (!file) return null;
 
   const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`;
 
   const { error: uploadError } = await supabase.storage
-    .from("payment receipts")
+    .from(bucketName)
     .upload(fileName, file.buffer, {
       contentType: file.mimetype,
       upsert: true,
@@ -37,15 +41,13 @@ const uploadToSupabase = async (file) => {
   if (uploadError) throw new Error(`Supabase upload failed: ${uploadError.message}`);
 
   const { data: urlData } = supabase.storage
-    .from("payment receipts")
+    .from(bucketName)
     .getPublicUrl(fileName);
 
   return urlData?.publicUrl || null;
 };
 
-
 // Create Tenant
-
 export const createTenant = async (req, res) => {
   try {
     const {
@@ -56,47 +58,31 @@ export const createTenant = async (req, res) => {
       unitId,
       paymentFrequency,
       initialPayment = 0,
-      password,
-      loginAttempts,
-      lockUntil,
-      resetToken,
-      resetTokenExpires,
+      contractStart,
+      contractEnd,
     } = req.body;
 
-    // Basic validation
-    if (!firstName || !lastName)
-      return res.status(400).json({ success: false, message: "First and last name required" });
-    if (!unitId)
-      return res.status(400).json({ success: false, message: "Unit must be selected" });
-    if (!paymentFrequency)
-      return res.status(400).json({ success: false, message: "Payment frequency is required" });
-
-    // Validate unit
     const unit = await Units.findById(unitId);
     if (!unit) return res.status(404).json({ success: false, message: "Unit not found" });
-    if (unit.status === "Occupied")
-      return res.status(400).json({ success: false, message: "Unit already occupied" });
+
+    let receiptUrl = null;
+    let contractURL = null;
+
+    if (req.files?.receipt?.[0]) {
+      receiptUrl = await uploadToSupabase(req.files.receipt[0], "payment receipts");
+    }
+
+    if (req.files?.contractFile?.[0]) {
+      contractURL = await uploadToSupabase(req.files.contractFile[0], "contract-files");
+    }
 
     const rentAmount = unit.rentAmount;
-    if (!rentAmount || rentAmount <= 0)
-      return res.status(400).json({ success: false, message: "Invalid rent amount" });
-
-    // Upload receipt if file provided
-    let receiptUrl = null;
-    if (req.file) receiptUrl = await uploadToSupabase(req.file);
-
-    // Compute initial balance and status
     const balance = Math.max(rentAmount - initialPayment, 0);
     const status = balance === 0 ? "Paid" : initialPayment > 0 ? "Partial" : "Pending";
 
-    // Determine nextDueDate and lastDueDate
     const today = new Date();
-    const lastDueDate = initialPayment > 0 ? today : null;
-    const nextDueDate = balance === 0
-      ? getNextDueDate(today, paymentFrequency)
-      : today;
+    const nextDueDate = balance === 0 ? getNextDueDate(today, paymentFrequency) : today;
 
-    // Create tenant
     const tenant = await Tenants.create({
       firstName,
       lastName,
@@ -108,36 +94,28 @@ export const createTenant = async (req, res) => {
       balance,
       status,
       nextDueDate,
-      lastDueDate,
       receiptUrl,
-      password,
-      loginAttempts,
-      lockUntil,
-      resetToken,
-      resetTokenExpires,
+      contractStart,
+      contractEnd,
+      contractURL,
     });
 
-    // Mark unit as occupied
+    if (initialPayment > 0) {
+      await Payments.create({
+        tenantId: tenant._id,
+        unitId: unit._id,
+        amount: initialPayment,
+        paymentDate: new Date(),
+        paymentMethod: "Initial Payment",
+        notes: "Initial payment upon contract start",
+        receiptUrl: receiptUrl || null,
+      });
+    }
+
     await Units.findByIdAndUpdate(unitId, {
       status: "Occupied",
       tenant: tenant._id,
     });
-
-    // Record initial payment if any
-    if (initialPayment > 0) {
-      await Payments.create({
-        tenantId: tenant._id,
-        unitId,
-        amount: initialPayment,
-        paymentDate: today,
-        paymentMethod: "Initial Payment",
-        notes: "Recorded during tenant creation",
-        receiptUrl,
-      });
-
-      // Recalculate tenant balance to handle overpayments
-      await recalcTenantBalance(tenant._id);
-    }
 
     res.status(201).json({
       success: true,
@@ -149,6 +127,8 @@ export const createTenant = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+
 
 // Get single tenant
 export const getTenant = async (req, res) => {
@@ -178,42 +158,44 @@ export const update = async (req, res) => {
       return res.status(404).json({ success: false, message: "Tenant not found" });
     }
 
-    // If tenant is moving to another unit
+    // Handle unit reassignment logic (keep yours)
     if (updates.rentalUnit && updates.location) {
-      // Free old unit
       if (tenant.unitId) {
         await Units.findOneAndUpdate(
           { _id: tenant.unitId, tenant: tenant._id },
           { status: "Available", tenant: null }
         );
       }
-      // Find and validate new unit
+
       const newUnit = await Units.findOne({
         unitNo: updates.rentalUnit,
         location: updates.location,
       });
 
-      if (!newUnit) {
+      if (!newUnit)
         return res.status(400).json({ success: false, message: "New unit not found" });
-      }
-      if (newUnit.status !== "Available") {
+      if (newUnit.status !== "Available")
         return res.status(400).json({ success: false, message: "New unit is not available" });
-      }
 
-      // Occupy new unit
       newUnit.status = "Occupied";
       newUnit.tenant = tenant._id;
       await newUnit.save();
 
-      // Update tenant’s unit reference
       updates.unitId = newUnit._id;
     }
 
-    // Apply updates
-    const updatedTenant = await Tenants.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true
-    }).populate("unitId", "unitNo location rentAmount status");
+    // ✅ Merge only provided fields into the existing tenant
+    Object.keys(updates).forEach((key) => {
+      if (updates[key] !== undefined && updates[key] !== null) {
+        tenant[key] = updates[key];
+      }
+    });
+
+    // Save merged document (no data loss)
+    await tenant.save();
+
+    const updatedTenant = await Tenants.findById(id)
+      .populate("unitId", "unitNo location rentAmount status");
 
     res.status(200).json({
       success: true,
@@ -225,6 +207,7 @@ export const update = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // Delete tenant
 export const archiveTenant = async (req, res) => {
