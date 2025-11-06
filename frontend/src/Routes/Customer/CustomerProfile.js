@@ -14,7 +14,7 @@ const BASE_URL =
 export default function CustomerProfile() {
   const [tenant, setTenant] = useState(null);
   const [notification, setNotification] = useState({ message: "", type: "" });
-  const [loading, setLoading] = useState(true); // ✅ added
+  const [loading, setLoading] = useState(true); 
   const navigate = useNavigate();
 
   useEffect(() => {

@@ -113,7 +113,7 @@ export default function Customer() {
           Welcome, {tenantName || "Tenant"}
         </h2>
 
-        <div className="card shadow-sm p-4 mb-4">
+        <div className="card shadow-sm p-4 mb-4 w-100">
           <h5 className="fw-semibold mb-2">
             Unit:{" "}
             {tenant.unitId
@@ -156,7 +156,7 @@ export default function Customer() {
           </div>
         </div>
 
-        <div className="card shadow-sm" style={{ minHeight: "400px" }}>
+        <div className="card shadow-sm w-100" style={{ minHeight: "400px" }}>
           <div className="card-header bg-light">
             <h5 className="mb-0 fw-semibold">Payment History</h5>
           </div>
