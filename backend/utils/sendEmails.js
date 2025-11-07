@@ -35,7 +35,7 @@ transporter.verify((error, success) => {
 });
 
 // =========================
-// General tenant email
+// 🔹 General tenant email
 // =========================
 export const sendEmail = async (tenant, subject, message) => {
   try {
@@ -108,26 +108,26 @@ export const sendEmail = async (tenant, subject, message) => {
 };
 
 // =========================
-// Welcome / Password Setup Email
+// 🔹 Password Reset Email
 // =========================
 export const sendPasswordResetEmail = async (email, resetLink, fullName) => {
   try {
-    console.log(`📤 Sending password setup email to ${email}...`);
+    console.log(`📤 Sending password reset email to ${email}...`);
 
     const mailOptions = {
       from: `"R Angeles Property Leasing" <${EMAIL_USER}>`,
       to: email,
-      subject: "Welcome! Set Your Password",
+      subject: "Password Reset Request",
       html: `
         <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
-          <h2 style="color: #1e40af;">Welcome, ${fullName}!</h2>
-          <p>You have been registered as an admin. Please click the button below to set your password:</p>
+          <h2 style="color: #1e40af;">Hello, ${fullName}!</h2>
+          <p>We received a request to reset your password. Click the button below to set a new one:</p>
           <a href="${resetLink}" 
             style="display: inline-block; background-color: #1e40af; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; margin-top: 10px;">
-            Set My Password
+            Reset My Password
           </a>
           <p style="margin-top: 15px;">This link will expire in <strong>15 minutes</strong>.</p>
-          <p>If you didn’t expect this email, you can safely ignore it.</p>
+          <p>If you didn’t request this, you can safely ignore this email.</p>
           <br/>
           <p style="font-size: 12px; color: #888;">Sent by R Angeles Property Leasing</p>
         </div>
@@ -135,10 +135,10 @@ export const sendPasswordResetEmail = async (email, resetLink, fullName) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Password setup email sent to ${email}`);
+    console.log(`✅ Password reset email sent to ${email}`);
     console.log("📨 Message ID:", info.messageId);
     console.log("📬 Response:", info.response);
   } catch (error) {
-    console.error("❌ Error sending password setup email:", error);
+    console.error("❌ Error sending password reset email:", error);
   }
 };

@@ -15,7 +15,8 @@ import expenseRoute from "./routes/expenseRoute.js";
 import testEmailRoutes from "./routes/testEmailRoutes.js";
 import customerRoute from "./routes/customerRoute.js";
 import userRoutes from "./routes/userRoutes.js";
-import resetRoutes from './routes/resetRoutes.js'
+import resetRoutes from "./routes/resetRoutes.js";
+
 // Utils
 import { initScheduler } from "./utils/mailScheduler.js";
 
@@ -24,27 +25,25 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Serve uploads folder
+// Serve uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Middleware
+// Middleware
 app.use(cors());
-
 app.use("/api/payments/paymongo/webhook", express.raw({ type: "application/json" }));
-
 app.use(express.json());
 
-// ✅ MongoDB connection
+// Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// ✅ Initialize scheduled jobs (like email reminders)
+// Initialize scheduled jobs
 initScheduler();
 
-// ✅ API Routes
-app.use("/api/auth", authRoutes);          
+// API routes
+app.use("/api/auth", authRoutes);
 app.use("/api/tenants", tenantRouter);
 app.use("/api/units", unitRouter);
 app.use("/api/maintenances", maintenanceRouter);
@@ -52,13 +51,14 @@ app.use("/api/expenses", expenseRoute);
 app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
 app.use("/api/customers", customerRoute);
-app.use("/api/users", userRoutes);         // 👈 NEW route for Admin/Staff accounts
+app.use("/api/users", userRoutes);
 app.use("/api/auth", resetRoutes);
-// ✅ Health check route
+
+// Health check
 app.get("/", (req, res) => {
   res.send("Server is working!");
 });
 
-// ✅ Start Server
+// Start server
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../../supabase";
 
 const BASE_URL =
   window.location.hostname === "localhost"
@@ -13,7 +12,6 @@ function AdminPost() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    password: "",
     role: "admin",
     contactNumber: "",
   });
@@ -21,6 +19,7 @@ function AdminPost() {
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ type: "", message: "" });
+  const [tempPassword, setTempPassword] = useState(""); // 🔹 for displaying temp password
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,6 +37,7 @@ function AdminPost() {
     try {
       const data = new FormData();
       for (const key in formData) data.append(key, formData[key]);
+
       if (validId) data.append("validId", validId);
       if (resume) data.append("resume", resume);
 
@@ -45,13 +45,23 @@ function AdminPost() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setNotification({ type: "success", message: res.data.message });
-      setTimeout(() => navigate("/accounts/admins"), 1500);
+      // 🔹 Set notification and show temporary password
+      setNotification({
+        type: "success",
+        message:
+          res.data.message ||
+          "Admin registered successfully. Temporary password has been sent.",
+      });
+
+      setTempPassword(res.data.tempPassword || ""); // display temp password
+
+      // Optional: redirect after a short delay
+      setTimeout(() => navigate("/accounts/admins"), 5000);
     } catch (err) {
-      console.error(err);
+      console.error("Error registering admin:", err);
       setNotification({
         type: "error",
-        message: err.response?.data?.message || "Failed to register admin",
+        message: err.response?.data?.message || "Failed to register admin.",
       });
     } finally {
       setLoading(false);
@@ -59,8 +69,8 @@ function AdminPost() {
   };
 
   return (
-    <div className="container">
-      <h2>Add Admin</h2>
+    <div className="container mt-4">
+      <h2 className="fw-bold mb-3">Add Admin</h2>
 
       {notification.message && (
         <div
@@ -69,6 +79,12 @@ function AdminPost() {
           }`}
         >
           {notification.message}
+        </div>
+      )}
+
+      {tempPassword && (
+        <div className="alert alert-info">
+          Temporary Password: <strong>{tempPassword}</strong>
         </div>
       )}
 
@@ -86,18 +102,8 @@ function AdminPost() {
         <input
           type="email"
           name="email"
-          placeholder="Email"
+          placeholder="Email Address"
           value={formData.email}
-          onChange={handleChange}
-          required
-          className="form-control my-2"
-        />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
           onChange={handleChange}
           required
           className="form-control my-2"
@@ -113,10 +119,10 @@ function AdminPost() {
           className="form-control my-2"
         />
 
-        <label>Valid ID (optional)</label>
+        <label className="mt-3">Valid ID (optional)</label>
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={(e) => handleFileChange(e, "validId")}
           className="form-control my-2"
         />
@@ -124,13 +130,13 @@ function AdminPost() {
         <label>Resume (optional)</label>
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={(e) => handleFileChange(e, "resume")}
           className="form-control my-2"
         />
 
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Saving..." : "Add Admin"}
+        <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+          {loading ? "Creating..." : "Add Admin"}
         </button>
       </form>
     </div>

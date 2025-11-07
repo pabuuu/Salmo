@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Card from "../components/Card";
 import Logo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import login_image from "../assets/backgrounds/login_img.png";
@@ -9,7 +8,7 @@ const BASE_URL =
     ? "http://localhost:5050/api"
     : "https://rangeles.online/api";
 
-export default function Login() {
+export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -19,20 +18,9 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!username.trim()) {
-      setMessage("Username is required");
-      return;
-    }
 
-    if (!password.trim()) {
-      setMessage("Password is required");
-      return;
-    }
-
-    if (password.length < 6) {
-      setMessage("Password must be at least 6 characters long");
-      return;
-    }
+    if (!username.trim()) return setMessage("Username or email is required");
+    if (!password.trim()) return setMessage("Password is required");
 
     setMessage("");
 
@@ -40,19 +28,49 @@ export default function Login() {
       const res = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, email: username, password }),
       });
 
       const data = await res.json();
+      console.log("🔍 Login API response:", data);
 
-      if (data.success) {
-        sessionStorage.setItem("token", data.token);
-        sessionStorage.setItem("role", data.role);
-        window.location.href = "/dashboard";
-      } else {
+      if (!data.success) {
         setMessage(data.message || "Login failed");
+        return;
+      }
+
+      const user = data.user || {};
+      const userId = user._id || user.id;
+
+      // ✅ Check the normalized backend field
+      const isTemporaryPassword =
+        user.isTemporaryPassword === true || user.isTemporaryPassword === "true";
+
+      console.log("🧠 isTemporaryPassword =", isTemporaryPassword);
+
+      // Save session
+      if (data.token) sessionStorage.setItem("token", data.token);
+      if (user.role) sessionStorage.setItem("role", user.role);
+      if (userId) sessionStorage.setItem("userId", userId);
+      if (user.email) sessionStorage.setItem("email", user.email);
+      // store as string so App guard (=== "true") works
+      sessionStorage.setItem("isTemporaryPassword", isTemporaryPassword ? "true" : "false");
+
+      if (setLoggedIn) setLoggedIn(true);
+      if (setRole) setRole(user.role);
+      if (setIsTemporaryPassword) setIsTemporaryPassword(isTemporaryPassword);
+
+      // Navigate
+      if (isTemporaryPassword) {
+        console.log("➡️ Redirecting to /new-password");
+        // pass email in state as extra safety
+        navigate("/new-password", { replace: true, state: { email: user.email } });
+      } else {
+        console.log("➡️ Redirecting to /dashboard");
+        navigate("/dashboard", { replace: true });
       }
     } catch (err) {
+      console.error("❌ Login error:", err);
       setMessage("Error connecting to server");
     }
   };
@@ -60,16 +78,16 @@ export default function Login() {
   return (
     <div className="d-flex vh-100">
       <div className="row w-100 vh-100 m-0">
-        {/* Left Image */}
         <div className="col-12 col-md-8 p-0">
           <img
             src={login_image}
-            className="h-100 w-100 img-fluid img"
-            style={{ display: "flex", objectFit: "contain" }}
+            className="h-100 w-100 img-fluid"
+            style={{ objectFit: "contain" }}
+            alt="Login"
           />
         </div>
-        
-        <div className="col-12 col-md-4 border d-flex flex-column h-100 justify-content-center bg-white border rounded px-4 shadow">
+
+        <div className="col-12 col-md-4 d-flex flex-column justify-content-center bg-white border rounded px-4 shadow">
           <div className="header mb-4 text-center">
             <img src={Logo} alt="Logo" width="210" className="img-fluid mb-2" />
             <h2 className="fw-bold m-0 p-0 primary-text">Welcome back!</h2>
@@ -79,6 +97,7 @@ export default function Login() {
                 : "Log in to your account."}
             </span>
           </div>
+
           {isChoosing ? (
             <div className="text-center">
               <div className="d-flex flex-column justify-content-center gap-3">
@@ -100,7 +119,7 @@ export default function Login() {
             <>
               <form onSubmit={handleLogin} className="d-flex flex-column">
                 <input
-                  placeholder="Username"
+                  placeholder="Username or Email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="custom-input my-1"
@@ -122,8 +141,6 @@ export default function Login() {
                       transform: "translateY(-50%)",
                       cursor: "pointer",
                       color: "#888",
-                      fontSize: "0.9rem",
-                      userSelect: "none",
                     }}
                   >
                     {showPassword ? (
@@ -141,14 +158,11 @@ export default function Login() {
               <p className="warning-msg text-center mt-3">{message}</p>
 
               <div className="text-center mt-3">
-                {/* <p className="text-muted mb-2">
-                  Are you actually a paying customer?
-                </p> */}
                 <button
-                  className="btn flex  w-100 text-muted"
-                  onClick={() =>setIsChoosing(true)}
+                  className="btn w-100 text-muted"
+                  onClick={() => setIsChoosing(true)}
                 >
-                  <i class="fa me-1 fa-solid fa-arrow-left"></i>
+                  <i className="fa me-1 fa-solid fa-arrow-left"></i>
                   Go back
                 </button>
               </div>

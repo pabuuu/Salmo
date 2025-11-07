@@ -8,14 +8,17 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ["admin", "staff"],
+      enum: ["admin", "staff", "superadmin"],
       default: "admin",
     },
     contactNumber: { type: String, required: true },
 
-    validId: { type: String }, // Optional (store file path or URL)
-    resume: { type: String },  // Optional (store file path or URL)
+    validId: { type: String },
+    resume: { type: String },
     isVerified: { type: Boolean, default: false },
+
+    // 🔹 For temporary password logic
+    isTemporaryPassword: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

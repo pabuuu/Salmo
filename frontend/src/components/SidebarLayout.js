@@ -36,6 +36,7 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
   function handleLogout() {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("role");
+    sessionStorage.removeItem("verificationShown"); // reset modal flag
     setLoggedIn(false);
     navigate("/", { replace: true });
   }
@@ -104,6 +105,15 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
           <SidebarLink to="/tenants" label="Tenants" icon="fa-users" />
           <SidebarLink to="/units" label="Units" icon="fa-building-user" />
 
+          {/* ✅ Requirements accessible to both Admin and Staff */}
+          {(role === "admin" || role === "staff" || role === "superadmin") && (
+            <SidebarLink
+              to="/requirements"
+              label="Requirements"
+              icon="fa-folder-open"
+            />
+          )}
+
           {/* === Accounts (Super Admin only) === */}
           {role === "superadmin" && (
             <>
@@ -138,7 +148,6 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
                 ></i>
               </button>
 
-              {/* === Accounts Dropdown === */}
               <div
                 className="ms-4 overflow-hidden"
                 style={{
@@ -193,7 +202,6 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
             ></i>
           </button>
 
-          {/* === Reports Dropdown === */}
           <div
             className="ms-4 overflow-hidden"
             style={{
@@ -208,7 +216,6 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
               icon="fa-screwdriver-wrench"
             />
 
-            {/* Hide Payments & Expenses for Staff */}
             {role !== "staff" && (
               <>
                 <SidebarLink

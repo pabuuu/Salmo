@@ -1,226 +1,240 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-// 🔐 Auth & Dashboard
+// Auth & Dashboard
 import Login from "./views/login";
 import CustomerLogin from "./views/CustomerLogin";
 import Dashboard from "./Dashboard";
-// 🧍 Tenants
-import Tenants from "./Routes/Tenants/Tenants.js";
-import TenantsPost from "./Routes/Tenants/TenantsPost.js";
-import TenantsProfile from "./Routes/Tenants/TenantsProfile.js";
-import TenantResetPass from "./views/TenantResetPass.js";
-// 🏢 Units
-import Units from "./Routes/Units/Units.js";
-import UnitsPost from "./Routes/Units/UnitsPost.js";
-import UnitsProfile from "./Routes/Units/UnitsProfile.js";
-
-// 💳 Payments
-import Payments from "./Routes/Payments/Payments.js";
-import UsersPayments from "./Routes/Payments/UsersPayments.js";
-
-// 🧾 Expenses
-import Expenses from "./Routes/Expenses/Expenses.js";
-import ExpensesPost from "./Routes/Expenses/ExpensesPost.js";
-import ExpensesProfile from "./Routes/Expenses/ExpensesProfile.js";
-
-// 🧰 Maintenance
-import Maintenance from "./Routes/Maintenance/Maintenance.js";
-import MaintenancePost from "./Routes/Maintenance/MaintenancePost.js";
-import MaintenanceProfile from "./Routes/Maintenance/MaintenanceProfile.js";
-
-// 👥 Accounts (Separated Folders)
-import AdminAccounts from "./Routes/Accounts/Admin/AdminAccounts.js";
-import AdminPost from "./Routes/Accounts/Admin/AdminPost.js";
-import AdminProfile from "./Routes/Accounts/Admin/AdminProfile.js";
-
-import StaffAccounts from "./Routes/Accounts/Staff/StaffAccounts.js";
-import StaffPost from "./Routes/Accounts/Staff/StaffPost.js";
-import StaffProfile from "./Routes/Accounts/Staff/StaffProfile.js";
-
-// 🧭 Layout
 import SidebarLayout from "./components/SidebarLayout";
 
-// 👤 Customer Pages
-import Customer from "./Routes/Customer/Customer.js";
-import CustomerProfile from "./Routes/Customer/CustomerProfile.js";
+// Tenants
+import Tenants from "./Routes/Tenants/Tenants";
+import TenantsPost from "./Routes/Tenants/TenantsPost";
+import TenantsProfile from "./Routes/Tenants/TenantsProfile";
+import TenantResetPass from "./views/TenantResetPass";
 
-// 🔑 Password Reset
-import ResetPassword from "./Routes/ResetPassword.js";
-import TenantNewPass from "./views/TenantNewPass.js";
+// Units
+import Units from "./Routes/Units/Units";
+import UnitsPost from "./Routes/Units/UnitsPost";
+import UnitsProfile from "./Routes/Units/UnitsProfile";
+
+// Payments
+import Payments from "./Routes/Payments/Payments";
+import UsersPayments from "./Routes/Payments/UsersPayments";
+
+// Expenses
+import Expenses from "./Routes/Expenses/Expenses";
+import ExpensesPost from "./Routes/Expenses/ExpensesPost";
+import ExpensesProfile from "./Routes/Expenses/ExpensesProfile";
+
+// Maintenance
+import Maintenance from "./Routes/Maintenance/Maintenance";
+import MaintenancePost from "./Routes/Maintenance/MaintenancePost";
+import MaintenanceProfile from "./Routes/Maintenance/MaintenanceProfile";
+
+// Accounts
+import AdminAccounts from "./Routes/Accounts/Admin/AdminAccounts";
+import AdminPost from "./Routes/Accounts/Admin/AdminPost";
+import AdminProfile from "./Routes/Accounts/Admin/AdminProfile";
+import StaffAccounts from "./Routes/Accounts/Staff/StaffAccounts";
+import StaffPost from "./Routes/Accounts/Staff/StaffPost";
+import StaffProfile from "./Routes/Accounts/Staff/StaffProfile";
+
+// Customer Pages
+import Customer from "./Routes/Customer/Customer";
+import CustomerProfile from "./Routes/Customer/CustomerProfile";
+
+// Requirements
+import Requirements from "./Routes/Accounts/Requirement";
+
+// Password Reset
+import ResetPassword from "./views/ResetPassword";
+import NewPassword from "./views/NewPassword";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(!!sessionStorage.getItem("token"));
-  const role = sessionStorage.getItem("role");
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [role, setRole] = useState(null);
+
+  // Restore session
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    const storedRole = sessionStorage.getItem("role");
+    setLoggedIn(!!token);
+    setRole(storedRole);
+  }, []);
+
   const isAdminOrSuperAdmin = role === "admin" || role === "superadmin";
+
+  // ===============================
+  // Admin / Staff Guard
+  // ===============================
+  const AdminGuard = ({ children }) => {
+    const storedToken = sessionStorage.getItem("token");
+    const storedRole = sessionStorage.getItem("role");
+    const tempPass = sessionStorage.getItem("isTemporaryPassword") === "true";
+
+    if (!storedToken || storedRole === "customer") {
+      return <Navigate to="/" replace />;
+    }
+
+    if (tempPass) {
+      return <Navigate to="/new-password" replace />;
+    }
+
+    return children;
+  };
+
+  // ===============================
+  // Customer Guard
+  // ===============================
+  const CustomerGuard = ({ children }) => {
+    const storedToken = sessionStorage.getItem("token");
+    const storedRole = sessionStorage.getItem("role");
+
+    if (!storedToken || storedRole !== "customer") {
+      return <Navigate to="/customer-login" replace />;
+    }
+
+    return children;
+  };
 
   return (
     <Router>
       <Routes>
-        {/* 🔐 Admin Login */}
-        <Route path="/" element={<Login setLoggedIn={setLoggedIn} />} />
-
-        {/* 👥 Customer Login */}
+        {/* =======================
+            Public Routes
+        ======================= */}
+        <Route
+          path="/"
+          element={<Login setLoggedIn={setLoggedIn} setRole={setRole} />}
+        />
         <Route path="/customer-login" element={<CustomerLogin />} />
-        
         <Route path="/forgot-password" element={<TenantResetPass />} />
-        <Route path="/reset-password-tenant" element={<TenantNewPass />} />
-        {/* 🔑 Password Reset (Public Route) */}
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        {/* 👤 Customer Dashboard */}
+        {/* =======================
+            New Password Route
+        ======================= */}
+        <Route
+          path="/new-password"
+          element={
+            sessionStorage.getItem("isTemporaryPassword") === "true" ? (
+              <NewPassword />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
+
+        {/* =======================
+            Dashboard (Top-level route)
+        ======================= */}
+        <Route
+          path="/dashboard"
+          element={
+            <AdminGuard>
+              <SidebarLayout role={role} setLoggedIn={setLoggedIn}>
+                <Dashboard />
+              </SidebarLayout>
+            </AdminGuard>
+          }
+        />
+
+        {/* =======================
+            Customer Routes
+        ======================= */}
         <Route
           path="/customer"
           element={
-            role === "customer" && loggedIn ? (
+            <CustomerGuard>
               <Customer />
-            ) : (
-              <Navigate to="/customer-login" />
-            )
+            </CustomerGuard>
           }
         />
-
-        {/* 👤 Customer Profile */}
         <Route
           path="/customer-profile"
           element={
-            role === "customer" && loggedIn ? (
+            <CustomerGuard>
               <CustomerProfile />
-            ) : (
-              <Navigate to="/customer-login" />
-            )
+            </CustomerGuard>
           }
         />
 
-        {/* 🧭 Admin/Staff Area */}
-        {loggedIn && role !== "customer" ? (
-          <Route
-            path="/*"
-            element={
+        {/* =======================
+            Admin / Staff Routes
+        ======================= */}
+        <Route
+          path="/*"
+          element={
+            <AdminGuard>
               <SidebarLayout role={role} setLoggedIn={setLoggedIn}>
                 <Routes>
-                  {/* 📊 Dashboard */}
-                  <Route path="/dashboard" element={<Dashboard />} />
-
-                  {/* 🧍 Tenants */}
+                  {/* Tenants */}
                   <Route path="/tenants" element={<Tenants />} />
                   <Route path="/tenants/create" element={<TenantsPost />} />
-                  <Route
-                    path="/tenants/profile/:id"
-                    element={<TenantsProfile />}
-                  />
+                  <Route path="/tenants/profile/:id" element={<TenantsProfile />} />
 
-                  {/* 🏢 Units */}
+                  {/* Units */}
                   <Route path="/units" element={<Units />} />
                   <Route path="/units/create" element={<UnitsPost />} />
                   <Route path="/units/profile/:id" element={<UnitsProfile />} />
 
-                  {/* 🧰 Maintenance */}
+                  {/* Maintenance */}
                   <Route path="/maintenance" element={<Maintenance />} />
-                  <Route
-                    path="/maintenance/create"
-                    element={<MaintenancePost />}
-                  />
-                  <Route
-                    path="/maintenance/:id"
-                    element={<MaintenanceProfile />}
-                  />
+                  <Route path="/maintenance/create" element={<MaintenancePost />} />
+                  <Route path="/maintenance/:id" element={<MaintenanceProfile />} />
 
-                  {/* 💳 Payments (Admins + SuperAdmins) */}
+                  {/* Payments */}
                   {isAdminOrSuperAdmin && (
                     <>
                       <Route path="/payments" element={<Payments />} />
-                      <Route
-                        path="/tenants/:id/payments"
-                        element={<UsersPayments />}
-                      />
+                      <Route path="/tenants/:id/payments" element={<UsersPayments />} />
                     </>
                   )}
 
-                  {/* 🧾 Expenses (Admins + SuperAdmins) */}
+                  {/* Expenses */}
                   {isAdminOrSuperAdmin && (
                     <>
                       <Route path="/expenses" element={<Expenses />} />
-                      <Route
-                        path="/expenses/create"
-                        element={<ExpensesPost />}
-                      />
-                      <Route
-                        path="/expenses/:id"
-                        element={<ExpensesProfile />}
-                      />
+                      <Route path="/expenses/create" element={<ExpensesPost />} />
+                      <Route path="/expenses/:id" element={<ExpensesProfile />} />
                     </>
                   )}
 
-                  {/* 👥 Accounts (SuperAdmin only) */}
+                  {/* Requirements */}
+                  <Route path="/requirements" element={<Requirements />} />
+
+                  {/* Accounts */}
                   {role === "superadmin" && (
                     <>
-                      {/* Admin Subroutes */}
-                      <Route
-                        path="/accounts/admins"
-                        element={<AdminAccounts />}
-                      />
-                      <Route
-                        path="/accounts/admins/create"
-                        element={<AdminPost />}
-                      />
-                      <Route
-                        path="/accounts/admins/profile/:id"
-                        element={<AdminProfile />}
-                      />
-
-                      {/* Staff Subroutes */}
-                      <Route
-                        path="/accounts/staff"
-                        element={<StaffAccounts />}
-                      />
-                      <Route
-                        path="/accounts/staff/create"
-                        element={<StaffPost />}
-                      />
-                      <Route
-                        path="/accounts/staff/profile/:id"
-                        element={<StaffProfile />}
-                      />
+                      <Route path="/accounts/admins" element={<AdminAccounts />} />
+                      <Route path="/accounts/admins/create" element={<AdminPost />} />
+                      <Route path="/accounts/admins/profile/:id" element={<AdminProfile />} />
+                      <Route path="/accounts/staff" element={<StaffAccounts />} />
+                      <Route path="/accounts/staff/create" element={<StaffPost />} />
+                      <Route path="/accounts/staff/profile/:id" element={<StaffProfile />} />
                     </>
                   )}
 
-                  {/* 🧭 Restrict Staff from admin-only routes */}
+                  {/* Staff restrictions */}
                   {role === "staff" && (
                     <>
-                      <Route
-                        path="/payments"
-                        element={<Navigate to="/dashboard" />}
-                      />
-                      <Route
-                        path="/tenants/:id/payments"
-                        element={<Navigate to="/dashboard" />}
-                      />
-                      <Route
-                        path="/expenses"
-                        element={<Navigate to="/dashboard" />}
-                      />
-                      <Route
-                        path="/expenses/create"
-                        element={<Navigate to="/dashboard" />}
-                      />
-                      <Route
-                        path="/expenses/:id"
-                        element={<Navigate to="/dashboard" />}
-                      />
+                      <Route path="/payments" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/tenants/:id/payments" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/expenses" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/expenses/create" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/expenses/:id" element={<Navigate to="/dashboard" replace />} />
                     </>
                   )}
 
-                  {/* 🧭 Fallback */}
-                  <Route path="*" element={<Navigate to="/dashboard" />} />
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </SidebarLayout>
-            }
-          />
-        ) : (
-          <Route path="*" element={<Navigate to="/" />} />
-        )}
+            </AdminGuard>
+          }
+        />
       </Routes>
     </Router>
   );

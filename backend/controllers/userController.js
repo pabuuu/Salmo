@@ -2,14 +2,31 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import nodemailer from "nodemailer";
 import { supabase } from "../supabase.js";
-import { sendEmail, sendPasswordResetEmail } from "../utils/sendEmails.js"; // ✅ both utils
 
 dotenv.config();
 
-// =========================
-// 🔹 GET ALL USERS
-// =========================
+// Email transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Send Email helper
+const sendEmailDirect = async (to, subject, text) => {
+  await transporter.sendMail({
+    from: `"Rangeles Management" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+  });
+};
+
+// Get all users
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
@@ -20,9 +37,7 @@ export const getUsers = async (req, res) => {
   }
 };
 
-// =========================
-// 🔹 GET USERS BY ROLE
-// =========================
+// Get users by role
 export const getUsersByRole = async (req, res) => {
   try {
     const { role } = req.params;
@@ -34,22 +49,20 @@ export const getUsersByRole = async (req, res) => {
   }
 };
 
-// =========================
-// 🔹 REGISTER USER (with welcome email)
-// =========================
+// Register user (Admin/Staff)
+// Register user (Admin/Staff)
 export const registerUser = async (req, res) => {
   try {
-    const { fullName, email, password, role, contactNumber } = req.body;
+    const { fullName, email, role = "admin", contactNumber } = req.body;
 
     // Check if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: "Email already exists" });
 
-    // Handle optional uploads
-    let validIdUrl = "";
-    let resumeUrl = "";
+    let validIdUrl, resumeUrl;
 
+    // Upload Valid ID
     if (req.files?.validId?.[0]) {
       const file = req.files.validId[0];
       const fileName = `validIds/${Date.now()}_${file.originalname}`;
@@ -60,6 +73,7 @@ export const registerUser = async (req, res) => {
       validIdUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.path}`;
     }
 
+    // Upload Resume
     if (req.files?.resume?.[0]) {
       const file = req.files.resume[0];
       const fileName = `resumes/${Date.now()}_${file.originalname}`;
@@ -70,47 +84,53 @@ export const registerUser = async (req, res) => {
       resumeUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${data.path}`;
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Generate a temporary password
+    const tempPassword = `${fullName.split(" ")[0]}${contactNumber.slice(-4)}`;
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
-    // Create user
+    // Create user in DB — always set isTemporaryPassword: true
     const user = new User({
       fullName,
       email,
       password: hashedPassword,
       role,
       contactNumber,
+      isTemporaryPassword: true, // ✅ ensure true
       validId: validIdUrl || undefined,
       resume: resumeUrl || undefined,
     });
 
     await user.save();
 
-    // ✅ Send Welcome Email
+    // Generate setup token & link
+    const setupToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "2d",
+    });
+    const frontendUrl = process.env.FRONTEND_URL || "https://rangeles.online";
+    const setupLink = `${frontendUrl}/new-password?token=${setupToken}`;
+
+    // Send welcome email
     const subject = `Welcome to Rangeles Admin Portal`;
     const message = `
-      Hello ${fullName},
+Hello ${fullName},
 
-      You have been registered as a ${role.toUpperCase()} in the Rangeles Admin Portal.
+You have been registered as a ${role.toUpperCase()} in the Rangeles Admin Portal.
 
-      📧 Login Email: ${email}
-      🔑 Temporary Password: ${password}
+📧 Login Email: ${email}
+🔑 Temporary Password: ${tempPassword}
 
-      Please change your password after your first login for security purposes.
+Please log in using your temporary password and set a new one here:
+${setupLink}
 
-      Regards,  
-      Rangeles Management
-    `;
+Regards,
+Rangeles Management
+`;
 
-    try {
-      await sendEmail(user, subject, message);
-      console.log(`✅ Welcome email sent to ${email}`);
-    } catch (emailErr) {
-      console.error("❌ Failed to send welcome email:", emailErr);
-    }
+    await sendEmailDirect(email, subject, message);
 
     res.status(201).json({
-      message: "User registered successfully. A welcome email has been sent.",
+      success: true,
+      message: "User registered successfully. A welcome email with setup instructions has been sent.",
     });
   } catch (error) {
     console.error("Error registering user:", error);
@@ -118,39 +138,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// =========================
-// 🔹 LOGIN USER
-// =========================
-export const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid password" });
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: { id: user._id, email: user.email, role: user.role },
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Login failed" });
-  }
-};
-
-// =========================
-// 🔹 FORGOT PASSWORD
-// =========================
+// Forgot Password
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -161,8 +149,28 @@ export const forgotPassword = async (req, res) => {
       expiresIn: "15m",
     });
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-    await sendPasswordResetEmail(email, resetLink, user.fullName);
+    const resetLink = `${
+      process.env.FRONTEND_URL || "https://rangeles.online"
+    }/reset-password?token=${resetToken}`;
+
+    const subject = "Password Reset Request";
+    const message = `
+Hello ${user.fullName},
+
+You requested a password reset. Click the link below to reset your password:
+${resetLink}
+
+This link will expire in 15 minutes.
+
+If you did not request this, please ignore this email.
+
+Regards,
+Rangeles Management
+    `;
+
+    await sendEmailDirect(email, subject, message);
+
+    console.log(`📩 Password reset link sent to ${email}: ${resetLink}`);
 
     res.status(200).json({ message: "Password reset email sent" });
   } catch (error) {
@@ -171,16 +179,13 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
-// =========================
-// 🔹 RESET PASSWORD
-// =========================
+// Reset Password
 export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
     const { newPassword } = req.body;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await User.findByIdAndUpdate(decoded.id, { password: hashedPassword });
 

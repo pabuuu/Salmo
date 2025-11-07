@@ -1,10 +1,8 @@
-// THIS IS FOR TESTING ONLY
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
-import User from "../models/User.js"; // adjust if your model filename differs
+import User from "../models/User.js";
 
-// Load .env from parent folder
 dotenv.config({ path: "../.env" });
 
 mongoose
@@ -14,30 +12,36 @@ mongoose
 
 const createSuperAdmin = async () => {
   try {
+    const fullName = "Super Administrator";
     const username = "superadmin";
+    const email = "superadmin@rangeles.online";
     const password = "superadmin123";
+    const contactNumber = "00000000000";
     const role = "superadmin";
 
-    // Check if already exists
-    const existing = await User.findOne({ username });
+    // Check if superadmin already exists
+    const existing = await User.findOne({ email });
     if (existing) {
       console.log("⚠️ Super Admin already exists");
       process.exit(0);
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new Super Admin
     const superAdmin = new User({
-      username,
+      fullName,
+      email,
       password: hashedPassword,
+      contactNumber,
+      isVerified: true,
+      isTemporaryPassword: false,
       role,
     });
 
     await superAdmin.save();
-    console.log("✅ Super Admin account created successfully");
-    console.log(`Username: ${username}`);
+
+    console.log("✅ Super Admin account created successfully!");
+    console.log(`Email: ${email}`);
     console.log(`Password: ${password}`);
     console.log(`Role: ${role}`);
 
