@@ -57,7 +57,6 @@ const TenantsSchema = new mongoose.Schema(
     lastDueDate: {
       type: Date,
     },
-    lastDueDate: { type: Date },
     password:{
       type:String,
       require:false,
@@ -71,8 +70,24 @@ const TenantsSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    resetToken: { type: String },
-    resetTokenExpires: { type: Date },
+    resetToken: { 
+      type: String 
+    },
+    resetTokenExpires: { 
+      type: Date 
+    },
+    contractStart:{
+      type:Date,
+      require:true,
+    },
+    contractEnd:{
+      type:Date,
+      require:true
+    },
+    contractURL:{
+      type: String,
+      required: false,
+    }
   },
   { timestamps: true }
 );

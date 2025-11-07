@@ -5,18 +5,27 @@ import {
   getTenants, 
   update, 
   archiveTenant,
-  deleteTenant,      // <- import deleteTenant
+  deleteTenant,      
   getTenant,
-  assignUnit
+  assignUnit,
+  upload
 } from "../controllers/tenantsController.js";
 import multer from "multer";
 
 const tenantRouter = express.Router();
 // const upload = multer();
-const upload = multer();
+// const upload = multer();
 
 tenantRouter.get("/", load);
-tenantRouter.post("/create", upload.single("receipt"), createTenant);
+tenantRouter.post(
+  "/create",
+  upload.fields([
+    { name: "receipt", maxCount: 1 },
+    { name: "contractFile", maxCount: 1 },
+  ]),
+  createTenant
+);
+
 tenantRouter.get("/:id", getTenant);        
 tenantRouter.put("/:id", update);
 tenantRouter.put("/:id/archive", archiveTenant);
