@@ -32,7 +32,7 @@ export const requestPasswordReset = async (req, res) => {
 
     const html = `
       <p>Hello ${tenant.firstName},</p>
-      <p>You (or someone else) requested a password reset. Click the link below to create a new password. The link is valid for 10 minutes.</p>
+      <p>You requested a password reset. Click the link below to create a new password. The link is valid for 10 minutes.</p>
       <p><a href="${resetLink}" target="_blank">${resetLink}</a></p>
       <p>If you didn't request this, ignore this email.</p>
     `;

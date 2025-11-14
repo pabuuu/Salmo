@@ -59,7 +59,7 @@ const TenantsSchema = new mongoose.Schema(
     },
     password:{
       type:String,
-      require:false,
+      required:false,
       default:null
     },
     loginAttempts: {
@@ -78,11 +78,11 @@ const TenantsSchema = new mongoose.Schema(
     },
     contractStart:{
       type:Date,
-      require:true,
+      required:false,
     },
     contractEnd:{
       type:Date,
-      require:true
+      required:false
     },
     contractURL:{
       type: String,

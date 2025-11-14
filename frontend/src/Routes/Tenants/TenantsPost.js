@@ -258,6 +258,7 @@ export default function TenantsPost() {
                   accept="image/*,application/pdf"
                   className="form-control py-2 "
                   onChange={(e) => setReceipt(e.target.files[0])}
+                  required
                 />
               </div>
             </div>
@@ -269,6 +270,7 @@ export default function TenantsPost() {
                   accept="application/pdf"
                   className="form-control py-2"
                   onChange={(e) => setStartContract(e.target.files[0])}
+                  required
                 />
               </div>
               <div className="flex-grow-1">
@@ -277,6 +279,7 @@ export default function TenantsPost() {
                   type="date"
                   className="form-control py-2"
                   onChange={(e) => setStartDate(e.target.value)}
+                  required
                 />
               </div>
               <div className="flex-grow-1">
@@ -285,6 +288,7 @@ export default function TenantsPost() {
                   type="date"
                   className="form-control py-2"
                   onChange={(e) => setEndDate(e.target.value)}
+                  required
                 />
               </div>
             </div>

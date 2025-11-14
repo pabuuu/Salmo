@@ -18,6 +18,9 @@ export default function CustomerLogin() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");
@@ -65,7 +68,6 @@ export default function CustomerLogin() {
     if (!newPassword.trim() || !confirmPassword.trim())
       return setMessage("Please fill in all password fields.");
 
-    // at least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
     const passwordRegex =
       /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 
@@ -209,17 +211,34 @@ export default function CustomerLogin() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="custom-input my-1"
                 disabled={loading}
-              />
-
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="custom-input my-1"
-                disabled={loading}
-              />
-
+              />  
+              <div className="position-relative my-1">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="custom-input w-100 pe-5"
+                  disabled={loading}
+                />
+                <span
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    cursor: "pointer",
+                    color: "#888",
+                  }}
+                >
+                  {showPassword ? (
+                    <i className="fa fa-solid fa-eye"></i>
+                  ) : (
+                    <i className="fa fa-regular fa-eye-slash"></i>
+                  )}
+                </span>
+              </div>
               <button
                 type="submit"
                 className="custom-button mt-3 m-0"
@@ -227,10 +246,151 @@ export default function CustomerLogin() {
               >
                 {loading ? "Verifying..." : "Login"}
               </button>
-              <Link className="text-decoration-none ms-auto" to='/forgot-password'> 
+              <Link className="text-decoration-none ms-auto my-3" to='/forgot-password'> 
                 {/* forgot password page */}
                 <span className="m-0 p-0 text-muted">Forgot password?</span>
               </Link>
+              <a
+                className="text-center text-decoration-none"
+                style={{ cursor: "pointer" }}
+                onClick={() => setShowModal(true)}
+              >
+                Terms and Conditions
+              </a>
+              {showModal && (
+                <div
+                  className="modal fade show"
+                  style={{
+                    display: "block",
+                    background: "rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+
+                      <div className="modal-header">
+                        <h5 className="modal-title">Terms and Conditions</h5>
+                        <button
+                          type="button"
+                          className="btn-close"
+                          onClick={() => setShowModal(false)}
+                        ></button>
+                      </div>
+
+                      <div className="modal-body" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                        <h2 className="fw-bold mb-3">Privacy Policy</h2>
+                        <p><strong>R. Angeles Property Leasing</strong></p>
+                        <p><strong>Last Updated:</strong> November 2025</p>
+
+                        <p>
+                          R. Angeles Property Leasing (“we,” “our,” “us”) operates the website 
+                          <strong> rangeles.online</strong>, which provides property leasing management 
+                          and monitoring services. This Privacy Policy explains how we collect, use, 
+                          store, and protect your personal information when you use our system—whether 
+                          you are a tenant or an authorized staff/admin.
+                        </p>
+
+                        <h5 className="mt-3">1. Information We Collect</h5>
+                        <strong>For Tenants:</strong>
+                        <ul>
+                          <li>Full name</li>
+                          <li>Contact number and email address</li>
+                          <li>ID or proof of identity</li>
+                          <li>Unit and lease information</li>
+                          <li>Payment records and transaction details</li>
+                        </ul>
+                        <strong>For Admins/Staff:</strong>
+                        <ul>
+                          <li>Full name</li>
+                          <li>Contact number and email address</li>
+                          <li>Account credentials (username, password)</li>
+                          <li>Logs of actions performed within the system</li>
+                        </ul>
+
+                        <h5 className="mt-3">2. How We Use Your Information</h5>
+                        <p>We use your information only for legitimate business purposes, such as:</p>
+                        <ul>
+                          <li>Managing tenant records and lease information</li>
+                          <li>Processing and recording payments</li>
+                          <li>Generating financial or maintenance reports</li>
+                          <li>Communicating with tenants regarding updates, billing, or maintenance</li>
+                          <li>Ensuring system security and administrative control</li>
+                        </ul>
+                        <p>We <strong>do not sell, rent, or trade</strong> your personal data to any third party.</p>
+
+                        <h5 className="mt-3">3. Data Access and Security</h5>
+                        <ul>
+                          <li>Only verified admins and authorized staff can access the administrative side of the system.</li>
+                          <li>Tenants can access only their personal and payment information.</li>
+                          <li>All accounts are secured with passwords and limited permissions.</li>
+                          <li>Sensitive data is stored in secure databases protected by authentication and encryption methods.</li>
+                        </ul>
+
+                        <h5 className="mt-3">4. Data Retention</h5>
+                        <p>
+                          We retain your personal and transaction data as long as your account or lease remains active. 
+                          After termination, records may be kept for legal or accounting reasons but are securely 
+                          archived or deleted when no longer necessary.
+                        </p>
+
+                        <h5 className="mt-3">5. Data Sharing and Disclosure</h5>
+                        <p>Your personal information may only be disclosed:</p>
+                        <ul>
+                          <li>When required by law or government authorities; or</li>
+                          <li>To authorized personnel within R. Angeles Property Leasing for operational purposes.</li>
+                        </ul>
+                        <p>We will <strong>never</strong> disclose your data to unauthorized individuals or external organizations.</p>
+
+                        <h5 className="mt-3">6. Your Rights</h5>
+                        <p>You have the right to:</p>
+                        <ul>
+                          <li>Access your personal data</li>
+                          <li>Request corrections or updates to inaccurate information</li>
+                          <li>Request deletion or restriction of processing (subject to legal requirements)</li>
+                        </ul>
+                        <p>For any privacy-related requests, please contact us using the details below.</p>
+
+                        <h5 className="mt-3">7. Cookies and Tracking</h5>
+                        <p>
+                          Our website may use cookies to enhance functionality and improve user experience. 
+                          These cookies do not collect personally identifiable information and may be disabled 
+                          in your browser settings.
+                        </p>
+
+                        <h5 className="mt-3">8. Updates to This Policy</h5>
+                        <p>
+                          We may update this Privacy Policy as needed. Any changes will be reflected on this 
+                          page with an updated “Last Updated” date. Continued use of our website means you 
+                          accept any revised terms.
+                        </p>
+
+                        <h5 className="mt-3">9. Contact Information</h5>
+                        <p>
+                          For inquiries or concerns regarding data privacy, you may contact us at:
+                        </p>
+                        <ul>
+                          <li><strong>Email:</strong> ra.propertyleasing@gmail.com</li>
+                          <li><strong>Phone:</strong> 09474820503 (Viber available)</li>
+                          <li><strong>Website:</strong> <a href="https://rangeles.online">rangeles.online</a></li>
+                        </ul>
+
+                        <p>
+                          By continuing to use this website, you acknowledge that you have read, understood, 
+                          and agreed to this Privacy Policy.
+                        </p>
+                      </div>
+                      <div className="modal-footer">
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => setShowModal(false)}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           )}
 

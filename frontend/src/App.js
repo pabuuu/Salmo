@@ -13,7 +13,7 @@ import Tenants from "./Routes/Tenants/Tenants";
 import TenantsPost from "./Routes/Tenants/TenantsPost";
 import TenantsProfile from "./Routes/Tenants/TenantsProfile";
 import TenantResetPass from "./views/TenantResetPass";
-
+import TenantNewPass from "./views/TenantNewPass"
 // Units
 import Units from "./Routes/Units/Units";
 import UnitsPost from "./Routes/Units/UnitsPost";
@@ -112,6 +112,7 @@ function App() {
         />
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/forgot-password" element={<TenantResetPass />} />
+        <Route path="/reset-password-tenant" element={<TenantNewPass />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} /> {/* ✅ Updated */}
         {/* =======================
             Admin Reset Password Route
