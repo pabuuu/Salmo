@@ -134,6 +134,8 @@ function AdminAccounts() {
               <th>Role</th>
               <th>Email</th>
               <th>Contact Number</th>
+              <th>Verified</th> {/* New Column */}
+
             </tr>
           </thead>
           <tbody>
@@ -147,6 +149,7 @@ function AdminAccounts() {
                 <td>{admin.role || "N/A"}</td>
                 <td>{admin.email || "N/A"}</td>
                 <td>{admin.contactNumber || "N/A"}</td>
+                <td>{admin.isVerified ? "Yes" : "No"}</td> {/* Use isVerified */}
               </tr>
             ))}
           </tbody>

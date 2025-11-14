@@ -52,7 +52,6 @@ app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
 app.use("/api/customers", customerRoute);
 app.use("/api/users", userRoutes);
-app.use("/api/auth", resetRoutes);
 
 // Health check
 app.get("/", (req, res) => {

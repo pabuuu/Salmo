@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema(
 
     // 🔹 For temporary password logic
     isTemporaryPassword: { type: Boolean, default: true },
+
+    // 🔹 For password reset logic
+    resetToken: { type: String },
+    resetTokenExpires: { type: Date },
   },
   { timestamps: true }
 );

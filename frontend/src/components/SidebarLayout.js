@@ -106,7 +106,7 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
           <SidebarLink to="/units" label="Units" icon="fa-building-user" />
 
           {/* ✅ Requirements accessible to both Admin and Staff */}
-          {(role === "admin" || role === "staff" || role === "superadmin") && (
+          {(role === "admin" || role === "staff") && (
             <SidebarLink
               to="/requirements"
               label="Requirements"
