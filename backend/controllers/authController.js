@@ -150,12 +150,11 @@ export const customerLogin = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Invalid email or password." });
 
-    // 🔐 Account lock check
     if (tenant.lockUntil && tenant.lockUntil > Date.now()) {
-      const remainingMinutes = Math.ceil((tenant.lockUntil - Date.now()) / 60000);
+      const remainingSeconds = Math.ceil((tenant.lockUntil - Date.now()) / 1000);
       return res.status(403).json({
         success: false,
-        message: `Too many failed attempts. Try again in ${remainingMinutes} minute(s).`,
+        message: `Too many failed attempts. Try again in ${remainingSeconds} second(s).`,
       });
     }
 
@@ -168,10 +167,12 @@ export const customerLogin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, tenant.password);
     if (!isMatch) {
       tenant.loginAttempts += 1;
-      if (tenant.loginAttempts >= 3) {
-        tenant.lockUntil = new Date(Date.now() + 5 * 60 * 1000);
+
+      if (tenant.loginAttempts >= 2) { 
+        tenant.lockUntil = new Date(Date.now() + 30 * 1000); 
         tenant.loginAttempts = 0;
       }
+
       await tenant.save();
       return res
         .status(401)
@@ -207,6 +208,7 @@ export const customerLogin = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error." });
   }
 };
+
 
 // ===============================
 // CHECK IF TENANT HAS PASSWORD

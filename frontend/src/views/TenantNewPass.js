@@ -15,6 +15,8 @@ export default function TenantNewPass() {
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -85,22 +87,60 @@ export default function TenantNewPass() {
           </div>
 
           <form onSubmit={handleSubmit} className="d-flex flex-column">
-            <input
-              type="password"
-              placeholder="New Password"
-              className="custom-input my-1"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={loading}
-            />
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              className="custom-input my-1"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
-            />
+            <div className="position-relative my-1">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                placeholder="New Password"
+                className="custom-input w-100 pe-5"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={loading}
+              />
+              <span
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  color: "#888",
+                }}
+              >
+                {showNewPassword ? (
+                  <i className="fa fa-solid fa-eye"></i>
+                ) : (
+                  <i className="fa fa-regular fa-eye-slash"></i>
+                )}
+              </span>
+            </div>
+            <div className="position-relative my-1">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                className="custom-input w-100 pe-5"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+              />
+              <span
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  color: "#888",
+                }}
+              >
+                {showConfirmPassword ? (
+                  <i className="fa fa-solid fa-eye"></i>
+                ) : (
+                  <i className="fa fa-regular fa-eye-slash"></i>
+                )}
+              </span>
+            </div>
 
             <button
               type="submit"

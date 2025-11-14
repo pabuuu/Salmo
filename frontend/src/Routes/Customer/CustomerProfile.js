@@ -42,7 +42,7 @@ export default function CustomerProfile() {
         });
         setTimeout(() => navigate("/customer-login", { replace: true }), 1500);
       } finally {
-        setLoading(false); // ✅ stop loading once done
+        setLoading(false); 
       }
     };
 
@@ -77,16 +77,15 @@ export default function CustomerProfile() {
       <div className="d-flex flex-grow-1">
         <div className="flex-grow-1 p-4">
           {loading ? (
-            // ✅ Sidebar stays, loading shows inside layout
             <LoadingScreen />
           ) : (
             <Card width="100%" height="auto">
               <div className="mx-4 my-3">
                 <h1 className="text-dark">
-                  Welcome, {tenant?.firstName || "Tenant"}!
+                  Welcome, {tenant?.firstName || "Tenant"} !
                 </h1>
                 <span className="text-muted">
-                  Manage your profile information below.
+                  View your profile information below.
                 </span>
 
                 <form onSubmit={handleUpdate} className="mt-4">
@@ -94,34 +93,15 @@ export default function CustomerProfile() {
                   <div className="d-flex gap-3 flex-wrap">
                     <div className="flex-grow-1">
                       <label>First Name</label>
-                      <input
-                        className="form-control"
-                        value={tenant?.firstName || ""}
-                        onChange={(e) =>
-                          setTenant({ ...tenant, firstName: e.target.value })
-                        }
-                      />
+                      <p className="fs-5">{tenant.firstName}</p>
                     </div>
                     <div className="flex-grow-1">
                       <label>Last Name</label>
-                      <input
-                        className="form-control"
-                        value={tenant?.lastName || ""}
-                        onChange={(e) =>
-                          setTenant({ ...tenant, lastName: e.target.value })
-                        }
-                      />
+                      <p className="fs-5">{tenant.lastName}</p>
                     </div>
                     <div className="flex-grow-1">
                       <label>Email</label>
-                      <input
-                        type="email"
-                        className="form-control"
-                        value={tenant?.email || ""}
-                        onChange={(e) =>
-                          setTenant({ ...tenant, email: e.target.value })
-                        }
-                      />
+                      <p className="fs-5">{tenant.email}</p>
                     </div>
                   </div>
 
@@ -129,19 +109,9 @@ export default function CustomerProfile() {
                   <div className="d-flex gap-3 flex-wrap mt-3">
                     <div className="flex-grow-1">
                       <label>Contact Number</label>
-                      <input
-                        className="form-control"
-                        value={tenant?.contactNumber || ""}
-                        onChange={(e) =>
-                          setTenant({
-                            ...tenant,
-                            contactNumber: e.target.value,
-                          })
-                        }
-                      />
+                        <p className="fs-5">{tenant.contactNumber}</p>
                     </div>
                   </div>
-
                   <div className="d-flex gap-3 flex-wrap mt-3">
                     <div className="flex-grow-1">
                       <label>Unit</label>
@@ -221,11 +191,11 @@ export default function CustomerProfile() {
                       </div>
                     </div>
                   </div>
-                  <div className="d-flex gap-2 mt-4">
+                  {/* <div className="d-flex gap-2 mt-4">
                     <button type="submit" className="btn btn-warning">
                       Update
                     </button>
-                  </div>
+                  </div> */}
                 </form>
                 
               </div>
