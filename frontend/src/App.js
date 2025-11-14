@@ -49,8 +49,9 @@ import CustomerProfile from "./Routes/Customer/CustomerProfile";
 import Requirements from "./Routes/Accounts/Requirement";
 
 // Password Reset
-import ResetPassword from "./views/ResetPassword";
+import ResetPassword from "./views/ResetPassword"; // ✅ Updated import path
 import NewPassword from "./views/NewPassword";
+import NewResetPassword from "./views/NewResetPassword";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -112,7 +113,12 @@ function App() {
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/forgot-password" element={<TenantResetPass />} />
         <Route path="/reset-password-tenant" element={<TenantNewPass />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} /> {/* ✅ Updated */}
+        {/* =======================
+            Admin Reset Password Route
+        ======================= */}        
+        <Route path="/reset-password-admin" element={<NewResetPassword />} />
+        <Route path="/admin-forgot-password" element={<ResetPassword />} />
 
         {/* =======================
             New Password Route
@@ -204,8 +210,10 @@ function App() {
                   )}
 
                   {/* Requirements */}
-                  <Route path="/requirements" element={<Requirements />} />
-
+                  {(role === "admin" || role === "staff") && (
+                    <Route path="/requirements" element={<Requirements />} />
+                  )}
+                  
                   {/* Accounts */}
                   {role === "superadmin" && (
                     <>
