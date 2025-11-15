@@ -11,39 +11,47 @@ const BASE_URL =
 
 function StaffAccounts() {
   const navigate = useNavigate();
-  const [staff, setStaff] = useState([]);
+  const [staffs, setStaffs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchStaff = async () => {
+  const fetchStaffs = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${BASE_URL}/users`);
       const data = res.data || [];
-      const filteredStaff = data.filter((u) => u.role === "staff");
-      setStaff(filteredStaff);
+
+      // Only staff with fullName
+      const filtered = data.filter((u) => u.role === "staff" && u.fullName);
+      setStaffs(filtered);
     } catch (err) {
       console.error("Error fetching staff:", err);
-      setNotification({ type: "error", message: "Failed to fetch staff." });
+      setNotification({ type: "error", message: "Failed to fetch staff accounts." });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStaff();
+    fetchStaffs();
   }, []);
 
-  const filteredStaff = staff.filter((user) =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStaff = staffs.filter(
+    (s) =>
+      s.fullName &&
+      s.fullName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSort = (type) => {
-    const sorted = [...staff];
-    if (type === "az") sorted.sort((a, b) => a.username.localeCompare(b.username));
-    if (type === "za") sorted.sort((a, b) => b.username.localeCompare(a.username));
-    setStaff(sorted);
+    const sorted = [...staffs];
+    if (type === "az") {
+      sorted.sort((a, b) => (a.fullName || "").localeCompare(b.fullName || ""));
+    }
+    if (type === "za") {
+      sorted.sort((a, b) => (b.fullName || "").localeCompare(a.fullName || ""));
+    }
+    setStaffs(sorted);
   };
 
   if (loading)
@@ -63,7 +71,7 @@ function StaffAccounts() {
 
       <div className="mb-4">
         <h1>Staff Accounts</h1>
-        <span>{filteredStaff.length} Staff found</span>
+        <span>{filteredStaff.length} Staff(s) found</span>
       </div>
 
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
@@ -76,40 +84,24 @@ function StaffAccounts() {
             borderRadius: "6px",
             fontWeight: 500,
             textDecoration: "none",
-            transition: "all 0.2s ease",
-            display: "inline-block",
           }}
-          onMouseOver={(e) => (e.target.style.backgroundColor = "#146c43")}
-          onMouseOut={(e) => (e.target.style.backgroundColor = "#198754")}
         >
           + Add Staff
         </Link>
 
         <div className="d-flex flex-wrap gap-2 align-items-center">
           <div className="dropdown">
-            <button
-              className="btn btn-outline-dark dropdown-toggle"
-              type="button"
-              data-bs-toggle="dropdown"
-            >
+            <button className="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">
               Sort by
             </button>
             <ul className="dropdown-menu">
-              <li>
-                <button className="dropdown-item" onClick={() => handleSort("az")}>
-                  Alphabetical ↑
-                </button>
-              </li>
-              <li>
-                <button className="dropdown-item" onClick={() => handleSort("za")}>
-                  Alphabetical ↓
-                </button>
-              </li>
+              <li><button className="dropdown-item" onClick={() => handleSort("az")}>Alphabetical ↑</button></li>
+              <li><button className="dropdown-item" onClick={() => handleSort("za")}>Alphabetical ↓</button></li>
             </ul>
           </div>
 
           <input
-            placeholder="Search Username"
+            placeholder="Search Name"
             className="custom-input my-1"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -121,27 +113,31 @@ function StaffAccounts() {
         <table className="table table-bordered table-hover">
           <thead className="table-dark">
             <tr>
-              <th>Username</th>
+              <th>Full Name</th>
               <th>Role</th>
+              <th>Email</th>
+              <th>Contact Number</th>
+              <th>Verified</th>
             </tr>
           </thead>
           <tbody>
-            {filteredStaff.map((user) => (
+            {filteredStaff.map((staff) => (
               <tr
-                key={user._id}
+                key={staff._id}
                 style={{ cursor: "pointer" }}
-                onClick={() => navigate(`/accounts/profile/${user._id}`)}
+                onClick={() => navigate(`/accounts/staff/profile/${staff._id}`)}
               >
-                <td>{user.username}</td>
-                <td>{user.role}</td>
+                <td>{staff.fullName || "N/A"}</td>
+                <td>{staff.role || "N/A"}</td>
+                <td>{staff.email || "N/A"}</td>
+                <td>{staff.contactNumber || "N/A"}</td>
+                <td>{staff.isVerified ? "Yes" : "No"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <div className="text-center py-4 text-muted">
-          No staff accounts found.
-        </div>
+        <div className="text-center py-4 text-muted">No staff accounts found.</div>
       )}
     </div>
   );

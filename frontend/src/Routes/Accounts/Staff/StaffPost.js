@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../../supabase";
 
 const BASE_URL =
   window.location.hostname === "localhost"
@@ -13,18 +12,18 @@ function StaffPost() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    password: "",
     role: "staff",
     contactNumber: "",
   });
+
   const [validId, setValidId] = useState(null);
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ type: "", message: "" });
+  const [tempPassword, setTempPassword] = useState("");
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const handleFileChange = (e, type) => {
     if (type === "validId") setValidId(e.target.files[0]);
@@ -37,6 +36,7 @@ function StaffPost() {
 
     try {
       const data = new FormData();
+
       for (const key in formData) data.append(key, formData[key]);
       if (validId) data.append("validId", validId);
       if (resume) data.append("resume", resume);
@@ -45,30 +45,37 @@ function StaffPost() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setNotification({ type: "success", message: res.data.message });
-      setTimeout(() => navigate("/accounts/staff"), 1500);
+      setNotification({
+        type: "success",
+        message: "Staff registered successfully.",
+      });
+
+      setTempPassword(res.data.tempPassword || "");
+
+      setTimeout(() => navigate("/accounts/staff"), 5000);
     } catch (err) {
-      console.error(err);
       setNotification({
         type: "error",
-        message: err.response?.data?.message || "Failed to register staff",
+        message: err.response?.data?.message || "Failed to register staff.",
       });
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="container">
-      <h2>Add Staff</h2>
+    <div className="container mt-4">
+      <h2 className="fw-bold mb-3">Add Staff</h2>
 
       {notification.message && (
-        <div
-          className={`alert ${
-            notification.type === "success" ? "alert-success" : "alert-danger"
-          }`}
-        >
+        <div className={`alert ${notification.type === "success" ? "alert-success" : "alert-danger"}`}>
           {notification.message}
+        </div>
+      )}
+
+      {tempPassword && (
+        <div className="alert alert-info">
+          Temporary Password: <strong>{tempPassword}</strong>
         </div>
       )}
 
@@ -86,18 +93,8 @@ function StaffPost() {
         <input
           type="email"
           name="email"
-          placeholder="Email"
+          placeholder="Email Address"
           value={formData.email}
-          onChange={handleChange}
-          required
-          className="form-control my-2"
-        />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
           onChange={handleChange}
           required
           className="form-control my-2"
@@ -113,10 +110,10 @@ function StaffPost() {
           className="form-control my-2"
         />
 
-        <label>Valid ID (optional)</label>
+        <label className="mt-3">Valid ID (optional)</label>
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={(e) => handleFileChange(e, "validId")}
           className="form-control my-2"
         />
@@ -124,13 +121,13 @@ function StaffPost() {
         <label>Resume (optional)</label>
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           onChange={(e) => handleFileChange(e, "resume")}
           className="form-control my-2"
         />
 
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Saving..." : "Add Staff"}
+        <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+          {loading ? "Creating..." : "Add Staff"}
         </button>
       </form>
     </div>
