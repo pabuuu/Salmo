@@ -3,12 +3,10 @@ import multer from "multer";
 import {
   createPayment,
   getTenantPayments,
-  getAllPayments
+  getAllPayments,
+  customerCreatePayment,
+  approvePayment
 } from "../controllers/paymentsController.js";
-import {
-  createPayMongoIntent,
-  handlePayMongoWebhook
-} from "../controllers/paymongoController.js";
 
 const paymentRoute = express.Router();
 
@@ -25,10 +23,13 @@ paymentRoute.get("/tenant/:tenantId", getTenantPayments);
 // 🔹 Get all payments
 paymentRoute.get("/all", getAllPayments);
 
-// 🔹 Create PayMongo payment intent
-paymentRoute.post("/paymongo/create-intent", createPayMongoIntent);
+paymentRoute.post(
+  "/customer-upload",
+  upload.single("receipt"),
+  customerCreatePayment
+);
 
-// 🔹 PayMongo webhook listener
-paymentRoute.post("/paymongo/webhook", express.raw({ type: "application/json" }), handlePayMongoWebhook);
+// 🔹 Approve payment
+paymentRoute.put("/approve/:id", approvePayment);
 
 export default paymentRoute;

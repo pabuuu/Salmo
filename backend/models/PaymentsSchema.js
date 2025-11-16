@@ -30,6 +30,10 @@ const paymentSchema = new mongoose.Schema(
       enum: ["Paid", "Partial", "Pending", "Overdue"], 
       default: "Pending",
     },
+    isApproved: {
+      type: Boolean,
+      default: true, 
+    },
     notes: {
       type: String,
     },

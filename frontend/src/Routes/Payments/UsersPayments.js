@@ -13,13 +13,13 @@ function UsersPayments() {
   const [tenant, setTenant] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  // Fetch tenant + payments data
+
   const frequencyMultiplier = {
     Monthly: 1,
     Quarterly: 3,
     Yearly: 12,
   };
-  
+
   useEffect(() => {
     const fetchTenantPayments = async () => {
       try {
@@ -36,6 +36,44 @@ function UsersPayments() {
     fetchTenantPayments();
   }, [id]);
 
+  const handleApprovePayment = async (paymentId, amount) => {
+    if (!window.confirm("Are you sure you want to approve this payment?")) return;
+
+    try {
+      setLoading(true);
+
+      const res = await axios.put(`${BASE_URL}/payments/approve/${paymentId}`, {
+        tenantId: tenant._id,
+      });
+
+      if (res.data.success) {
+        // Update tenant balance and status locally
+        const newBalance = tenant.balance - amount;
+        setTenant((prev) => ({
+          ...prev,
+          balance: newBalance,
+          status: newBalance <= 0 ? "Paid" : "Partial",
+        }));
+
+        // Update payment status locally
+        setPayments((prev) =>
+          prev.map((p) =>
+            p._id === paymentId ? { ...p, isApproved: true, status: "Approved" } : p
+          )
+        );
+
+        alert("Payment approved successfully!");
+      } else {
+        alert(res.data.message || "Failed to approve payment.");
+      }
+    } catch (err) {
+      console.error("Error approving payment:", err);
+      alert("Server error. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return <LoadingScreen />;
   if (!tenant) return <p className="text-danger">Tenant not found.</p>;
 
@@ -44,16 +82,10 @@ function UsersPayments() {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2>
-            {tenant.firstName} {tenant.lastName}
-          </h2>
+          <h2>{tenant.firstName} {tenant.lastName}</h2>
           <p className="text-muted mb-0">
             Unit:{" "}
-            {tenant.unitId
-              ? tenant.unitId.unitNo
-              : tenant.lastUnitNo
-                ? tenant.lastUnitNo
-                : "N/A"}{" "}
+            {tenant.unitId ? tenant.unitId.unitNo : tenant.lastUnitNo ? tenant.lastUnitNo : "N/A"}{" "}
             | Rent:{" "}
             {tenant.unitId
               ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
@@ -70,7 +102,6 @@ function UsersPayments() {
             </span>
           </p>
 
-
           <p className="text-muted">
             Next Due Date:{" "}
             {tenant.nextDueDate
@@ -82,22 +113,22 @@ function UsersPayments() {
 
           <p className="text-muted">
             Remaining Balance:{" "}
-            {new Intl.NumberFormat("en-PH", {
-              style: "currency",
-              currency: "PHP",
-            }).format(tenant.balance || 0)}
+            {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
+              tenant.balance || 0
+            )}
           </p>
         </div>
         <Link to="/payments" className="btn btn-outline-secondary">
           ← Back to Payments
         </Link>
       </div>
+
       {/* Payment History Table */}
       <div className="card shadow-sm w-100">
         <div className="card-header bg-light">
           <h5 className="mb-0">Payment History</h5>
         </div>
-        <div className="card-body table-responsive ">
+        <div className="card-body table-responsive">
           {payments.length === 0 ? (
             <p className="text-muted text-center m-0">No payment records yet.</p>
           ) : (
@@ -110,6 +141,7 @@ function UsersPayments() {
                   <th>Remarks</th>
                   <th>Receipt</th>
                   <th>Next Due</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -117,30 +149,33 @@ function UsersPayments() {
                   <tr key={p._id}>
                     <td>{new Date(p.paymentDate).toLocaleDateString()}</td>
                     <td>
-                      {new Intl.NumberFormat("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      }).format(p.amount)}
+                      {new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
+                        p.amount
+                      )}
                     </td>
                     <td>{p.paymentMethod}</td>
                     <td>{p.notes || "-"}</td>
-
-                    {/* 👇 Receipt Column */}
                     <td>
                       {p.receiptUrl ? (
                         <a href={p.receiptUrl} target="_blank" rel="noopener noreferrer">
                           <i className="fa fa-file-image text-primary"></i>
                         </a>
-                      
                       ) : (
                         <span className="text-muted">No Receipt</span>
                       )}
                     </td>
-
+                    <td>{tenant.nextDueDate ? new Date(tenant.nextDueDate).toLocaleDateString() : "-"}</td>
                     <td>
-                      {tenant.nextDueDate
-                        ? new Date(tenant.nextDueDate).toLocaleDateString()
-                        : "-"}
+                      {p.isApproved ? (
+                        <span className="text-success fw-bold">Approved</span>
+                      ) : (
+                        <button
+                          className="btn btn-sm btn-success"
+                          onClick={() => handleApprovePayment(p._id, p.amount)}
+                        >
+                          Approve
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -2,15 +2,26 @@ import PaymentsSchema from "../models/PaymentsSchema.js";
 import Tenants from "../models/Tenants.js";
 import { supabase } from "../supabase.js";
 import { getNextDueDate } from '../utils/dateUtils.js';
+import Payment from "../models/PaymentsSchema.js";
+import Tenant from "../models/Tenants.js";
 
+// Helper: sanitize filename
+const sanitizeFileName = (filename) => {
+  const ext = filename.split('.').pop();
+  const name = filename.replace(`.${ext}`, '');
+  const safeName = name.replace(/[^a-zA-Z0-9-_]/g, '_'); // replace invalid chars with _
+  return `${safeName}.${ext}`;
+};
 
+// Upload to Supabase with sanitized filename
 const uploadToSupabase = async (file) => {
   if (!file) return null;
 
-  const fileName = `${Date.now()}_${file.originalname.replace(/\s+/g, "_")}`;
+  const safeFileName = `${Date.now()}_${sanitizeFileName(file.originalname)}`;
+  
   const { error: uploadError } = await supabase.storage
-    .from("payment receipts") 
-    .upload(fileName, file.buffer, {
+    .from("payment receipts") // make sure bucket name has no spaces
+    .upload(safeFileName, file.buffer, {
       contentType: file.mimetype,
       upsert: true,
     });
@@ -19,7 +30,7 @@ const uploadToSupabase = async (file) => {
 
   const { data: urlData, error: urlError } = supabase.storage
     .from("payment receipts")
-    .getPublicUrl(fileName);
+    .getPublicUrl(safeFileName);
 
   if (urlError || !urlData?.publicUrl)
     throw new Error("Failed to get Supabase public URL");
@@ -218,3 +229,76 @@ export const getAllPayments = async (req, res) => {
   }
 };
 
+export const customerCreatePayment = async (req, res) => {
+  try {
+    const { tenantId, amount, paymentMethod, referenceNumber, notes } = req.body;
+
+    if (!tenantId || !amount || !paymentMethod || !referenceNumber) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Receipt image is required" });
+    }
+
+    // Find tenant to get unitId
+    const tenant = await Tenants.findById(tenantId);
+    if (!tenant) return res.status(404).json({ message: "Tenant not found" });
+
+    // Upload receipt
+    const receiptUrl = await uploadToSupabase(req.file);
+
+    // ✅ Create pending payment with isApproved: false
+    const payment = await PaymentsSchema.create({
+      tenantId,
+      unitId: tenant.unitId || null,
+      amount,
+      paymentMethod,
+      notes: notes || "",
+      referenceNumber,
+      status: "Pending",
+      receiptUrl,
+      isApproved: false, // <--- important
+    });
+
+    res.status(201).json({
+      message: "Payment submitted. Waiting for verification.",
+      payment,
+    });
+  } catch (err) {
+    console.error("Error in customer payment upload:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+export const approvePayment = async (req, res) => {
+  const paymentId = req.params.id;
+  const { tenantId } = req.body;
+
+  try {
+    const payment = await Payment.findById(paymentId);
+    if (!payment) return res.status(404).json({ success: false, message: "Payment not found" });
+    if (payment.isApproved) return res.status(400).json({ success: false, message: "Payment already approved" });
+
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found" });
+
+    // Mark payment approved
+    payment.isApproved = true;
+    await payment.save();
+
+    // ❗ Recalculate tenant balance properly
+    const updated = await recalcTenantBalance(tenantId);
+
+    return res.json({ 
+      success: true, 
+      message: "Payment approved", 
+      payment, 
+      tenant: updated 
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

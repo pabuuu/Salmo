@@ -16,6 +16,7 @@ import testEmailRoutes from "./routes/testEmailRoutes.js";
 import customerRoute from "./routes/customerRoute.js";
 import userRoutes from "./routes/userRoutes.js";
 import resetRoutes from "./routes/resetRoutes.js";
+import qrRoute from "./routes/qrRoute.js";
 
 // Utils
 import { initScheduler } from "./utils/mailScheduler.js";
@@ -52,6 +53,7 @@ app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
 app.use("/api/customers", customerRoute);
 app.use("/api/users", userRoutes);
+app.use("/api/qr", qrRoute);
 
 // Health check
 app.get("/", (req, res) => {
