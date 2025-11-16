@@ -144,7 +144,7 @@ export const registerUser = async (req, res) => {
     const setupToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "2d",
     });
-    const frontendUrl = process.env.FRONTEND_URL || "https://rangeles.online";
+    const frontendUrl = "https://rangeles.online";
     const setupLink = `${frontendUrl}/new-password?token=${setupToken}`;
 
     const subject = `Welcome to Rangeles Admin Portal`;
@@ -182,26 +182,31 @@ Rangeles Management
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email)
+
+    if (!email) {
       return res
         .status(400)
         .json({ success: false, message: "Email is required." });
+    }
 
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res
         .status(404)
         .json({ success: false, message: "Email not found." });
+    }
 
+    // Generate a secure token valid for 10 minutes
     const token = crypto.randomBytes(32).toString("hex");
     user.resetToken = token;
-    user.resetTokenExpires = Date.now() + 10 * 60 * 1000; // 10 min
+    user.resetTokenExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    const resetLink = `${
-      process.env.FRONTEND_URL || "https://rangeles.online"
-    }/reset-password-admin?token=${token}`;
+    // Always point to the live frontend URL
+    const frontendUrl = "https://rangeles.online";
+    const resetLink = `${frontendUrl}/reset-password-admin?token=${token}`;
 
+    // HTML email content
     const html = `
       <p>Hello ${user.fullName},</p>
       <p>You requested a password reset for your Rangeles Admin account.</p>
@@ -211,11 +216,16 @@ export const forgotPassword = async (req, res) => {
       <p>— Rangeles Management</p>
     `;
 
+    // Plain text fallback
+    const text = `Hello ${user.fullName},\n\nYou requested a password reset for your Rangeles Admin account.\nReset your password here (valid 10 minutes): ${resetLink}\n\nIf this wasn’t you, ignore this email.\n\n— Rangeles Management`;
+
+    // Send email
     await transporter.sendMail({
       from: `"Rangeles Management" <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: "Password Reset Request",
       html,
+      text,
     });
 
     console.log(`📩 Reset link sent: ${resetLink}`);
@@ -226,9 +236,10 @@ export const forgotPassword = async (req, res) => {
     });
   } catch (err) {
     console.error("forgotPassword error:", err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Server error sending reset email." });
+    return res.status(500).json({
+      success: false,
+      message: "Server error sending reset email.",
+    });
   }
 };
 
