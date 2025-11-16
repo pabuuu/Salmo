@@ -27,7 +27,7 @@ export const requestPasswordReset = async (req, res) => {
       },
     });
 
-    const resetLink = `${process.env.FRONTEND_URL || "https://rangeles.online"}/reset-password-tenant?token=${token}`;
+    const resetLink = `https://rangeles.online/reset-password-tenant?token=${token}`;
 
 
     const html = `
