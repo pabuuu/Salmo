@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Notification from "../components/Notification.js";
 import Logo from "../assets/logo.png";
 
-export default function SidebarLayout({ children, role, setLoggedIn }) {
+export default function SidebarLayout({ children, role, fullName, setLoggedIn }) {
   const DESKTOP_WIDTH = 240;
   const MOBILE_WIDTH = 220;
   const BUBBLE_DIAMETER = 40;
@@ -36,10 +36,13 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
   function handleLogout() {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("role");
-    sessionStorage.removeItem("verificationShown"); // reset modal flag
+    sessionStorage.removeItem("verificationShown");
     setLoggedIn(false);
     navigate("/", { replace: true });
   }
+
+  // Decide what to show in top section: fullName or role
+  const displayName = fullName || (role ? role.toUpperCase() : "USER");
 
   return (
     <div
@@ -79,7 +82,7 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
         }}
       >
         <div className="px-2">
-          {/* === Logo and Role === */}
+          {/* === Logo and Name/Role === */}
           <div className="d-flex justify-content-center flex-column mb-3 text-center">
             <img
               src={Logo}
@@ -92,7 +95,7 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
               className="text-uppercase fw-bold text-truncate px-2"
               style={{ fontSize: "14px" }}
             >
-              {role || ""}
+              {displayName}
             </span>
           </div>
 
@@ -105,7 +108,6 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
           <SidebarLink to="/tenants" label="Tenants" icon="fa-users" />
           <SidebarLink to="/units" label="Units" icon="fa-building-user" />
 
-          {/* ✅ Requirements accessible to both Admin and Staff */}
           {(role === "admin" || role === "staff") && (
             <SidebarLink
               to="/requirements"
@@ -114,7 +116,6 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
             />
           )}
 
-          {/* === Accounts (Super Admin only) === */}
           {role === "superadmin" && (
             <>
               <button
@@ -195,9 +196,7 @@ export default function SidebarLayout({ children, role, setLoggedIn }) {
               Reports
             </span>
             <i
-              className={`fa-solid fa-chevron-${
-                showReports ? "up" : "down"
-              }`}
+              className={`fa-solid fa-chevron-${showReports ? "up" : "down"}`}
               style={{ fontSize: "12px" }}
             ></i>
           </button>

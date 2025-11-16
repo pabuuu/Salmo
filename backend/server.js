@@ -15,7 +15,7 @@ import expenseRoute from "./routes/expenseRoute.js";
 import testEmailRoutes from "./routes/testEmailRoutes.js";
 import customerRoute from "./routes/customerRoute.js";
 import userRoutes from "./routes/userRoutes.js";
-// import resetRoutes from "./routes/resetRoutes.js";
+import resetRoutes from "./routes/resetRoutes.js";
 import qrRoute from "./routes/qrRoute.js";
 
 // Utils
@@ -54,7 +54,7 @@ app.use("/api/test", testEmailRoutes);
 app.use("/api/customers", customerRoute);
 app.use("/api/reset", resetRoutes);
 app.use("/api/users", userRoutes);
-// app.use("/api/reset", resetRoutes);
+app.use("/api/reset", resetRoutes);
 app.use("/api/qr", qrRoute);
 
 // Health check

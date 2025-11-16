@@ -56,13 +56,16 @@ import NewResetPassword from "./views/NewResetPassword";
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [role, setRole] = useState(null);
+  const [fullName, setFullName] = useState(null);
 
   // Restore session
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     const storedRole = sessionStorage.getItem("role");
+    const storedName = sessionStorage.getItem("userID");
     setLoggedIn(!!token);
     setRole(storedRole);
+    setFullName(storedName);
   }, []);
 
   const isAdminOrSuperAdmin = role === "admin" || role === "superadmin";
@@ -175,7 +178,7 @@ function App() {
           path="/*"
           element={
             <AdminGuard>
-              <SidebarLayout role={role} setLoggedIn={setLoggedIn}>
+              <SidebarLayout role={role} fullName={fullName} setLoggedIn={setLoggedIn}>
                 <Routes>
                   {/* Tenants */}
                   <Route path="/tenants" element={<Tenants />} />
