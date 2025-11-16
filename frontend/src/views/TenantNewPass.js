@@ -44,7 +44,7 @@ export default function TenantNewPass() {
 
     try {
       setLoading(true);
-      const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+      const res = await fetch(`${BASE_URL}/reset/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword }),
@@ -134,7 +134,8 @@ export default function TenantNewPass() {
                   color: "#888",
                 }}
               >
-                {showConfirmPassword ? (
+                {
+                  showConfirmPassword ? (
                   <i className="fa fa-solid fa-eye"></i>
                 ) : (
                   <i className="fa fa-regular fa-eye-slash"></i>

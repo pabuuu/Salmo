@@ -20,9 +20,6 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // ============================
-  // 🔹 LOGIN HANDLER
-  // ============================
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -50,7 +47,7 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
       const isTemporaryPassword =
         user.isTemporaryPassword === true || user.isTemporaryPassword === "true";
 
-      // Save session
+
       if (data.token) sessionStorage.setItem("token", data.token);
       if (user.role) sessionStorage.setItem("role", user.role);
       if (userId) sessionStorage.setItem("userId", userId);
@@ -77,9 +74,6 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
     }
   };
 
-  // ============================
-  // 🔹 FORGOT PASSWORD HANDLER
-  // ============================
   const handleForgotPassword = async (e) => {
     e.preventDefault();
 
@@ -114,13 +108,9 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
     }
   };
 
-  // ============================
-  // 🔹 RENDER
-  // ============================
   return (
     <div className="d-flex vh-100 align-items-center justify-content-center">
       <div className="row w-100">
-        {/* LEFT SIDE IMAGE */}
         <div className="col-12 col-md-8 p-0">
           <img
             src={login_image}
@@ -129,8 +119,6 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
             alt="Login background"
           />
         </div>
-
-        {/* RIGHT SIDE CONTENT */}
         <div className="col-12 col-md-4 d-flex flex-column justify-content-center vh-100 bg-white border rounded shadow p-4">
           <div className="text-center mb-4">
             <img src={Logo} alt="Logo" width="210" className="img-fluid mb-3" />
@@ -150,7 +138,6 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
             </span>
           </div>
 
-          {/* ✅ Error / Success Messages */}
           {!isForgot && message && (
             <p className="text-center text-danger mt-2 fw-semibold">{message}</p>
           )}
@@ -179,9 +166,6 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
               </div>
             </div>
           ) : isForgot ? (
-            // =============================
-            // 🔹 FORGOT PASSWORD FORM
-            // =============================
             <form onSubmit={handleForgotPassword} className="d-flex flex-column">
               <input
                 type="email"

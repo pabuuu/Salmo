@@ -22,6 +22,7 @@ tenantRouter.post(
   upload.fields([
     { name: "receipt", maxCount: 1 },
     { name: "contractFile", maxCount: 1 },
+    { name: "validID", maxCount: 1 },
   ]),
   createTenant
 );

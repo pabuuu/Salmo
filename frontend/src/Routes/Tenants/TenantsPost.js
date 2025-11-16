@@ -29,9 +29,9 @@ export default function TenantsPost() {
   const [startContract, setStartContract] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
-
-
+  const [validID, setValidID] = useState(null);
+  const [cashbond, setCashbond] = useState('');
+  
   // dropdown labels
   const [unitLabel, setUnitLabel] = useState("Select Unit");
   const [locationLabel, setLocationLabel] = useState("Select Location");
@@ -67,8 +67,25 @@ export default function TenantsPost() {
     e.preventDefault();
   
     const selectedUnit = availableUnits.find((u) => u._id === unitId);
+    const nameRegex = /^[A-Za-z\s'-]+$/;
     const rentAmount = selectedUnit?.rentAmount || 0;
   
+    if (!firstName.trim()) {
+      setToast({ show: true, type: "warning", message: "First name is required." });
+      return;
+    }
+    if (!nameRegex.test(firstName)) {
+      setToast({ show: true, type: "warning", message: "First name can only contain letters, spaces, hyphens, or apostrophes." });
+      return;
+    }
+    if (!lastName.trim()) {
+      setToast({ show: true, type: "warning", message: "Last name is required." });
+      return;
+    }
+    if (!nameRegex.test(lastName)) {
+      setToast({ show: true, type: "warning", message: "Last name can only contain letters, spaces, hyphens, or apostrophes." });
+      return;
+    }
     const formData = new FormData();
     formData.append("firstName", firstName);
     formData.append("lastName", lastName);
@@ -80,10 +97,11 @@ export default function TenantsPost() {
     formData.append("isArchived", false);
     formData.append("contractStart", startDate);
     formData.append("contractEnd", endDate);
-  
+    formData.append("cashbond", cashbond);
+    
     if (receipt) formData.append("receipt", receipt);
-    if (startContract) formData.append("contractFile", startContract); // 👈 this name matters
-  
+    if (startContract) formData.append("contractFile", startContract); 
+    if (validID) formData.append("validID", validID);
     try {
       const response = await fetch(`${BASE_URL}/tenants/create`, {
         method: "POST",
@@ -116,8 +134,6 @@ export default function TenantsPost() {
     }
   };
   
-  
-
   // handlers
   const handleLocationSelect = (loc) => {
     setLocation(loc);
@@ -299,6 +315,27 @@ export default function TenantsPost() {
                 onClose={() => setToast({ show: false, type: "", message: "" })}
               />
             )}
+            <div className="flex-grow-1 mt-3">
+              <label className="form-label">Upload Valid ID</label>
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                className="form-control py-2"
+                onChange={(e) => setValidID(e.target.files[0])}
+                required
+              />
+            </div>
+            <div className="flex-grow-1">
+              <label className="form-label">Cashbond</label>
+              <input
+                type="text"
+                placeholder="Enter cashbond amount or notes"
+                className="custom-input form-control"
+                value={cashbond}
+                onChange={(e) => setCashbond(e.target.value)}
+                required
+              />
+            </div>
             <div className="d-flex gap-2 mt-3  ">
               <button
                 className="custom-button fw-normal px-4 bg-light border text-muted"

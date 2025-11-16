@@ -23,7 +23,7 @@ export default function TenantResetPass() {
     setMessage("");
 
     try {
-      const res = await fetch(`${BASE_URL}/auth/request-reset`, {
+      const res = await fetch(`${BASE_URL}/reset/request-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

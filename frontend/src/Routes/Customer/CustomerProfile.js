@@ -136,8 +136,7 @@ export default function CustomerProfile() {
                   </div>
                   <div className="mt-5">
                     <h5 className="fw-bold text-dark">Uploaded Documents</h5>
-
-                    <div className="d-flex mt-3 flex-wrap">
+                    <div className="d-flex mt-3 flex-wrap gap-2">
                       {tenant.contractURL ? (
                         <div className="border rounded p-2" style={{ width: "250px" }}>
                           <p className="fw-semibold mb-2">Contract Document</p>
@@ -182,13 +181,28 @@ export default function CustomerProfile() {
                       ) : (
                         <div className="text-muted">No contract uploaded.</div>
                       )}
-
-                      <div
-                        className=" p-3 d-flex flex-column justify-content-center"
-                        style={{ width: "250px", height: "250px" }}
-                      >
-                        
-                      </div>
+                      {tenant.validID ? (
+                        <div className="border rounded p-2 d-flex flex-column" style={{ width: "350px", }}>
+                          <p className="fw-semibold mb-2">Valid ID</p>
+                          <img
+                            src={tenant.validID}
+                            alt="Valid ID"
+                            width="100%"
+                            height="100%"
+                            className="border rounded object-cover"
+                          />
+                          <a
+                            href={tenant.validID}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-primary w-100 mt-5"
+                          >
+                            View Full Image
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="text-muted">No valid ID uploaded.</div>
+                      )}
                     </div>
                   </div>
                   {/* <div className="d-flex gap-2 mt-4">
