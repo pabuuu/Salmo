@@ -23,6 +23,8 @@ const userSchema = new mongoose.Schema(
     // 🔹 For password reset logic
     resetToken: { type: String },
     resetTokenExpires: { type: Date },
+    loginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
   },
   { timestamps: true }
 );

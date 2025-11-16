@@ -51,6 +51,7 @@ app.use("/api/expenses", expenseRoute);
 app.use("/api/payments", paymentRoute);
 app.use("/api/test", testEmailRoutes);
 app.use("/api/customers", customerRoute);
+app.use("/api/reset", resetRoutes);
 app.use("/api/users", userRoutes);
 
 // Health check

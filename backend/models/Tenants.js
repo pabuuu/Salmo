@@ -87,7 +87,15 @@ const TenantsSchema = new mongoose.Schema(
     contractURL:{
       type: String,
       required: false,
-    }
+    },
+    validID: {
+      type: String, 
+      required: false,
+    },
+    cashbond: {
+      type: Number,
+      default: 0,
+    },    
   },
   { timestamps: true }
 );

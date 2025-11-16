@@ -6,14 +6,11 @@ import { recalcTenantBalance } from './paymentsController.js';
 import { getNextDueDate } from '../utils/dateUtils.js';
 import { supabase } from '../supabase.js';
 import multer from 'multer';
+import { sendWelcomeEmail } from '../utils/sendWelcome.js';
 
-// Multer memory storage for file uploads
 const storage = multer.memoryStorage();
 export const upload = multer({ storage });
 
-// --------------------
-// Helper: Upload to Supabase
-// --------------------
 export const uploadToSupabase = async (file, bucketName = "payment receipts") => {
   if (!file) return null;
 
@@ -51,9 +48,6 @@ export const load = async (req, res) => {
   }
 };
 
-// --------------------
-// Create Tenant
-// --------------------
 export const createTenant = async (req, res) => {
   try {
     const {
@@ -71,6 +65,7 @@ export const createTenant = async (req, res) => {
       lockUntil,
       resetToken,
       resetTokenExpires,
+      cashbond,
     } = req.body;
 
     // Validation
@@ -88,9 +83,12 @@ export const createTenant = async (req, res) => {
     // File uploads
     let receiptUrl = null;
     let contractURL = null;
+    let validIDUrl = null;
     if (req.files?.receipt?.[0]) receiptUrl = await uploadToSupabase(req.files.receipt[0], "payment receipts");
     if (req.files?.contractFile?.[0]) contractURL = await uploadToSupabase(req.files.contractFile[0], "contract-files");
-
+    if (req.files?.validID?.[0]) {
+      validIDUrl = await uploadToSupabase(req.files.validID[0], "valid-ids");
+    }
     // Compute balance & status
     const balance = Math.max(rentAmount - initialPayment, 0);
     const status = balance === 0 ? "Paid" : initialPayment > 0 ? "Partial" : "Pending";
@@ -115,6 +113,8 @@ export const createTenant = async (req, res) => {
       contractStart,
       contractEnd,
       contractURL,
+      validID: validIDUrl, 
+      cashbond: cashbond ? Number(cashbond) : 0, 
       password,
       loginAttempts,
       lockUntil,
@@ -138,6 +138,12 @@ export const createTenant = async (req, res) => {
       });
 
       await recalcTenantBalance(tenant._id);
+    }
+
+    try {
+      await sendWelcomeEmail(tenant,unit);
+    } catch (emailErr) {
+      console.error("❌ Failed to send welcome email:", emailErr);
     }
 
     res.status(201).json({ success: true, message: "Tenant created successfully", tenant });

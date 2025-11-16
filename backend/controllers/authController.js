@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 // ===============================
-// ADMIN / STAFF / SUPERADMIN LOGIN
+// ADMIN / STAFF / SUPERADMIN LOGIN WITH ATTEMPT TRACKING
 // ===============================
 export const login = async (req, res) => {
   try {
@@ -22,11 +22,35 @@ export const login = async (req, res) => {
     if (!user)
       return res.status(401).json({ success: false, message: "User not found." });
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(401).json({ success: false, message: "Invalid password." });
+    // Check if account is locked
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingSeconds = Math.ceil((user.lockUntil - Date.now()) / 1000);
+      return res.status(403).json({
+        success: false,
+        message: `Too many failed attempts. Try again in ${remainingSeconds} second(s).`,
+      });
+    }
 
-    // 🔹 Use the actual DB field name
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      // Increment login attempts
+      user.loginAttempts = (user.loginAttempts || 0) + 1;
+
+      // Lock account after 3 failed attempts
+      if (user.loginAttempts >= 2) {
+        user.lockUntil = new Date(Date.now() + 30 * 1000); // lock for 30s
+        user.loginAttempts = 0;
+      }
+
+      await user.save();
+      return res.status(401).json({ success: false, message: "Invalid password." });
+    }
+
+    // Reset attempts on successful login
+    user.loginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
     const isTempPassword = !!user.isTemporaryPassword;
 
     const token = jwt.sign(
@@ -44,7 +68,7 @@ export const login = async (req, res) => {
         username: user.username || "",
         email: user.email,
         role: user.role,
-        isTemporaryPassword: isTempPassword, // ✅ consistent naming
+        isTemporaryPassword: isTempPassword,
       },
     });
   } catch (err) {
@@ -52,6 +76,7 @@ export const login = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error." });
   }
 };
+
 
 // ===============================
 // SET NEW PASSWORD (Admin/Staff)
@@ -133,9 +158,6 @@ export const checkTemporaryPassword = async (req, res) => {
   }
 };
 
-// ===============================
-// TENANT LOGIN
-// ===============================
 export const customerLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -209,10 +231,6 @@ export const customerLogin = async (req, res) => {
   }
 };
 
-
-// ===============================
-// CHECK IF TENANT HAS PASSWORD
-// ===============================
 export const checkCustomerPassword = async (req, res) => {
   const { email, contactNumber } = req.body;
 
@@ -234,9 +252,6 @@ export const checkCustomerPassword = async (req, res) => {
   }
 };
 
-// ===============================
-// CREATE / SET TENANT PASSWORD
-// ===============================
 export const createPass = async (req, res) => {
   const { tenantId, newPassword } = req.body;
 
