@@ -33,27 +33,37 @@ function Dashboard() {
 // 🔐 VERIFY ADMIN / STAFF ONCE PER SESSION
 // ========================
 useEffect(() => {
-  const token = sessionStorage.getItem("token");
-  if (!token) return;
+    const token = sessionStorage.getItem("token");
+    if (!token) return;
 
-  try {
-    const decoded = jwtDecode(token);
-    setCurrentUser(decoded);
+    try {
+      const decoded = jwtDecode(token);
+      const modalShown = sessionStorage.getItem("verificationShown");
 
-    const modalShown = sessionStorage.getItem("verificationShown");
+      // Fetch full user info from backend
+      axios
+        .get(`${BASE_URL}/users/${decoded.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          const userData = res.data; // user data includes isVerified
+          setCurrentUser(userData);
 
-    // Show modal only if admin/staff AND not already shown this session
-    if (
-      (decoded.role === "admin" || decoded.role === "staff") &&
-      !modalShown
-    ) {
-      setShowVerification(true);
-      sessionStorage.setItem("verificationShown", "true");
+          if (
+            (userData.role === "admin" || userData.role === "staff") &&
+            !modalShown &&
+            !userData.isVerified // only show modal if NOT verified
+          ) {
+            setShowVerification(true);
+            sessionStorage.setItem("verificationShown", "true");
+          }
+        })
+        .catch((err) => console.error("Error fetching user data:", err));
+    } catch (err) {
+      console.error("Invalid token", err);
     }
-  } catch (err) {
-    console.error("Invalid token", err);
-  }
-}, []);
+  }, []);
+
 
   const handleConfirmVerification = () => {
     setShowVerification(false);

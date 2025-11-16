@@ -41,9 +41,11 @@ export default function Requirements() {
     actions: null,
   });
 
-  // Fetch current user info
+  // ========================
+  // 🔐 VERIFY USER ON PAGE LOAD
+  // ========================
   useEffect(() => {
-    const fetchUser = async () => {
+    const verifyUser = async () => {
       const token = sessionStorage.getItem("token");
       if (!token) return;
 
@@ -53,20 +55,32 @@ export default function Requirements() {
         });
 
         const user = res.data;
-        setIsVerified(Boolean(user.isVerified)); // <-- make sure it's boolean
+        setIsVerified(Boolean(user.isVerified));
         setExistingValidId(user.validId || null);
         setExistingResume(user.resume || null);
+
+        // Optional: show notification if verified
+        if (user.isVerified) {
+          setNotification({
+            type: "info",
+            message: "You are already verified. Uploads and submission are disabled.",
+            actions: null,
+          });
+        }
       } catch (err) {
         console.error("Error fetching user data:", err);
       }
     };
 
-    fetchUser();
+    verifyUser();
   }, []);
 
+  // ========================
+  // Handle form submission
+  // ========================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isVerified) return; // Prevent submit if verified
+    if (isVerified) return;
 
     if (!validIdFile || !resumeFile) {
       setNotification({
@@ -165,8 +179,8 @@ export default function Requirements() {
           <span className="text-muted">Provide your Valid ID and Resume</span>
 
           {isVerified && (
-            <div className="alert alert-info mt-3" style={{ fontWeight: "bold", textAlign: "center" }}>
-              You are already verified. You cannot change or upload requirements anymore.
+            <div className="alert alert-info mt-3 text-center fw-bold">
+              You are already verified. Uploads and submission are disabled.
             </div>
           )}
 
@@ -178,7 +192,7 @@ export default function Requirements() {
                 className="form-control"
                 accept=".jpg,.jpeg,.png,.pdf"
                 onChange={(e) => setValidIdFile(e.target.files[0])}
-                disabled={isVerified} // <-- disabled if verified
+                disabled={isVerified}
                 required={!isVerified}
               />
               {renderFilePreview(isVerified ? existingValidId : validIdFile)}
@@ -191,7 +205,7 @@ export default function Requirements() {
                 className="form-control"
                 accept=".pdf,.doc,.docx"
                 onChange={(e) => setResumeFile(e.target.files[0])}
-                disabled={isVerified} // <-- disabled if verified
+                disabled={isVerified}
                 required={!isVerified}
               />
               {renderFilePreview(isVerified ? existingResume : resumeFile)}
@@ -207,7 +221,7 @@ export default function Requirements() {
                 label={loading ? "Submitting..." : "Submit Requirements"}
                 variant="primary"
                 type="submit"
-                disabled={loading || isVerified} // <-- disabled if verified
+                disabled={loading || isVerified}
               />
             </div>
           </form>
