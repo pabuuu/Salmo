@@ -147,6 +147,15 @@ export default function CustomerProfile() {
                             height="200"
                             className="border rounded"
                           />
+                          <a
+                            href={tenant.contractURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-outline-primary w-100"
+                          >
+                            View Full PDF
+                          </a>
+                          <span className="fw-bold">Contract valid from</span>
                           <div className="d-flex gap-2 flex-row align-items-center justify-content-center my-1">
                             <p className="">
                               {tenant.contractStart
@@ -168,15 +177,6 @@ export default function CustomerProfile() {
                                 : "Not set"}
                             </p>
                           </div>
-                          <a
-                            href={tenant.contractURL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-sm btn-outline-primary w-100"
-                          >
-                            View Full PDF
-                          </a>
-                          
                         </div>
                       ) : (
                         <div className="text-muted">No contract uploaded.</div>

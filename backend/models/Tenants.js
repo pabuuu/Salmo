@@ -66,6 +66,10 @@ const TenantsSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    lockLevel: { 
+      type: Number, 
+      default: 0 
+    },
     lockUntil: {
       type: Date,
       default: null,

@@ -268,16 +268,27 @@ export default function TenantsProfile() {
                       height="200"
                       className="border rounded"
                     />
+                    <a
+                      href={tenant.contractURL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-outline-primary w-100"
+                    >
+                      View Full PDF
+                    </a>
+                    <span className="fw-bold">Contract valid from</span>
                     <div className="d-flex gap-2 flex-row align-items-center justify-content-center my-1">
-                      <p className="">
-                        {tenant.contractStart
-                          ? new Date(tenant.contractStart).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "Not set"}
-                      </p>
+                      <div className="d-flex gap-2">
+                        <p className="">
+                          {tenant.contractStart
+                            ? new Date(tenant.contractStart).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "Not set"}
+                        </p>
+                      </div>
                       <p>-</p>
                       <p className="">
                         {tenant.contractEnd
@@ -289,15 +300,6 @@ export default function TenantsProfile() {
                           : "Not set"}
                       </p>
                     </div>
-                    <a
-                      href={tenant.contractURL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-sm btn-outline-primary w-100"
-                    >
-                      View Full PDF
-                    </a>
-                    
                   </div>
                 ) : (
                   <div className="text-muted">No contract uploaded.</div>
@@ -326,18 +328,20 @@ export default function TenantsProfile() {
                 )}
                 <div className="flex-grow-1">
                   <label className="form-label p-0 m-0">Cashbond</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="Enter cashbond"
-                    className="custom-input form-control"
-                    value={tenant.cashbond || 0}
-                    onChange={(e) =>
-                      setTenant((prev) => ({ ...prev, cashbond: Number(e.target.value) }))
-                    }
-                  />
+                  <div className="d-flex gap-2 align-items-center justify-content-center">
+                    <span className="">₱</span>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Enter cashbond"
+                      className="custom-input form-control"
+                      value={tenant.cashbond || 0}
+                      onChange={(e) =>
+                        setTenant((prev) => ({ ...prev, cashbond: Number(e.target.value) }))
+                      }
+                    />
+                  </div>
                 </div>
-
               </div>
             </div>
             <div className="d-flex gap-2 mt-4">
