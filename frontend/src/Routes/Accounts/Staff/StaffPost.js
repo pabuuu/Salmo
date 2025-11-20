@@ -22,8 +22,26 @@ function StaffPost() {
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [tempPassword, setTempPassword] = useState("");
 
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  // ⬇️ UPDATED handleChange with validation (same as AdminPost)
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    // 🔹 FULL NAME: letters + spaces only
+    if (name === "fullName") {
+      const cleaned = value.replace(/[^A-Za-z\s]/g, "");
+      setFormData({ ...formData, fullName: cleaned });
+      return;
+    }
+
+    // 🔹 CONTACT NUMBER: digits only + max 11
+    if (name === "contactNumber") {
+      const cleaned = value.replace(/\D/g, "").slice(0, 11);
+      setFormData({ ...formData, contactNumber: cleaned });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleFileChange = (e, type) => {
     if (type === "validId") setValidId(e.target.files[0]);
@@ -68,7 +86,11 @@ function StaffPost() {
       <h2 className="fw-bold mb-3">Add Staff</h2>
 
       {notification.message && (
-        <div className={`alert ${notification.type === "success" ? "alert-success" : "alert-danger"}`}>
+        <div
+          className={`alert ${
+            notification.type === "success" ? "alert-success" : "alert-danger"
+          }`}
+        >
           {notification.message}
         </div>
       )}
@@ -108,6 +130,7 @@ function StaffPost() {
           onChange={handleChange}
           required
           className="form-control my-2"
+          maxLength={11}
         />
 
         <label className="mt-3">Valid ID (optional)</label>

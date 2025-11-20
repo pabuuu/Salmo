@@ -19,10 +19,26 @@ function AdminPost() {
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({ type: "", message: "" });
-  const [tempPassword, setTempPassword] = useState(""); // 🔹 for displaying temp password
+  const [tempPassword, setTempPassword] = useState("");
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // 🔹 FULL NAME VALIDATION (letters and spaces only)
+    if (name === "fullName") {
+      const cleaned = value.replace(/[^A-Za-z\s]/g, ""); 
+      setFormData({ ...formData, fullName: cleaned });
+      return;
+    }
+
+    // 🔹 CONTACT NUMBER VALIDATION (numbers only, max 11 digits)
+    if (name === "contactNumber") {
+      const cleaned = value.replace(/\D/g, "").slice(0, 11);
+      setFormData({ ...formData, contactNumber: cleaned });
+      return;
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleFileChange = (e, type) => {
@@ -45,7 +61,6 @@ function AdminPost() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // 🔹 Set notification and show temporary password
       setNotification({
         type: "success",
         message:
@@ -53,9 +68,8 @@ function AdminPost() {
           "Admin registered successfully. Temporary password has been sent.",
       });
 
-      setTempPassword(res.data.tempPassword || ""); // display temp password
+      setTempPassword(res.data.tempPassword || "");
 
-      // Optional: redirect after a short delay
       setTimeout(() => navigate("/accounts/admins"), 5000);
     } catch (err) {
       console.error("Error registering admin:", err);
@@ -89,6 +103,7 @@ function AdminPost() {
       )}
 
       <form onSubmit={handleSubmit}>
+        {/* FULL NAME */}
         <input
           type="text"
           name="fullName"
@@ -99,6 +114,7 @@ function AdminPost() {
           className="form-control my-2"
         />
 
+        {/* EMAIL */}
         <input
           type="email"
           name="email"
@@ -109,6 +125,7 @@ function AdminPost() {
           className="form-control my-2"
         />
 
+        {/* CONTACT NUMBER */}
         <input
           type="text"
           name="contactNumber"
@@ -117,6 +134,7 @@ function AdminPost() {
           onChange={handleChange}
           required
           className="form-control my-2"
+          maxLength={11} // not required but acts as a secondary limit
         />
 
         <label className="mt-3">Valid ID (optional)</label>

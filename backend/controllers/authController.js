@@ -59,7 +59,7 @@ export const login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    return res.json({
+        return res.json({
       success: true,
       message: "Login successful.",
       token,
@@ -68,6 +68,7 @@ export const login = async (req, res) => {
         username: user.username || "",
         email: user.email,
         role: user.role,
+        fullName: user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username, // ✅ ADDED
         isTemporaryPassword: isTempPassword,
       },
     });

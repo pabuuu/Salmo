@@ -8,7 +8,7 @@ const BASE_URL =
     ? "http://localhost:5050/api"
     : "https://rangeles.online/api";
 
-export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) {
+export default function Login({ setLoggedIn, setRole, setFullName, setIsTemporaryPassword }) { // ✅ add setFullName
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -47,11 +47,21 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
       const isTemporaryPassword =
         user.isTemporaryPassword === true || user.isTemporaryPassword === "true";
 
-
       if (data.token) sessionStorage.setItem("token", data.token);
       if (user.role) sessionStorage.setItem("role", user.role);
       if (userId) sessionStorage.setItem("userId", userId);
       if (user.email) sessionStorage.setItem("email", user.email);
+
+      // Save full name
+      let fullNameValue = "";
+      if (user.fullName) fullNameValue = user.fullName;
+      else fullNameValue = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+
+      if (fullNameValue) {
+        sessionStorage.setItem("fullName", fullNameValue);
+        if (setFullName) setFullName(fullNameValue);
+      }
+
       sessionStorage.setItem(
         "isTemporaryPassword",
         isTemporaryPassword ? "true" : "false"
@@ -145,9 +155,6 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
             <p className="text-center text-danger mt-2 fw-semibold">{resetMessage}</p>
           )}
 
-          {/* =============================
-              LOGIN TYPE SELECTION
-          ============================= */}
           {isChoosing ? (
             <div className="text-center">
               <div className="d-flex flex-column justify-content-center gap-3">
@@ -194,9 +201,6 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
               </button>
             </form>
           ) : (
-            // =============================
-            // 🔹 NORMAL LOGIN FORM
-            // =============================
             <>
               <form onSubmit={handleLogin} className="d-flex flex-column">
                 <input
@@ -243,7 +247,6 @@ export default function Login({ setLoggedIn, setRole, setIsTemporaryPassword }) 
                   {loading ? "Logging in..." : "Login"}
                 </button>
 
-                {/* 🔹 Forgot password link */}
                 <span
                   onClick={() => setIsForgot(true)}
                   className="text-decoration-none ms-auto mt-2 text-muted"

@@ -13,7 +13,8 @@ import Tenants from "./Routes/Tenants/Tenants";
 import TenantsPost from "./Routes/Tenants/TenantsPost";
 import TenantsProfile from "./Routes/Tenants/TenantsProfile";
 import TenantResetPass from "./views/TenantResetPass";
-import TenantNewPass from "./views/TenantNewPass"
+import TenantNewPass from "./views/TenantNewPass";
+
 // Units
 import Units from "./Routes/Units/Units";
 import UnitsPost from "./Routes/Units/UnitsPost";
@@ -49,7 +50,7 @@ import CustomerProfile from "./Routes/Customer/CustomerProfile";
 import Requirements from "./Routes/Accounts/Requirement";
 
 // Password Reset
-import ResetPassword from "./views/ResetPassword"; // ✅ Updated import path
+import ResetPassword from "./views/ResetPassword";
 import NewPassword from "./views/NewPassword";
 import NewResetPassword from "./views/NewResetPassword";
 
@@ -58,47 +59,45 @@ function App() {
   const [role, setRole] = useState(null);
   const [fullName, setFullName] = useState(null);
 
-  // Restore session
+  // ========================================
+  // Restore session on page load
+  // ========================================
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     const storedRole = sessionStorage.getItem("role");
-    const storedName = sessionStorage.getItem("userID");
+    const storedName = sessionStorage.getItem("fullName");
+
     setLoggedIn(!!token);
-    setRole(storedRole);
-    setFullName(storedName);
+    setRole(storedRole || null);
+    setFullName(storedName || null);
   }, []);
 
   const isAdminOrSuperAdmin = role === "admin" || role === "superadmin";
 
-  // ===============================
-  // Admin / Staff Guard
-  // ===============================
+  // ========================================
+  // Admin / Staff Auth Guard
+  // ========================================
   const AdminGuard = ({ children }) => {
-    const storedToken = sessionStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const storedRole = sessionStorage.getItem("role");
     const tempPass = sessionStorage.getItem("isTemporaryPassword") === "true";
 
-    if (!storedToken || storedRole === "customer") {
-      return <Navigate to="/" replace />;
-    }
+    if (!token || storedRole === "customer") return <Navigate to="/" replace />;
 
-    if (tempPass) {
-      return <Navigate to="/new-password" replace />;
-    }
+    if (tempPass) return <Navigate to="/new-password" replace />;
 
     return children;
   };
 
-  // ===============================
-  // Customer Guard
-  // ===============================
+  // ========================================
+  // Customer Auth Guard
+  // ========================================
   const CustomerGuard = ({ children }) => {
-    const storedToken = sessionStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const storedRole = sessionStorage.getItem("role");
 
-    if (!storedToken || storedRole !== "customer") {
+    if (!token || storedRole !== "customer")
       return <Navigate to="/customer-login" replace />;
-    }
 
     return children;
   };
@@ -106,54 +105,46 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* =======================
-            Public Routes
-        ======================= */}
+
+        {/* PUBLIC ROUTES */}
         <Route
           path="/"
-          element={<Login setLoggedIn={setLoggedIn} setRole={setRole} />}
+          element={<Login setLoggedIn={setLoggedIn} setRole={setRole} setFullName={setFullName} />}
         />
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/forgot-password" element={<TenantResetPass />} />
         <Route path="/reset-password-tenant" element={<TenantNewPass />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} /> {/* ✅ Updated */}
-        {/* =======================
-            Admin Reset Password Route
-        ======================= */}        
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/reset-password-admin" element={<NewResetPassword />} />
         <Route path="/admin-forgot-password" element={<ResetPassword />} />
 
-        {/* =======================
-            New Password Route
-        ======================= */}
+        {/* NEW PASSWORD ROUTE */}
         <Route
           path="/new-password"
           element={
-            sessionStorage.getItem("isTemporaryPassword") === "true" ? (
-              <NewPassword />
-            ) : (
-              <Navigate to="/dashboard" replace />
-            )
+            sessionStorage.getItem("isTemporaryPassword") === "true"
+              ? <NewPassword />
+              : <Navigate to="/dashboard" replace />
           }
         />
 
-        {/* =======================
-            Dashboard (Top-level route)
-        ======================= */}
+        {/* DASHBOARD */}
         <Route
           path="/dashboard"
           element={
             <AdminGuard>
-              <SidebarLayout role={role} setLoggedIn={setLoggedIn}>
+              <SidebarLayout
+                role={role}
+                fullName={fullName}
+                setLoggedIn={setLoggedIn}
+              >
                 <Dashboard />
               </SidebarLayout>
             </AdminGuard>
           }
         />
 
-        {/* =======================
-            Customer Routes
-        ======================= */}
+        {/* CUSTOMER ROUTES */}
         <Route
           path="/customer"
           element={
@@ -162,6 +153,7 @@ function App() {
             </CustomerGuard>
           }
         />
+
         <Route
           path="/customer-profile"
           element={
@@ -171,15 +163,18 @@ function App() {
           }
         />
 
-        {/* =======================
-            Admin / Staff Routes
-        ======================= */}
+        {/* ADMIN / STAFF ROUTES */}
         <Route
           path="/*"
           element={
             <AdminGuard>
-              <SidebarLayout role={role} fullName={fullName} setLoggedIn={setLoggedIn}>
+              <SidebarLayout
+                role={role}
+                fullName={fullName}
+                setLoggedIn={setLoggedIn}
+              >
                 <Routes>
+
                   {/* Tenants */}
                   <Route path="/tenants" element={<Tenants />} />
                   <Route path="/tenants/create" element={<TenantsPost />} />
@@ -216,20 +211,21 @@ function App() {
                   {(role === "admin" || role === "staff") && (
                     <Route path="/requirements" element={<Requirements />} />
                   )}
-                  
-                  {/* Accounts */}
+
+                  {/* Accounts (Superadmin only) */}
                   {role === "superadmin" && (
                     <>
                       <Route path="/accounts/admins" element={<AdminAccounts />} />
                       <Route path="/accounts/admins/create" element={<AdminPost />} />
                       <Route path="/accounts/admins/profile/:id" element={<AdminProfile />} />
+
                       <Route path="/accounts/staff" element={<StaffAccounts />} />
                       <Route path="/accounts/staff/create" element={<StaffPost />} />
                       <Route path="/accounts/staff/profile/:id" element={<StaffProfile />} />
                     </>
                   )}
 
-                  {/* Staff restrictions */}
+                  {/* Staff Restrictions */}
                   {role === "staff" && (
                     <>
                       <Route path="/payments" element={<Navigate to="/dashboard" replace />} />
@@ -247,6 +243,7 @@ function App() {
             </AdminGuard>
           }
         />
+
       </Routes>
     </Router>
   );
