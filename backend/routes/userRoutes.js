@@ -9,6 +9,7 @@ import {
   getUserById,
   verifyAdmin,
   uploadRequirements,
+  getMe
 } from "../controllers/userController.js";
 import { authMiddlewareUser } from "../middleware/authMiddlewareUser.js";
 
@@ -24,6 +25,9 @@ router.get("/", getUsers);
 
 // Fetch users by role (admin or staff)
 router.get("/role/:role", getUsersByRole);
+
+// Get current authenticated user ✅
+router.get("/me", authMiddlewareUser, getMe);
 
 // Fetch single user by ID ✅
 router.get("/:id", getUserById);

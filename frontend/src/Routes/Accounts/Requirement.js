@@ -27,13 +27,12 @@ const PDFIcon = () => (
   </div>
 );
 
-export default function Requirements() {
+export default function Requirement() {
   const [validIdFile, setValidIdFile] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const [existingValidId, setExistingValidId] = useState(null);
   const [existingResume, setExistingResume] = useState(null);
   const [isVerified, setIsVerified] = useState(false);
-
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState({
     type: "",
@@ -42,25 +41,31 @@ export default function Requirements() {
   });
 
   // ========================
-  // 🔐 VERIFY USER ON PAGE LOAD
+  // 🔐 FETCH USER DATA ON PAGE LOAD
   // ========================
   useEffect(() => {
-    const verifyUser = async () => {
-      const token = sessionStorage.getItem("token");
-      if (!token) return;
+    const token = sessionStorage.getItem("token");
+    console.log("Token from sessionStorage:", token);
+    if (!token) return;
 
+    const fetchUser = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const user = res.data;
-        setIsVerified(Boolean(user.isVerified));
-        setExistingValidId(user.validId || null);
-        setExistingResume(user.resume || null);
+        const user = res.data.data;
+        const verified = Boolean(user.isVerified);
+        setIsVerified(verified);
+        sessionStorage.setItem("isVerified", verified ? "true" : "false");
 
-        // Optional: show notification if verified
-        if (user.isVerified) {
+        // Only set previews if both files exist
+        if (user.validId && user.resume) {
+          setExistingValidId(user.validId);
+          setExistingResume(user.resume);
+        }
+
+        if (verified) {
           setNotification({
             type: "info",
             message: "You are already verified. Uploads and submission are disabled.",
@@ -72,11 +77,11 @@ export default function Requirements() {
       }
     };
 
-    verifyUser();
+    fetchUser();
   }, []);
 
   // ========================
-  // Handle form submission
+  // HANDLE FORM SUBMISSION
   // ========================
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -117,6 +122,12 @@ export default function Requirements() {
       setNotification({ type: "success", message: res.data.message, actions: null });
       setValidIdFile(null);
       setResumeFile(null);
+
+      // Update previews with latest uploaded files if both exist
+      if (res.data.validId && res.data.resume) {
+        setExistingValidId(res.data.validId);
+        setExistingResume(res.data.resume);
+      }
     } catch (err) {
       console.error(err);
       setNotification({
@@ -129,6 +140,9 @@ export default function Requirements() {
     }
   };
 
+  // ========================
+  // RENDER FILE PREVIEW
+  // ========================
   const renderFilePreview = (file) => {
     if (!file) return null;
 
@@ -195,7 +209,7 @@ export default function Requirements() {
                 disabled={isVerified}
                 required={!isVerified}
               />
-              {renderFilePreview(isVerified ? existingValidId : validIdFile)}
+              {validIdFile ? renderFilePreview(validIdFile) : renderFilePreview(existingValidId)}
             </div>
 
             <div className="mb-3">
@@ -208,7 +222,7 @@ export default function Requirements() {
                 disabled={isVerified}
                 required={!isVerified}
               />
-              {renderFilePreview(isVerified ? existingResume : resumeFile)}
+              {resumeFile ? renderFilePreview(resumeFile) : renderFilePreview(existingResume)}
             </div>
 
             <div className="d-flex gap-2 justify-content-end">

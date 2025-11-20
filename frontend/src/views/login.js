@@ -8,7 +8,7 @@ const BASE_URL =
     ? "http://localhost:5050/api"
     : "https://rangeles.online/api";
 
-export default function Login({ setLoggedIn, setRole, setFullName, setIsTemporaryPassword }) { // ✅ add setFullName
+export default function Login({ setLoggedIn, setRole, setFullName, setIsTemporaryPassword }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -46,26 +46,24 @@ export default function Login({ setLoggedIn, setRole, setFullName, setIsTemporar
       const userId = user._id || user.id;
       const isTemporaryPassword =
         user.isTemporaryPassword === true || user.isTemporaryPassword === "true";
+      const isVerified = user.isVerified === true || user.isVerified === "true";
 
+      // Store session data
       if (data.token) sessionStorage.setItem("token", data.token);
       if (user.role) sessionStorage.setItem("role", user.role);
       if (userId) sessionStorage.setItem("userId", userId);
       if (user.email) sessionStorage.setItem("email", user.email);
+      sessionStorage.setItem("isTemporaryPassword", isTemporaryPassword ? "true" : "false");
+      sessionStorage.setItem("isVerified", isVerified ? "true" : "false");
 
       // Save full name
       let fullNameValue = "";
       if (user.fullName) fullNameValue = user.fullName;
       else fullNameValue = `${user.firstName || ""} ${user.lastName || ""}`.trim();
-
       if (fullNameValue) {
         sessionStorage.setItem("fullName", fullNameValue);
         if (setFullName) setFullName(fullNameValue);
       }
-
-      sessionStorage.setItem(
-        "isTemporaryPassword",
-        isTemporaryPassword ? "true" : "false"
-      );
 
       if (setLoggedIn) setLoggedIn(true);
       if (setRole) setRole(user.role);

@@ -354,3 +354,27 @@ export const uploadRequirements = async (req, res) => {
     res.status(500).json({ message: "Failed to upload requirements" });
   }
 };
+
+// Get logged-in admin/staff profile
+export const getMe = async (req, res) => {
+  try {
+    console.log("getMe called with req.user:", req.user);
+
+    if (!req.user) {
+      console.warn("No user attached to request");
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const { _id, fullName, email, role, contactNumber, isVerified, validId, resume } = req.user;
+
+    console.log("Sending user data:", { _id, fullName, email, role, contactNumber, isVerified, validId, resume });
+
+    res.status(200).json({
+      success: true,
+      data: { _id, fullName, email, role, contactNumber, isVerified, validId, resume },
+    });
+  } catch (err) {
+    console.error("getMe error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
