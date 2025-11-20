@@ -325,16 +325,19 @@ export default function TenantsPost() {
                 required
               />
             </div>
-            <div className="flex-grow-1">
+            <div className="flex-grow-1 w-50 mt-2">
               <label className="form-label">Cashbond</label>
-              <input
-                type="text"
-                placeholder="Enter cashbond amount or notes"
-                className="custom-input form-control"
-                value={cashbond}
-                onChange={(e) => setCashbond(e.target.value)}
-                required
-              />
+              <div className="d-flex gap-2 align-items-center">
+                <span>₱</span>
+                <input
+                  type="text"
+                  placeholder="Enter cashbond amount"
+                  className="custom-input form-control "
+                  value={cashbond}
+                  onChange={(e) => setCashbond(e.target.value)}
+                  required
+                />
+              </div>
             </div>
             <div className="d-flex gap-2 mt-3  ">
               <button

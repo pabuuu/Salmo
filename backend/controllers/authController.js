@@ -172,6 +172,10 @@ export const customerLogin = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Invalid email or password." });
 
+    // Initialize lockLevel if missing
+    if (tenant.lockLevel === undefined) tenant.lockLevel = 0;
+
+    // Check if currently locked
     if (tenant.lockUntil && tenant.lockUntil > Date.now()) {
       const remainingSeconds = Math.ceil((tenant.lockUntil - Date.now()) / 1000);
       return res.status(403).json({
@@ -187,12 +191,26 @@ export const customerLogin = async (req, res) => {
       });
 
     const isMatch = await bcrypt.compare(password, tenant.password);
+
     if (!isMatch) {
       tenant.loginAttempts += 1;
 
-      if (tenant.loginAttempts >= 2) { 
-        tenant.lockUntil = new Date(Date.now() + 30 * 1000); 
+      if (tenant.loginAttempts >= 2) {
         tenant.loginAttempts = 0;
+
+        // Progressive lockouts
+        let lockDuration;
+
+        if (tenant.lockLevel === 0) {
+          lockDuration = 30 * 1000; // 30 sec
+        } else if (tenant.lockLevel === 1) {
+          lockDuration = 60 * 1000; // 1 min
+        } else {
+          lockDuration = 30 * 60 * 1000; // 30 mins
+        }
+
+        tenant.lockUntil = new Date(Date.now() + lockDuration);
+        tenant.lockLevel += 1;
       }
 
       await tenant.save();
@@ -201,8 +219,10 @@ export const customerLogin = async (req, res) => {
         .json({ success: false, message: "Invalid email or password." });
     }
 
+    // Successful login → reset all counters
     tenant.loginAttempts = 0;
     tenant.lockUntil = null;
+    tenant.lockLevel = 0;
     await tenant.save();
 
     const token = jwt.sign(
@@ -230,6 +250,7 @@ export const customerLogin = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error." });
   }
 };
+
 
 export const checkCustomerPassword = async (req, res) => {
   const { email, contactNumber } = req.body;
