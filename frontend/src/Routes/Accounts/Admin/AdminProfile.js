@@ -157,11 +157,21 @@ export default function AdminProfile() {
             </div>
 
             <div className="d-flex flex-wrap gap-3 mt-4">
-              {!admin.isVerified && (
-                <CustomButton label="Verify Admin" variant="success" onClick={handleVerify} />
-              )}
-              <CustomButton label="Back" variant="secondary" onClick={() => navigate(-1)} />
-            </div>
+            {!admin.isVerified && (
+              <CustomButton
+                label="Verify Admin"
+                variant="success"
+                onClick={handleVerify}
+                disabled={!admin.validId || !admin.resume}
+                title={!admin.validId || !admin.resume ? "Upload valid ID and resume first" : ""}
+                style={{
+                  opacity: !admin.validId || !admin.resume ? 0.5 : 1,
+                  cursor: !admin.validId || !admin.resume ? "not-allowed" : "pointer",
+                }}
+              />
+            )}
+            <CustomButton label="Back" variant="secondary" onClick={() => navigate(-1)} />
+          </div>
           </div>
         </div>
       </Card>
