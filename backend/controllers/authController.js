@@ -178,9 +178,12 @@ export const customerLogin = async (req, res) => {
     // Check if currently locked
     if (tenant.lockUntil && tenant.lockUntil > Date.now()) {
       const remainingSeconds = Math.ceil((tenant.lockUntil - Date.now()) / 1000);
+    
       return res.status(403).json({
         success: false,
-        message: `Too many failed attempts. Try again in ${remainingSeconds} second(s).`,
+        message: "Too many failed attempts.",
+        remainingSeconds,
+        lockUntil: tenant.lockUntil.getTime(),
       });
     }
 
@@ -194,30 +197,38 @@ export const customerLogin = async (req, res) => {
 
     if (!isMatch) {
       tenant.loginAttempts += 1;
-
-      if (tenant.loginAttempts >= 2) {
-        tenant.loginAttempts = 0;
-
-        // Progressive lockouts
-        let lockDuration;
-
-        if (tenant.lockLevel === 0) {
-          lockDuration = 30 * 1000; // 30 sec
-        } else if (tenant.lockLevel === 1) {
-          lockDuration = 60 * 1000; // 1 min
-        } else {
-          lockDuration = 30 * 60 * 1000; // 30 mins
+    
+      if (tenant.lockLevel === 0) {
+        // BEFORE FIRST LOCK: allow 2 attempts
+        if (tenant.loginAttempts >= 2) {
+          // First lock (30 seconds)
+          tenant.lockLevel = 1;
+          tenant.loginAttempts = 0;
+          tenant.lockUntil = new Date(Date.now() + 30 * 1000);
         }
-
+      } else {
+        // AFTER FIRST LOCK: every wrong attempt = instant lock (x2 duration)
+        tenant.loginAttempts = 0;
+    
+        // Duration doubles each time
+        // lockLevel = 1 → 30*2^(1-1) = 30s
+        // lockLevel = 2 → 30*2^(2-1) = 60s
+        // lockLevel = 3 → 30*2^(3-1) = 120s
+        const lockDuration = 30 * 1000 * Math.pow(2, tenant.lockLevel - 1);
+    
         tenant.lockUntil = new Date(Date.now() + lockDuration);
         tenant.lockLevel += 1;
       }
-
+    
       await tenant.save();
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid email or password." });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+        remainingSeconds: Math.ceil((tenant.lockUntil - Date.now()) / 1000),
+        lockUntil: tenant.lockUntil.getTime(),
+      });
     }
+    
 
     // Successful login → reset all counters
     tenant.loginAttempts = 0;

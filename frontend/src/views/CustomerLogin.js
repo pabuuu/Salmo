@@ -20,8 +20,24 @@ export default function CustomerLogin() {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [timer, setTimer] = useState(null);
 
-
+  useEffect(() => {
+    if (timer === null) return;
+  
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  
+    return () => clearInterval(interval);
+  }, [timer]);
+  
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     const role = sessionStorage.getItem("role");
@@ -105,7 +121,6 @@ export default function CustomerLogin() {
   };
 
 
-  // ✅ Handle normal login
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -137,7 +152,20 @@ export default function CustomerLogin() {
 
         navigate("/customer");
       } else {
-        setMessage(data.message || "Login failed");
+        
+        if (data.remainingSeconds || data.lockUntil) {
+          const seconds = data.remainingSeconds
+            ? data.remainingSeconds
+            : Math.ceil((data.lockUntil - Date.now()) / 1000);
+      
+          setTimer(seconds);
+        }
+      
+        setMessage(
+          data.remainingSeconds
+            ? `Too many attempts.`
+            : data.message || "Login failed"
+        );
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -174,6 +202,12 @@ export default function CustomerLogin() {
               {message}
             </p>
           )}
+          {timer > 0 && (
+            <p className="text-center text-danger fw-bold fs-5">
+              Try again in {timer} second{timer !== 1 ? "s" : ""}...
+            </p>
+          )}
+
           {!hasPassword ? (
             <form onSubmit={handleSetPassword} className="d-flex flex-column">
               <input
@@ -210,7 +244,7 @@ export default function CustomerLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="custom-input my-1"
-                disabled={loading}
+                disabled={loading || timer > 0}
               />  
               <div className="position-relative my-1">
                 <input
@@ -219,7 +253,7 @@ export default function CustomerLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="custom-input w-100 pe-5"
-                  disabled={loading}
+                  disabled={loading || timer > 0}
                 />
                 <span
                   onClick={() => setShowPassword(!showPassword)}
@@ -242,7 +276,7 @@ export default function CustomerLogin() {
               <button
                 type="submit"
                 className="custom-button mt-3 m-0"
-                disabled={loading}
+                disabled={loading || timer > 0}
               >
                 {loading ? "Verifying..." : "Login"}
               </button>
